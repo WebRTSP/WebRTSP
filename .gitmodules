@@ -1,0 +1,3 @@
+[submodule "deps/CxxPtr"]
+	path = deps/CxxPtr
+	url = https://github.com/RSATom/CxxPtr.git
