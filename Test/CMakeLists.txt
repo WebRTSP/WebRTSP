@@ -7,11 +7,11 @@ file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.h
     *.cmake)
 
-add_library(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES})
 #target_include_directories(${PROJECT_NAME} PRIVATE
 #    )
-#target_link_libraries(${PROJECT_NAME}
-#    )
+target_link_libraries(${PROJECT_NAME}
+    RtspParser)
 
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})
