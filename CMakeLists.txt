@@ -20,7 +20,7 @@ add_subdirectory(deps/CxxPtr)
 add_subdirectory(Common)
 
 add_subdirectory(RtspParser)
-add_subdirectory(Transport)
+add_subdirectory(Signalling)
 add_subdirectory(Test)
 
 #get_cmake_property(_variableNames VARIABLES)
