@@ -17,6 +17,7 @@ include_directories(
     ${DEPS_DIR})
 
 add_subdirectory(deps/CxxPtr)
+add_subdirectory(Common)
 
 add_subdirectory(RtspParser)
 add_subdirectory(Transport)
