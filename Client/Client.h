@@ -1,8 +1,10 @@
 #pragma once
 
+#include "Config.h"
+
 
 namespace client {
 
-void Client() noexcept;
+bool Client(const Config*) noexcept;
 
 }

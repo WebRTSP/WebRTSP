@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME}
     RtspParser
     Signalling
+    Client
     Threads::Threads)
 
 #get_cmake_property(_variableNames VARIABLES)
