@@ -21,6 +21,8 @@ add_subdirectory(Common)
 
 add_subdirectory(RtspParser)
 add_subdirectory(Signalling)
+add_subdirectory(Streaming)
+add_subdirectory(Client)
 add_subdirectory(Test)
 
 #get_cmake_property(_variableNames VARIABLES)
