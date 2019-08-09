@@ -19,6 +19,8 @@ public:
     size_t size();
 
     void append(const char*, size_t);
+    void assign(const char*, size_t);
+    void assign(const char*);
 
     bool onReceive(lws*, void* chunk, size_t);
     bool writeAsText(lws*);

@@ -82,6 +82,18 @@ void MessageBuffer::append(const char* chunk, size_t chunkSize)
     }
 }
 
+void MessageBuffer::assign(const char* message, size_t size)
+{
+    clear();
+    append(message, size);
+}
+
+void MessageBuffer::assign(const char* message)
+{
+    clear();
+    assign(message, strlen(message));
+}
+
 bool MessageBuffer::writeAsText(lws* wsi)
 {
     return lws_write(wsi, data(), size(), LWS_WRITE_TEXT) >= 0;
