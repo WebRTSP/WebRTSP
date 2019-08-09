@@ -50,6 +50,25 @@ struct SessionContextData
 
 }
 
+static void Send(SessionContextData* scd, MessageBuffer* message)
+{
+    scd->data->sendMessages.emplace_back(std::move(*message));
+
+    lws_callback_on_writable(scd->wsi);
+}
+
+static bool OnConnected(ContextData* cd, SessionContextData* scd)
+{
+    MessageBuffer message;
+    message.assign(
+        "OPTIONS * RTSP/1.0\r\n"
+        "CSeq: 1\r\n");
+
+    Send(scd, &message);
+
+    return true;
+}
+
 static int WsCallback(
     lws* wsi,
     lws_callback_reasons reason,
@@ -68,6 +87,9 @@ static int WsCallback(
             scd->wsi = wsi;
 
             cd->connected = true;
+
+            if(!OnConnected(cd, scd))
+                return -1;
 
             break;
         case LWS_CALLBACK_CLIENT_RECEIVE:
