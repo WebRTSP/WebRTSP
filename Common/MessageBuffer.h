@@ -8,7 +8,7 @@
 class MessageBuffer
 {
 public:
-    typedef std::vector<unsigned char> Buffer;
+    typedef std::vector<char> Buffer;
 
     MessageBuffer();
     MessageBuffer(MessageBuffer&&);
@@ -16,7 +16,7 @@ public:
     const Buffer::value_type* data() const;
     Buffer::value_type* data();
 
-    size_t size();
+    size_t size() const;
 
     void append(const char*, size_t);
     void assign(const char*, size_t);

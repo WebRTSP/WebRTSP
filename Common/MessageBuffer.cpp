@@ -40,7 +40,7 @@ MessageBuffer::data()
     return _buffer.data() + LWS_PRE;
 }
 
-size_t MessageBuffer::size()
+size_t MessageBuffer::size() const
 {
     assert(!_buffer.empty());
     if(_buffer.empty())
@@ -96,7 +96,7 @@ void MessageBuffer::assign(const char* message)
 
 bool MessageBuffer::writeAsText(lws* wsi)
 {
-    return lws_write(wsi, data(), size(), LWS_WRITE_TEXT) >= 0;
+    return lws_write(wsi, reinterpret_cast<unsigned char*>(data()), size(), LWS_WRITE_TEXT) >= 0;
 }
 
 void MessageBuffer::swap(MessageBuffer& other)
