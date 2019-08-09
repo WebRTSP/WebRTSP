@@ -7,6 +7,7 @@
 #include <CxxPtr/libwebsocketsPtr.h>
 
 #include "Common/MessageBuffer.h"
+#include "RtspParser/RtspParser.h"
 
 
 namespace signalling {
@@ -38,9 +39,47 @@ struct SessionData
 // since created inside libwebsockets on session create.
 struct SessionContextData
 {
+    lws* wsi;
     SessionData* data;
 };
 
+}
+
+static void Send(SessionContextData* scd, MessageBuffer* message)
+{
+    scd->data->sendMessages.emplace_back(std::move(*message));
+
+    lws_callback_on_writable(scd->wsi);
+}
+
+static bool OnMessage(ContextData* cd, SessionContextData* scd, const MessageBuffer& message)
+{
+    rtsp::Request request;
+    if(!rtsp::ParseRequest(message.data(), message.size(), &request))
+        return false;
+
+    if(rtsp::Method::OPTIONS == request.method) {
+        auto it = request.headerFields.find("cseq");
+        if(request.headerFields.end() == it || it->second.empty())
+            return false;
+
+        // rtsp::Response response;
+        // response.protocol = rtsp::Protocol::RTSP_1_0;
+        // response.headerFields.emplace("CSeq", it->second);
+        // response.headerFields.emplace("Public", "DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE");
+        // response.statusCode = 200;
+        // response.reasonPhrase = "OK";
+
+        MessageBuffer message;
+        message.assign(
+            "RTSP/1.0 200 OK\r\n"
+            "CSeq: 1\r\n"
+            "Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r\n");
+
+        Send(scd, &message);
+    }
+
+    return true;
 }
 
 static int WsCallback(
@@ -58,11 +97,14 @@ static int WsCallback(
             break;
         case LWS_CALLBACK_ESTABLISHED: {
             scd->data = new SessionData;
+            scd->wsi = wsi;
             break;
         }
         case LWS_CALLBACK_RECEIVE: {
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
                 lwsl_notice("%.*s\n", static_cast<int>(scd->data->incomingMessage.size()), scd->data->incomingMessage.data());
+
+                OnMessage(cd, scd, scd->data->incomingMessage);
 
                 scd->data->incomingMessage.clear();
             }
