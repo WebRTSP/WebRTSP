@@ -51,35 +51,35 @@ static int WsCallback(
 {
     lws_context* context = lws_get_context(wsi);
     ContextData* cd = static_cast<ContextData*>(lws_context_user(context));
-    SessionContextData* sd = static_cast<SessionContextData*>(user);
+    SessionContextData* scd = static_cast<SessionContextData*>(user);
 
     switch (reason) {
         case LWS_CALLBACK_PROTOCOL_INIT:
             break;
         case LWS_CALLBACK_ESTABLISHED: {
-            sd->data = new SessionData;
+            scd->data = new SessionData;
             break;
         }
         case LWS_CALLBACK_RECEIVE: {
-            if(sd->data->incomingMessage.onReceive(wsi, in, len)) {
-                lwsl_notice("%.*s\n", static_cast<int>(sd->data->incomingMessage.size()), sd->data->incomingMessage.data());
+            if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
+                lwsl_notice("%.*s\n", static_cast<int>(scd->data->incomingMessage.size()), scd->data->incomingMessage.data());
 
-                sd->data->incomingMessage.clear();
+                scd->data->incomingMessage.clear();
             }
 
             break;
         }
         case LWS_CALLBACK_SERVER_WRITEABLE: {
-            if(!sd->data->sendMessages.empty()) {
-                MessageBuffer& buffer = sd->data->sendMessages.front();
+            if(!scd->data->sendMessages.empty()) {
+                MessageBuffer& buffer = scd->data->sendMessages.front();
                 if(!buffer.writeAsText(wsi)) {
                     lwsl_err("write failed\n");
                     return -1;
                 }
 
-                sd->data->sendMessages.pop_front();
+                scd->data->sendMessages.pop_front();
 
-                if(!sd->data->sendMessages.empty())
+                if(!scd->data->sendMessages.empty())
                     lws_callback_on_writable(wsi);
             }
 
