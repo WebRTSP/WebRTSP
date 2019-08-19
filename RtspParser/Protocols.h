@@ -12,7 +12,7 @@ enum class Protocol {
     RTSP_1_0
 };
 
-constexpr const char* ProtocolName(Protocol) noexcept;
+const char* ProtocolName(Protocol) noexcept;
 Protocol ParseProtocol(const Token& token) noexcept;
 
 }

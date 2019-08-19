@@ -15,7 +15,7 @@ static const unsigned ProtocolsCount = sizeof(Protocols) / sizeof(Protocols[0]);
 
 }
 
-constexpr const char* ProtocolName(Protocol protocol) noexcept
+const char* ProtocolName(Protocol protocol) noexcept
 {
     switch(protocol) {
     case Protocol::NONE:

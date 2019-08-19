@@ -22,7 +22,7 @@ enum class Method {
     // RECORD,
 };
 
-constexpr const char* MethodName(Method) noexcept;
+const char* MethodName(Method) noexcept;
 Method ParseMethod(const Token&) noexcept;
 
 }

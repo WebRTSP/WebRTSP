@@ -27,7 +27,7 @@ static const unsigned MethodsCount = sizeof(Methods) / sizeof(Methods[0]);
 
 }
 
-constexpr const char* MethodName(Method method) noexcept
+const char* MethodName(Method method) noexcept
 {
     switch(method) {
     case Method::NONE:
