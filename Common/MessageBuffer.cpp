@@ -94,6 +94,12 @@ void MessageBuffer::assign(const char* message)
     assign(message, strlen(message));
 }
 
+void MessageBuffer::assign(const std::string& message)
+{
+    clear();
+    append(message.data(), message.size());
+}
+
 bool MessageBuffer::writeAsText(lws* wsi)
 {
     return lws_write(wsi, reinterpret_cast<unsigned char*>(data()), size(), LWS_WRITE_TEXT) >= 0;
