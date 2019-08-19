@@ -8,6 +8,7 @@
 
 #include "Common/MessageBuffer.h"
 #include "RtspParser/RtspParser.h"
+#include "RtspParser/RtspSerialize.h"
 
 
 namespace signalling {
@@ -63,18 +64,15 @@ static bool OnMessage(ContextData* cd, SessionContextData* scd, const MessageBuf
         if(request.headerFields.end() == it || it->second.empty())
             return false;
 
-        // rtsp::Response response;
-        // response.protocol = rtsp::Protocol::RTSP_1_0;
-        // response.headerFields.emplace("CSeq", it->second);
-        // response.headerFields.emplace("Public", "DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE");
-        // response.statusCode = 200;
-        // response.reasonPhrase = "OK";
+        rtsp::Response response;
+        response.protocol = rtsp::Protocol::RTSP_1_0;
+        response.headerFields.emplace("CSeq", it->second);
+        response.headerFields.emplace("Public", "DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE");
+        response.statusCode = 200;
+        response.reasonPhrase = "OK";
 
         MessageBuffer message;
-        message.assign(
-            "RTSP/1.0 200 OK\r\n"
-            "CSeq: 1\r\n"
-            "Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r\n");
+        message.assign(rtsp::Serialize(response));
 
         Send(scd, &message);
     }

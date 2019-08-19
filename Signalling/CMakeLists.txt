@@ -15,6 +15,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${WS_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}
     ${WS_LIBRARIES}
+    RtspParser
     Common)
 
 #get_cmake_property(_variableNames VARIABLES)
