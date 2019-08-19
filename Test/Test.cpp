@@ -1,8 +1,10 @@
-#include "TestParse.h"
-
 #include <thread>
 
+#include "TestParse.h"
+#include "TestSerialize.h"
+
 #include "Signalling/Signalling.h"
+
 #include "Client/Client.h"
 
 
@@ -13,6 +15,7 @@ int main(int argc, char *argv[])
     };
 
     TestParse();
+    TestSerialize();
 
     std::thread signallingThread(
         [] () {
