@@ -9,6 +9,7 @@
 #include "Common/MessageBuffer.h"
 #include "RtspParser/RtspParser.h"
 #include "RtspParser/RtspSerialize.h"
+#include "RtspSession.h"
 
 
 namespace signalling {
@@ -32,8 +33,10 @@ struct ContextData
 
 struct SessionData
 {
+    bool terminateSession = false;
     MessageBuffer incomingMessage;
     std::deque<MessageBuffer> sendMessages;
+    RtspSession rtspSession;
 };
 
 // Should contain only POD types,
@@ -53,29 +56,31 @@ static void Send(SessionContextData* scd, MessageBuffer* message)
     lws_callback_on_writable(scd->wsi);
 }
 
+static void SendResponse(
+    ContextData* cd,
+    SessionContextData* scd,
+    const rtsp::Response* response)
+{
+    if(!response) {
+        scd->data->terminateSession = true;
+        lws_callback_on_writable(scd->wsi);
+        return;
+    }
+
+    MessageBuffer responseMessage;
+    responseMessage.assign(rtsp::Serialize(*response));
+
+    Send(scd, &responseMessage);
+}
+
 static bool OnMessage(ContextData* cd, SessionContextData* scd, const MessageBuffer& message)
 {
     rtsp::Request request;
     if(!rtsp::ParseRequest(message.data(), message.size(), &request))
         return false;
 
-    if(rtsp::Method::OPTIONS == request.method) {
-        auto it = request.headerFields.find("cseq");
-        if(request.headerFields.end() == it || it->second.empty())
-            return false;
-
-        rtsp::Response response;
-        response.protocol = rtsp::Protocol::RTSP_1_0;
-        response.headerFields.emplace("CSeq", it->second);
-        response.headerFields.emplace("Public", "DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE");
-        response.statusCode = 200;
-        response.reasonPhrase = "OK";
-
-        MessageBuffer message;
-        message.assign(rtsp::Serialize(response));
-
-        Send(scd, &message);
-    }
+    if(!scd->data->rtspSession.handleRequest(request))
+        return false;
 
     return true;
 }
@@ -94,7 +99,12 @@ static int WsCallback(
         case LWS_CALLBACK_PROTOCOL_INIT:
             break;
         case LWS_CALLBACK_ESTABLISHED: {
-            scd->data = new SessionData;
+            scd->data =
+                new SessionData {
+                    .incomingMessage ={},
+                    .sendMessages = {},
+                    .rtspSession = { std::bind(SendResponse, cd, scd, std::placeholders::_1) }
+                };
             scd->wsi = wsi;
             break;
         }
@@ -110,6 +120,9 @@ static int WsCallback(
             break;
         }
         case LWS_CALLBACK_SERVER_WRITEABLE: {
+            if(scd->data->terminateSession)
+                return -1;
+
             if(!scd->data->sendMessages.empty()) {
                 MessageBuffer& buffer = scd->data->sendMessages.front();
                 if(!buffer.writeAsText(wsi)) {
