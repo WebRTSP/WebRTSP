@@ -5,6 +5,8 @@
 #include "CxxPtr/libwebsocketsPtr.h"
 
 #include "Common/MessageBuffer.h"
+#include "RtspParser/RtspSerialize.h"
+#include "RtspSession/ClientSession.h"
 
 
 namespace client {
@@ -36,8 +38,10 @@ struct ContextData
 
 struct SessionData
 {
+    bool terminateSession = false;
     MessageBuffer incomingMessage;
     std::deque<MessageBuffer> sendMessages;
+    rtsp::ClientSession rtspSession;
 };
 
 // Should contain only POD types,
@@ -57,14 +61,26 @@ static void Send(SessionContextData* scd, MessageBuffer* message)
     lws_callback_on_writable(scd->wsi);
 }
 
+static void SendRequest(
+    ContextData* cd,
+    SessionContextData* scd,
+    const rtsp::Request* request)
+{
+    if(!request) {
+        scd->data->terminateSession = true;
+        lws_callback_on_writable(scd->wsi);
+        return;
+    }
+
+    MessageBuffer requestMessage;
+    requestMessage.assign(rtsp::Serialize(*request));
+
+    Send(scd, &requestMessage);
+}
+
 static bool OnConnected(ContextData* cd, SessionContextData* scd)
 {
-    MessageBuffer message;
-    message.assign(
-        "OPTIONS * RTSP/1.0\r\n"
-        "CSeq: 1\r\n");
-
-    Send(scd, &message);
+    scd->data->rtspSession.requestOptions();
 
     return true;
 }
@@ -83,7 +99,12 @@ static int WsCallback(
         case LWS_CALLBACK_CLIENT_ESTABLISHED:
             lwsl_notice("Connection to server established\n");
 
-            scd->data = new SessionData;
+            scd->data =
+                new SessionData {
+                    .incomingMessage ={},
+                    .sendMessages = {},
+                    .rtspSession = { std::bind(SendRequest, cd, scd, std::placeholders::_1) }
+                };
             scd->wsi = wsi;
 
             cd->connected = true;
@@ -101,6 +122,9 @@ static int WsCallback(
 
             break;
         case LWS_CALLBACK_CLIENT_WRITEABLE:
+            if(scd->data->terminateSession)
+                return -1;
+
             if(!scd->data->sendMessages.empty()) {
                 MessageBuffer& buffer = scd->data->sendMessages.front();
                 if(!buffer.writeAsText(wsi)) {
