@@ -27,7 +27,7 @@ void SerializeStatusCode(unsigned statusCode, std::string* out)
 void Serialize(const Response& response, std::string* out) noexcept
 {
     try {
-        *out += ProtocolName(response.protocol);
+        *out = ProtocolName(response.protocol);
         *out += " ";
         SerializeStatusCode(response.statusCode, out);
         *out += " ";
