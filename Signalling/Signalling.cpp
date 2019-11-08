@@ -112,7 +112,8 @@ static int WsCallback(
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
                 lwsl_notice("%.*s\n", static_cast<int>(scd->data->incomingMessage.size()), scd->data->incomingMessage.data());
 
-                OnMessage(cd, scd, scd->data->incomingMessage);
+                if(!OnMessage(cd, scd, scd->data->incomingMessage))
+                    return -1;
 
                 scd->data->incomingMessage.clear();
             }
