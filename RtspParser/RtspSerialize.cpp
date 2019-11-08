@@ -24,6 +24,40 @@ void SerializeStatusCode(unsigned statusCode, std::string* out)
 
 }
 
+void Serialize(const Request& request, std::string* out) noexcept
+{
+    try {
+        *out = MethodName(request.method);
+        *out += " ";
+        *out += request.uri;
+        *out += " ";
+        *out += ProtocolName(request.protocol);
+        *out += "\r\n";
+
+        for(const std::pair<std::string, std::string>& hf: request.headerFields) {
+            *out += hf.first;
+            *out += ": ";
+            *out += hf.second;
+            *out += "\r\n";
+        }
+
+        if(!request.body.empty()) {
+            *out +="\r\n";
+            *out += request.body;
+            *out += "\r\n";
+        }
+    } catch(...) {
+        out->clear();
+    }
+}
+
+std::string Serialize(const Request& request) noexcept
+{
+    std::string out;
+    Serialize(request, &out);
+    return out;
+}
+
 void Serialize(const Response& response, std::string* out) noexcept
 {
     try {
