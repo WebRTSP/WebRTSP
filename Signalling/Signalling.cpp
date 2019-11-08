@@ -9,7 +9,7 @@
 #include "Common/MessageBuffer.h"
 #include "RtspParser/RtspParser.h"
 #include "RtspParser/RtspSerialize.h"
-#include "RtspSession.h"
+#include "RtspSession/ServerSession.h"
 
 
 namespace signalling {
@@ -36,7 +36,7 @@ struct SessionData
     bool terminateSession = false;
     MessageBuffer incomingMessage;
     std::deque<MessageBuffer> sendMessages;
-    RtspSession rtspSession;
+    rtsp::ServerSession rtspSession;
 };
 
 // Should contain only POD types,

@@ -1,12 +1,13 @@
-#include "RtspSession.h"
+#include "ServerSession.h"
 
+namespace rtsp {
 
-RtspSession::RtspSession(const std::function<void (rtsp::Response*)>& cb) :
+ServerSession::ServerSession(const std::function<void (rtsp::Response*)>& cb) :
     _responseCallback(cb)
 {
 }
 
-bool RtspSession::handleOptionsRequest(
+bool ServerSession::handleOptionsRequest(
     const rtsp::Request& request)
 {
     auto it = request.headerFields.find("cseq");
@@ -25,31 +26,31 @@ bool RtspSession::handleOptionsRequest(
     return true;
 }
 
-bool RtspSession::handleDescribeRequest(
+bool ServerSession::handleDescribeRequest(
     const rtsp::Request& request)
 {
     return false;
 }
 
-bool RtspSession::handleSetupRequest(
+bool ServerSession::handleSetupRequest(
     const rtsp::Request& request)
 {
     return false;
 }
 
-bool RtspSession::handlePlayRequest(
+bool ServerSession::handlePlayRequest(
     const rtsp::Request& request)
 {
     return false;
 }
 
-bool RtspSession::handleTeardownRequest(
+bool ServerSession::handleTeardownRequest(
     const rtsp::Request& request)
 {
     return false;
 }
 
-bool RtspSession::handleRequest(
+bool ServerSession::handleRequest(
     const rtsp::Request& request)
 {
     switch(request.method) {
@@ -66,4 +67,6 @@ bool RtspSession::handleRequest(
     default:
         return false;
     }
+}
+
 }

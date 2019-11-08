@@ -6,9 +6,11 @@
 #include "RtspParser/Response.h"
 
 
-struct RtspSession
+namespace rtsp {
+
+struct ServerSession
 {
-    RtspSession(const std::function<void (rtsp::Response*)>&);
+    ServerSession(const std::function<void (rtsp::Response*)>&);
 
     bool handleRequest(const rtsp::Request&);
 
@@ -22,3 +24,5 @@ private:
 private:
     std::function<void (rtsp::Response*)> _responseCallback;
 };
+
+}
