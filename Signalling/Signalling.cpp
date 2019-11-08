@@ -73,7 +73,10 @@ static void SendResponse(
     Send(scd, &responseMessage);
 }
 
-static bool OnMessage(ContextData* cd, SessionContextData* scd, const MessageBuffer& message)
+static bool OnMessage(
+    ContextData* cd,
+    SessionContextData* scd,
+    const MessageBuffer& message)
 {
     rtsp::Request request;
     if(!rtsp::ParseRequest(message.data(), message.size(), &request))
