@@ -17,7 +17,7 @@ struct ClientSession
     bool handleResponse(const rtsp::Response&);
 
 protected:
-    void requestOptions(const std::string& uri);
+    CSeq requestOptions(const std::string& uri);
 
 private:
     void sendRequest(const rtsp::Request&);

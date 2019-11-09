@@ -12,7 +12,7 @@ void ClientSession::sendRequest(const rtsp::Request& request)
     _requestCallback(&request);
 }
 
-void ClientSession::requestOptions(const std::string& uri)
+CSeq ClientSession::requestOptions(const std::string& uri)
 {
     rtsp::Request request;
     request.method = rtsp::Method::OPTIONS;
@@ -21,6 +21,10 @@ void ClientSession::requestOptions(const std::string& uri)
     request.cseq = _nextCSeq++;
 
     sendRequest(request);
+
+    return request.cseq;
+}
+
 }
 
 bool ClientSession::handleOptionsResponse(
