@@ -11,7 +11,7 @@ void TestSerialize() noexcept
     request.method = rtsp::Method::OPTIONS;
     request.uri = "*";
     request.protocol = rtsp::Protocol::RTSP_1_0;
-    request.headerFields.emplace("CSeq", std::to_string(1));
+    request.cseq = 1;
 
     const std::string requestMessage = rtsp::Serialize(request);
 
@@ -21,7 +21,7 @@ void TestSerialize() noexcept
 
     rtsp::Response response;
     response.protocol = rtsp::Protocol::RTSP_1_0;
-    response.headerFields.emplace("CSeq", "1");
+    response.cseq = 1;
     response.headerFields.emplace("Public", "DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE");
     response.statusCode = 200;
     response.reasonPhrase = "OK";

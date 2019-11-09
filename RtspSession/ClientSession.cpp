@@ -18,8 +18,7 @@ void ClientSession::requestOptions()
     request.method = rtsp::Method::OPTIONS;
     request.uri = "*";
     request.protocol = rtsp::Protocol::RTSP_1_0;
-    request.headerFields.emplace("CSeq", std::to_string(_nextCSeq));
-    ++_nextCSeq;
+    request.cseq = _nextCSeq++;
 
     sendRequest(request);
 }
@@ -27,10 +26,6 @@ void ClientSession::requestOptions()
 bool ClientSession::handleOptionsResponse(
     const rtsp::Response& response)
 {
-    auto it = response.headerFields.find("cseq");
-    if(response.headerFields.end() == it || it->second.empty())
-        return false;
-
     return true;
 }
 

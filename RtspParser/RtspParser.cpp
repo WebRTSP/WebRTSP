@@ -357,6 +357,15 @@ bool ParseRequest(const char* request, size_t size, Request* out) noexcept
     if(!IsEOS(position, size))
         out->body.assign(request + position, size - position);
 
+    auto cseqIt = out->headerFields.find("cseq");
+    if(out->headerFields.end() == cseqIt || cseqIt->second.empty())
+        return false;
+
+    if(!ParseCSeq(cseqIt->second, &out->cseq))
+        return false;
+
+    out->headerFields.erase(cseqIt);
+
     return true;
 }
 
@@ -452,6 +461,15 @@ bool ParseResponse(const char* response, size_t size, Response* out) noexcept
 
     if(!IsEOS(position, size))
         out->body.assign(response + position, size - position);
+
+    auto cseqIt = out->headerFields.find("cseq");
+    if(out->headerFields.end() == cseqIt || cseqIt->second.empty())
+        return false;
+
+    if(!ParseCSeq(cseqIt->second, &out->cseq))
+        return false;
+
+    out->headerFields.erase(cseqIt);
 
     return true;
 }

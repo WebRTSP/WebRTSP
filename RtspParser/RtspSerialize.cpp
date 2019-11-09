@@ -34,6 +34,10 @@ void Serialize(const Request& request, std::string* out) noexcept
         *out += ProtocolName(request.protocol);
         *out += "\r\n";
 
+        *out += "CSeq: ";
+        *out += std::to_string(request.cseq);
+        *out += "\r\n";
+
         for(const std::pair<std::string, std::string>& hf: request.headerFields) {
             *out += hf.first;
             *out += ": ";
@@ -66,6 +70,10 @@ void Serialize(const Response& response, std::string* out) noexcept
         SerializeStatusCode(response.statusCode, out);
         *out += " ";
         *out += response.reasonPhrase;
+        *out += "\r\n";
+
+        *out += "CSeq: ";
+        *out += std::to_string(response.cseq);
         *out += "\r\n";
 
         for(const std::pair<std::string, std::string>& hf: response.headerFields) {

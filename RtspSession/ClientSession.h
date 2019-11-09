@@ -24,7 +24,7 @@ private:
 private:
     std::function<void (const rtsp::Request*)> _requestCallback;
 
-    unsigned _nextCSeq = 1;
+    CSeq _nextCSeq = 1;
 };
 
 }

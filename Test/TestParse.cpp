@@ -85,10 +85,7 @@ void TestParse()
         rtsp::Request request;
         const bool success =
             rtsp::ParseRequest(OPTIONSRequest, sizeof(OPTIONSRequest) - 1, &request);
-        assert(success);
-        assert(request.method == rtsp::Method::OPTIONS);
-        assert(request.uri == "*");
-        assert(request.protocol == rtsp::Protocol::RTSP_1_0);
+        assert(!success);
     }
 
     {
@@ -112,10 +109,8 @@ void TestParse()
         assert(request.method == rtsp::Method::OPTIONS);
         assert(request.uri == "*");
         assert(request.protocol == rtsp::Protocol::RTSP_1_0);
-        assert(
-            request.headerFields.size() == 1 &&
-            request.headerFields.begin()->first == "cseq" &&
-            request.headerFields.begin()->second == "1");
+        assert(request.cseq == 1);
+        assert(request.headerFields.empty());
     }
     {
         const char OPTIONSRequest[] =
@@ -128,10 +123,8 @@ void TestParse()
         assert(request.method == rtsp::Method::OPTIONS);
         assert(request.uri == "*");
         assert(request.protocol == rtsp::Protocol::RTSP_1_0);
-        assert(
-            request.headerFields.size() == 1 &&
-            request.headerFields.begin()->first == "cseq" &&
-            request.headerFields.begin()->second == "1");
+        assert(request.cseq == 1);
+        assert(request.headerFields.empty());
     }
 
     {
@@ -146,14 +139,10 @@ void TestParse()
         assert(request.method == rtsp::Method::SETUP);
         assert(request.uri == "rtsp://example.com/meida.ogg/streamid=0");
         assert(request.protocol == rtsp::Protocol::RTSP_1_0);
-        assert(request.headerFields.size() == 2);
-        if(request.headerFields.size() == 2) {
+        assert(request.cseq == 3);
+        assert(request.headerFields.size() == 1);
+        if(request.headerFields.size() == 1) {
             auto it = request.headerFields.begin();
-            assert(
-                it->first == "cseq" &&
-                it->second == "3");
-
-            ++it;
             assert(
                 it->first == "transport" &&
                 it->second == "RTP/AVP;unicast;client_port=8000-8001");
@@ -175,7 +164,8 @@ void TestParse()
             rtsp::ParseRequest(GET_PARAMETERRequest, sizeof(GET_PARAMETERRequest) - 1, &request);
         assert(success);
         assert(request.method == rtsp::Method::GET_PARAMETER);
-        assert(request.headerFields.size() == 4);
+        assert(request.cseq == 9);
+        assert(request.headerFields.size() == 3);
         assert(!request.body.empty());
     }
 
@@ -195,7 +185,8 @@ void TestParse()
         assert(response.protocol == rtsp::Protocol::RTSP_1_0);
         assert(response.statusCode == 200);
         assert(response.reasonPhrase == "OK");
-        assert(response.headerFields.size() == 3);
+        assert(response.cseq == 9);
+        assert(response.headerFields.size() == 2);
         assert(!response.body.empty());
     }
 }
