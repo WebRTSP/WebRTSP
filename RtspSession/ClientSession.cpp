@@ -85,16 +85,4 @@ CSeq ClientSession::requestTeardown(
     return request.cseq;
 }
 
-bool ClientSession::handleOptionsResponse(
-    const rtsp::Response& response)
-{
-    return true;
-}
-
-bool ClientSession::handleResponse(
-    const rtsp::Response& response)
-{
-    return false;
-}
-
 }

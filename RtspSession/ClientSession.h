@@ -14,7 +14,8 @@ struct ClientSession
 
     virtual void onConnected() {}
 
-    bool handleResponse(const rtsp::Response&);
+    virtual bool handleResponse(const rtsp::Response&)
+        { return false; }
 
 protected:
     CSeq requestOptions(const std::string& uri);
