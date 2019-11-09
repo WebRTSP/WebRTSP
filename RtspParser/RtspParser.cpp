@@ -313,6 +313,33 @@ bool ParseHeaderField(
     return false;
 }
 
+bool ParseCSeq(const std::string& token, CSeq* out) noexcept
+{
+    CSeq tmpOut = 0;
+
+    for(const std::string::value_type& c: token) {
+        if(!IsDigit(c))
+            return false;
+
+        unsigned digit = ParseDigit(c);
+
+        if(tmpOut > (tmpOut * 10 + digit)) {
+            // overflow
+            return false;
+        }
+
+        tmpOut = tmpOut * 10 + digit;
+    }
+
+    if(!tmpOut)
+        return false;
+
+    if(out)
+        *out = tmpOut;
+
+    return true;
+}
+
 bool ParseRequest(const char* request, size_t size, Request* out) noexcept
 {
     size_t position = 0;
