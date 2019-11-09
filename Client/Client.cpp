@@ -80,7 +80,7 @@ static void SendRequest(
 
 static bool OnConnected(ContextData* cd, SessionContextData* scd)
 {
-    scd->data->rtspSession.requestOptions();
+    scd->data->rtspSession.requestOptions("*");
 
     return true;
 }

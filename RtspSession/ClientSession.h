@@ -12,7 +12,7 @@ struct ClientSession
 {
     ClientSession(const std::function<void (const rtsp::Request*)>&);
 
-    void requestOptions();
+    void requestOptions(const std::string& uri);
 
     bool handleResponse(const rtsp::Response&);
 

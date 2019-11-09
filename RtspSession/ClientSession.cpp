@@ -12,11 +12,11 @@ void ClientSession::sendRequest(const rtsp::Request& request)
     _requestCallback(&request);
 }
 
-void ClientSession::requestOptions()
+void ClientSession::requestOptions(const std::string& uri)
 {
     rtsp::Request request;
     request.method = rtsp::Method::OPTIONS;
-    request.uri = "*";
+    request.uri = uri;
     request.protocol = rtsp::Protocol::RTSP_1_0;
     request.cseq = _nextCSeq++;
 
