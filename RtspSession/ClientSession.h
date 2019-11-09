@@ -18,6 +18,12 @@ struct ClientSession
 
 protected:
     CSeq requestOptions(const std::string& uri);
+    CSeq requestDescribe(const std::string& uri);
+    CSeq requestSetup(const std::string& uri);
+    CSeq requestPlay(const std::string& uri, const std::string& session);
+    CSeq requestTeardown(const std::string& uri, const std::string& session);
+
+    virtual bool onResponse(const rtsp::Response&) { return false; }
 
 private:
     void sendRequest(const rtsp::Request&);
