@@ -12,9 +12,12 @@ struct ClientSession
 {
     ClientSession(const std::function<void (const rtsp::Request*)>&);
 
-    void requestOptions(const std::string& uri);
+    virtual void onConnected() {}
 
     bool handleResponse(const rtsp::Response&);
+
+protected:
+    void requestOptions(const std::string& uri);
 
 private:
     void sendRequest(const rtsp::Request&);
