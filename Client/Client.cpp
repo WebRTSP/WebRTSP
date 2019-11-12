@@ -6,7 +6,9 @@
 
 #include "Common/MessageBuffer.h"
 #include "RtspParser/RtspSerialize.h"
-#include "RtspSession/ClientSession.h"
+#include "RtspParser/RtspParser.h"
+
+#include "ClientSession.h"
 
 
 namespace client {
@@ -41,7 +43,7 @@ struct SessionData
     bool terminateSession = false;
     MessageBuffer incomingMessage;
     std::deque<MessageBuffer> sendMessages;
-    rtsp::ClientSession rtspSession;
+    ClientSession rtspSession;
 };
 
 // Should contain only POD types,
@@ -85,6 +87,21 @@ static bool OnConnected(ContextData* cd, SessionContextData* scd)
     return true;
 }
 
+static bool OnMessage(
+    ContextData* cd,
+    SessionContextData* scd,
+    const MessageBuffer& message)
+{
+    rtsp::Response response;
+    if(!rtsp::ParseResponse(message.data(), message.size(), &response))
+        return false;
+
+    if(!scd->data->rtspSession.handleResponse(response))
+        return false;
+
+    return true;
+}
+
 static int WsCallback(
     lws* wsi,
     lws_callback_reasons reason,
@@ -116,6 +133,9 @@ static int WsCallback(
         case LWS_CALLBACK_CLIENT_RECEIVE:
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
                 lwsl_notice("%.*s\n", static_cast<int>(scd->data->incomingMessage.size()), scd->data->incomingMessage.data());
+
+                if(!OnMessage(cd, scd, scd->data->incomingMessage))
+                    return -1;
 
                 scd->data->incomingMessage.clear();
             }
