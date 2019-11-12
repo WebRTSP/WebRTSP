@@ -10,16 +10,13 @@ ServerSession::ServerSession(const std::function<void (rtsp::Response*)>& cb) :
 bool ServerSession::handleOptionsRequest(
     const rtsp::Request& request)
 {
-    auto it = request.headerFields.find("cseq");
-    if(request.headerFields.end() == it || it->second.empty())
-        return false;
-
     rtsp::Response response;
     response.protocol = rtsp::Protocol::RTSP_1_0;
-    response.headerFields.emplace("CSeq", it->second);
-    response.headerFields.emplace("Public", "DESCRIBE, SETUP, PLAY, TEARDOWN");
+    response.cseq = request.cseq;
     response.statusCode = 200;
     response.reasonPhrase = "OK";
+
+    response.headerFields.emplace("Public", "DESCRIBE, SETUP, PLAY, TEARDOWN");
 
     _responseCallback(&response);
 
