@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <map>
 
 #include "RtspParser/Request.h"
 #include "RtspParser/Response.h"
@@ -14,8 +15,7 @@ struct ClientSession
 
     virtual void onConnected() {}
 
-    virtual bool handleResponse(const rtsp::Response&)
-        { return false; }
+    bool handleResponse(const rtsp::Response&);
 
 protected:
     CSeq requestOptions(const std::string& uri);
@@ -24,17 +24,39 @@ protected:
     CSeq requestPlay(const std::string& uri, const std::string& session);
     CSeq requestTeardown(const std::string& uri, const std::string& session);
 
-    virtual bool onResponse(const rtsp::Response&) { return false; }
+    virtual bool onOptionsResponse(
+        const rtsp::Request&, const rtsp::Response&)
+        { return false; }
+    virtual bool onDescribeResponse(
+        const rtsp::Request&, const rtsp::Response&)
+        { return false; }
+    virtual bool onSetupResponse(
+        const rtsp::Request&, const rtsp::Response&)
+        { return false; }
+    virtual bool onPlayResponse(
+        const rtsp::Request&, const rtsp::Response&)
+        { return false; }
+    virtual bool onTeardownResponse(
+        const rtsp::Request&, const rtsp::Response&)
+        { return false; }
 
 private:
-    void sendRequest(const rtsp::Request&);
+    rtsp::Request* createRequest(
+        rtsp::Method,
+        const std::string& uri);
+    rtsp::Request* createRequest(
+        rtsp::Method,
+        const std::string& uri,
+        const std::string& session);
 
-    bool handleOptionsResponse(const rtsp::Response&);
+    void sendRequest(const rtsp::Request&);
 
 private:
     std::function<void (const rtsp::Request*)> _requestCallback;
 
     CSeq _nextCSeq = 1;
+
+    std::map<CSeq, rtsp::Request> _sentRequests;
 };
 
 }

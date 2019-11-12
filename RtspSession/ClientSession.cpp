@@ -12,13 +12,46 @@ void ClientSession::sendRequest(const rtsp::Request& request)
     _requestCallback(&request);
 }
 
+rtsp::Request* ClientSession::createRequest(
+    rtsp::Method method,
+    const std::string& uri)
+{
+    for(;;) {
+        const auto& pair =
+            _sentRequests.emplace(
+                _nextCSeq,
+                rtsp::Request{
+                    .method = method,
+                    .protocol = Protocol::RTSP_1_0,
+                    .cseq = _nextCSeq
+                });
+
+        ++_nextCSeq;
+
+        if(pair.second) {
+            rtsp::Request& request = pair.first->second;
+            request.uri = uri;
+            return &request;
+        }
+    }
+}
+
+rtsp::Request* ClientSession::createRequest(
+    rtsp::Method method,
+    const std::string& uri,
+    const std::string& session)
+{
+    rtsp::Request* request = createRequest(method, uri);
+
+    request->headerFields.emplace("Session", session);
+
+    return request;
+}
+
 CSeq ClientSession::requestOptions(const std::string& uri)
 {
-    rtsp::Request request;
-    request.method = rtsp::Method::OPTIONS;
-    request.uri = uri;
-    request.protocol = rtsp::Protocol::RTSP_1_0;
-    request.cseq = _nextCSeq++;
+    rtsp::Request& request =
+        *createRequest(rtsp::Method::OPTIONS, uri);
 
     sendRequest(request);
 
@@ -27,11 +60,8 @@ CSeq ClientSession::requestOptions(const std::string& uri)
 
 CSeq ClientSession::requestDescribe(const std::string& uri)
 {
-    rtsp::Request request;
-    request.method = rtsp::Method::DESCRIBE;
-    request.uri = uri;
-    request.protocol = rtsp::Protocol::RTSP_1_0;
-    request.cseq = _nextCSeq++;
+    rtsp::Request& request =
+        *createRequest(rtsp::Method::DESCRIBE, uri);
 
     sendRequest(request);
 
@@ -40,11 +70,8 @@ CSeq ClientSession::requestDescribe(const std::string& uri)
 
 CSeq ClientSession::requestSetup(const std::string& uri)
 {
-    rtsp::Request request;
-    request.method = rtsp::Method::SETUP;
-    request.uri = uri;
-    request.protocol = rtsp::Protocol::RTSP_1_0;
-    request.cseq = _nextCSeq++;
+    rtsp::Request& request =
+        *createRequest(rtsp::Method::SETUP, uri);
 
     sendRequest(request);
 
@@ -55,13 +82,8 @@ CSeq ClientSession::requestPlay(
     const std::string& uri,
     const std::string& session)
 {
-    rtsp::Request request;
-    request.method = rtsp::Method::PLAY;
-    request.uri = uri;
-    request.protocol = rtsp::Protocol::RTSP_1_0;
-    request.cseq = _nextCSeq++;
-
-    request.headerFields.emplace("Session", session);
+    rtsp::Request& request =
+        *createRequest(rtsp::Method::PLAY, uri, session);
 
     sendRequest(request);
 
@@ -72,17 +94,36 @@ CSeq ClientSession::requestTeardown(
     const std::string& uri,
     const std::string& session)
 {
-    rtsp::Request request;
-    request.method = rtsp::Method::TEARDOWN;
-    request.uri = uri;
-    request.protocol = rtsp::Protocol::RTSP_1_0;
-    request.cseq = _nextCSeq++;
-
-    request.headerFields.emplace("Session", session);
+    rtsp::Request& request =
+        *createRequest(rtsp::Method::TEARDOWN, uri, session);
 
     sendRequest(request);
 
     return request.cseq;
+}
+
+bool ClientSession::handleResponse(const rtsp::Response& response)
+{
+    auto it = _sentRequests.find(response.cseq);
+    if(it == _sentRequests.end())
+        return false;
+
+    const Request& request = it->second;
+    switch(request.method) {
+        case rtsp::Method::OPTIONS:
+            return onOptionsResponse(request, response);
+        case rtsp::Method::DESCRIBE:
+            return onDescribeResponse(request, response);
+        case rtsp::Method::SETUP:
+            return onSetupResponse(request, response);
+        case rtsp::Method::PLAY:
+            return onPlayResponse(request, response);
+        case rtsp::Method::TEARDOWN:
+            return onTeardownResponse(request, response);
+        default:
+            return false;
+    }
+
 }
 
 }
