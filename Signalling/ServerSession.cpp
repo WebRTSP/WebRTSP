@@ -7,7 +7,7 @@ bool ServerSession::handleOptionsRequest(
     rtsp::Response response;
     response.protocol = rtsp::Protocol::RTSP_1_0;
     response.cseq = request.cseq;
-    response.statusCode = 200;
+    response.statusCode = rtsp::OK;
     response.reasonPhrase = "OK";
 
     response.headerFields.emplace("Public", "DESCRIBE, SETUP, PLAY, TEARDOWN");
