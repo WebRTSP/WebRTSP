@@ -3,7 +3,8 @@
 
 namespace rtsp {
 
-ServerSession::ServerSession(const std::function<void (rtsp::Response*)>& cb) :
+ServerSession::ServerSession(
+    const std::function<void (const rtsp::Response*)>& cb) :
     _responseCallback(cb)
 {
 }

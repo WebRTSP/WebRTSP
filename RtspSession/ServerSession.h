@@ -10,7 +10,7 @@ namespace rtsp {
 
 struct ServerSession
 {
-    ServerSession(const std::function<void (rtsp::Response*)>&);
+    ServerSession(const std::function<void (const rtsp::Response*)>&);
 
     bool handleRequest(const rtsp::Request&);
 
@@ -22,7 +22,7 @@ private:
     bool handleTeardownRequest(const rtsp::Request&);
 
 private:
-    std::function<void (rtsp::Response*)> _responseCallback;
+    std::function<void (const rtsp::Response*)> _responseCallback;
 };
 
 }
