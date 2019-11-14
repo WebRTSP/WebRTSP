@@ -10,18 +10,18 @@ namespace rtsp {
 
 struct ServerSession
 {
-    ServerSession(const std::function<void (const rtsp::Response*)>&);
+    ServerSession(const std::function<void (const rtsp::Response*)>&) noexcept;
 
-    bool handleRequest(const rtsp::Request&);
+    bool handleRequest(const rtsp::Request&) noexcept;
 
 protected:
-    virtual bool handleOptionsRequest(const rtsp::Request&);
-    virtual bool handleDescribeRequest(const rtsp::Request&);
-    virtual bool handleSetupRequest(const rtsp::Request&);
-    virtual bool handlePlayRequest(const rtsp::Request&);
-    virtual bool handleTeardownRequest(const rtsp::Request&);
+    virtual bool handleOptionsRequest(const rtsp::Request&) noexcept;
+    virtual bool handleDescribeRequest(const rtsp::Request&) noexcept;
+    virtual bool handleSetupRequest(const rtsp::Request&) noexcept;
+    virtual bool handlePlayRequest(const rtsp::Request&) noexcept;
+    virtual bool handleTeardownRequest(const rtsp::Request&) noexcept;
 
-    void sendResponse(const rtsp::Response&);
+    void sendResponse(const rtsp::Response&) noexcept;
 
 private:
     std::function<void (const rtsp::Response*)> _responseCallback;

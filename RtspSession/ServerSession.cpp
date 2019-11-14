@@ -4,48 +4,48 @@
 namespace rtsp {
 
 ServerSession::ServerSession(
-    const std::function<void (const rtsp::Response*)>& cb) :
+    const std::function<void (const rtsp::Response*)>& cb) noexcept :
     _responseCallback(cb)
 {
 }
 
-void ServerSession::sendResponse(const rtsp::Response& response)
+void ServerSession::sendResponse(const rtsp::Response& response) noexcept
 {
     _responseCallback(&response);
 }
 
 bool ServerSession::handleOptionsRequest(
-    const rtsp::Request& request)
+    const rtsp::Request& request) noexcept
 {
     return false;
 }
 
 bool ServerSession::handleDescribeRequest(
-    const rtsp::Request& request)
+    const rtsp::Request& request) noexcept
 {
     return false;
 }
 
 bool ServerSession::handleSetupRequest(
-    const rtsp::Request& request)
+    const rtsp::Request& request) noexcept
 {
     return false;
 }
 
 bool ServerSession::handlePlayRequest(
-    const rtsp::Request& request)
+    const rtsp::Request& request) noexcept
 {
     return false;
 }
 
 bool ServerSession::handleTeardownRequest(
-    const rtsp::Request& request)
+    const rtsp::Request& request) noexcept
 {
     return false;
 }
 
 bool ServerSession::handleRequest(
-    const rtsp::Request& request)
+    const rtsp::Request& request) noexcept
 {
     switch(request.method) {
     case rtsp::Method::OPTIONS:

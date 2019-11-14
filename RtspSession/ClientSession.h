@@ -11,45 +11,45 @@ namespace rtsp {
 
 struct ClientSession
 {
-    ClientSession(const std::function<void (const rtsp::Request*)>&);
+    ClientSession(const std::function<void (const rtsp::Request*)>&) noexcept;
 
-    virtual void onConnected() {}
+    virtual void onConnected() noexcept {}
 
-    bool handleResponse(const rtsp::Response&);
+    bool handleResponse(const rtsp::Response&) noexcept;
 
 protected:
-    CSeq requestOptions(const std::string& uri);
-    CSeq requestDescribe(const std::string& uri);
-    CSeq requestSetup(const std::string& uri);
-    CSeq requestPlay(const std::string& uri, const std::string& session);
-    CSeq requestTeardown(const std::string& uri, const std::string& session);
+    CSeq requestOptions(const std::string& uri) noexcept;
+    CSeq requestDescribe(const std::string& uri) noexcept;
+    CSeq requestSetup(const std::string& uri) noexcept;
+    CSeq requestPlay(const std::string& uri, const std::string& session) noexcept;
+    CSeq requestTeardown(const std::string& uri, const std::string& session) noexcept;
 
     virtual bool onOptionsResponse(
-        const rtsp::Request&, const rtsp::Response&)
+        const rtsp::Request&, const rtsp::Response&) noexcept
         { return false; }
     virtual bool onDescribeResponse(
-        const rtsp::Request&, const rtsp::Response&)
+        const rtsp::Request&, const rtsp::Response&) noexcept
         { return false; }
     virtual bool onSetupResponse(
-        const rtsp::Request&, const rtsp::Response&)
+        const rtsp::Request&, const rtsp::Response&) noexcept
         { return false; }
     virtual bool onPlayResponse(
-        const rtsp::Request&, const rtsp::Response&)
+        const rtsp::Request&, const rtsp::Response&) noexcept
         { return false; }
     virtual bool onTeardownResponse(
-        const rtsp::Request&, const rtsp::Response&)
+        const rtsp::Request&, const rtsp::Response&) noexcept
         { return false; }
 
 private:
     rtsp::Request* createRequest(
         rtsp::Method,
-        const std::string& uri);
+        const std::string& uri) noexcept;
     rtsp::Request* createRequest(
         rtsp::Method,
         const std::string& uri,
-        const std::string& session);
+        const std::string& session) noexcept;
 
-    void sendRequest(const rtsp::Request&);
+    void sendRequest(const rtsp::Request&) noexcept;
 
 private:
     std::function<void (const rtsp::Request*)> _requestCallback;

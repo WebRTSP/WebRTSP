@@ -1,8 +1,10 @@
 #include "ServerSession.h"
 
+#include "RtspSession/StatusCode.h"
+
 
 bool ServerSession::handleOptionsRequest(
-    const rtsp::Request& request)
+    const rtsp::Request& request) noexcept
 {
     rtsp::Response response;
     response.protocol = rtsp::Protocol::RTSP_1_0;
@@ -17,22 +19,22 @@ bool ServerSession::handleOptionsRequest(
     return true;
 }
 
-bool ServerSession::handleDescribeRequest(const rtsp::Request&)
+bool ServerSession::handleDescribeRequest(const rtsp::Request& request) noexcept
 {
     return false;
 }
 
-bool ServerSession::handleSetupRequest(const rtsp::Request&)
+bool ServerSession::handleSetupRequest(const rtsp::Request&) noexcept
 {
     return false;
 }
 
-bool ServerSession::handlePlayRequest(const rtsp::Request&)
+bool ServerSession::handlePlayRequest(const rtsp::Request&) noexcept
 {
     return false;
 }
 
-bool ServerSession::handleTeardownRequest(const rtsp::Request&)
+bool ServerSession::handleTeardownRequest(const rtsp::Request&) noexcept
 {
     return false;
 }
