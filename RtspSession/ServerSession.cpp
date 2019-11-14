@@ -12,17 +12,7 @@ ServerSession::ServerSession(
 bool ServerSession::handleOptionsRequest(
     const rtsp::Request& request)
 {
-    rtsp::Response response;
-    response.protocol = rtsp::Protocol::RTSP_1_0;
-    response.cseq = request.cseq;
-    response.statusCode = 200;
-    response.reasonPhrase = "OK";
-
-    response.headerFields.emplace("Public", "DESCRIBE, SETUP, PLAY, TEARDOWN");
-
-    _responseCallback(&response);
-
-    return true;
+    return false;
 }
 
 bool ServerSession::handleDescribeRequest(
