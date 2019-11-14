@@ -9,6 +9,11 @@ ServerSession::ServerSession(
 {
 }
 
+void ServerSession::sendResponse(const rtsp::Response& response)
+{
+    _responseCallback(&response);
+}
+
 bool ServerSession::handleOptionsRequest(
     const rtsp::Request& request)
 {
