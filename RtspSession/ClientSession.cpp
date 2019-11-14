@@ -1,5 +1,6 @@
 #include "ClientSession.h"
 
+
 namespace rtsp {
 
 ClientSession::ClientSession(const std::function<void (const rtsp::Request*)>& cb) :
