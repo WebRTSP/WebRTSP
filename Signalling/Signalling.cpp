@@ -5,10 +5,12 @@
 #include <libwebsockets.h>
 
 #include <CxxPtr/libwebsocketsPtr.h>
+#include <CxxPtr/GlibPtr.h>
 
 #include "Common/MessageBuffer.h"
 #include "RtspParser/RtspParser.h"
 #include "RtspParser/RtspSerialize.h"
+#include "LwsSource.h"
 #include "ServerSession.h"
 
 
@@ -29,6 +31,7 @@ namespace {
 
 struct ContextData
 {
+    LwsSourcePtr lwsSource;
 };
 
 struct SessionData
@@ -86,6 +89,26 @@ static bool OnMessage(
         return false;
 
     return true;
+}
+
+int HttpCallback(
+    lws* wsi,
+    lws_callback_reasons reason,
+    void* user,
+    void* in, size_t len)
+{
+    lws_context* context = lws_get_context(wsi);
+    ContextData* cd = static_cast<ContextData*>(lws_context_user(context));
+    switch(reason) {
+        case LWS_CALLBACK_ADD_POLL_FD:
+        case LWS_CALLBACK_DEL_POLL_FD:
+        case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
+            return LwsSourceCallback(cd->lwsSource, wsi, reason, in, len);
+        default:
+            return lws_callback_http_dummy(wsi, reason, user, in, len);
+    }
+
+    return 0;
 }
 
 static int WsCallback(
@@ -155,7 +178,7 @@ static int WsCallback(
 bool Signalling(Config* config) noexcept
 {
     const lws_protocols protocols[] = {
-        { "http", lws_callback_http_dummy, 0, 0, HTTP_PROTOCOL_ID },
+        { "http", HttpCallback, 0, 0, HTTP_PROTOCOL_ID },
         {
             "webrtsp",
             WsCallback,
@@ -168,7 +191,7 @@ bool Signalling(Config* config) noexcept
     };
 
     const lws_protocols secureProtocols[] = {
-        { "http", lws_callback_http_dummy, 0, 0, HTTPS_PROTOCOL_ID },
+        { "http", HttpCallback, 0, 0, HTTPS_PROTOCOL_ID },
         {
             "webrtsp",
             WsCallback,
@@ -179,6 +202,9 @@ bool Signalling(Config* config) noexcept
         },
         { nullptr, nullptr, 0, 0 } /* terminator */
     };
+
+    GMainLoopPtr loopPtr(g_main_loop_new(nullptr, FALSE));
+    GMainLoop* loop = loopPtr.get();
 
     ContextData contextData {};
 
@@ -191,6 +217,10 @@ bool Signalling(Config* config) noexcept
     LwsContextPtr contextPtr(lws_create_context(&wsInfo));
     lws_context* context = contextPtr.get();
     if(!context)
+        return false;
+
+    contextData.lwsSource = LwsSourceNew(context);
+    if(!contextData.lwsSource)
         return false;
 
     bool run = false;
@@ -226,7 +256,7 @@ bool Signalling(Config* config) noexcept
     }
 
     if(run) {
-        while(lws_service(context, 50) >= 0);
+        g_main_loop_run(loop);
 
         return true;
     } else
