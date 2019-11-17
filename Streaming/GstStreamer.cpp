@@ -3,7 +3,7 @@
 
 namespace streaming {
 
-bool GstStreamer::sdp(const std::string& uri, std::string* sdp) noexcept
+bool GstStreamer::sdp(std::string* sdp) noexcept
 {
     return false;
 }
