@@ -10,7 +10,9 @@ bool ClientSession::onOptionsResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
 {
-    return false;
+    requestDescribe("http://example.com/");
+
+    return true;
 }
 
 bool ClientSession::onDescribeResponse(
