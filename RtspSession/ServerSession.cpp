@@ -9,9 +9,9 @@ ServerSession::ServerSession(
 {
 }
 
-void ServerSession::sendResponse(const rtsp::Response& response) noexcept
+void ServerSession::sendResponse(const rtsp::Response* response) noexcept
 {
-    _responseCallback(&response);
+    _responseCallback(response);
 }
 
 bool ServerSession::handleOptionsRequest(

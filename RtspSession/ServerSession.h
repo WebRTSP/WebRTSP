@@ -21,7 +21,7 @@ protected:
     virtual bool handlePlayRequest(const rtsp::Request&) noexcept;
     virtual bool handleTeardownRequest(const rtsp::Request&) noexcept;
 
-    void sendResponse(const rtsp::Response&) noexcept;
+    void sendResponse(const rtsp::Response*) noexcept;
 
 private:
     std::function<void (const rtsp::Response*)> _responseCallback;

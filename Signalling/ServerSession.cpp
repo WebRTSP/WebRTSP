@@ -14,7 +14,7 @@ bool ServerSession::handleOptionsRequest(
 
     response.headerFields.emplace("Public", "DESCRIBE, SETUP, PLAY, TEARDOWN");
 
-    sendResponse(response);
+    sendResponse(&response);
 
     return true;
 }
