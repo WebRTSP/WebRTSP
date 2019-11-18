@@ -15,49 +15,49 @@ void ServerSession::sendResponse(const rtsp::Response* response) noexcept
 }
 
 bool ServerSession::handleOptionsRequest(
-    const rtsp::Request& request) noexcept
+    std::unique_ptr<rtsp::Request>&) noexcept
 {
     return false;
 }
 
 bool ServerSession::handleDescribeRequest(
-    const rtsp::Request& request) noexcept
+    std::unique_ptr<rtsp::Request>&) noexcept
 {
     return false;
 }
 
 bool ServerSession::handleSetupRequest(
-    const rtsp::Request& request) noexcept
+    std::unique_ptr<rtsp::Request>&) noexcept
 {
     return false;
 }
 
 bool ServerSession::handlePlayRequest(
-    const rtsp::Request& request) noexcept
+    std::unique_ptr<rtsp::Request>&) noexcept
 {
     return false;
 }
 
 bool ServerSession::handleTeardownRequest(
-    const rtsp::Request& request) noexcept
+    std::unique_ptr<rtsp::Request>&) noexcept
 {
     return false;
 }
 
 bool ServerSession::handleRequest(
-    const rtsp::Request& request) noexcept
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    switch(request.method) {
+    switch(requestPtr->method) {
     case rtsp::Method::OPTIONS:
-        return handleOptionsRequest(request);
+        return handleOptionsRequest(requestPtr);
     case rtsp::Method::DESCRIBE:
-        return handleDescribeRequest(request);
+        return handleDescribeRequest(requestPtr);
     case rtsp::Method::SETUP:
-        return handleRequest(request);
+        return handleRequest(requestPtr);
     case rtsp::Method::PLAY:
-        return handlePlayRequest(request);
+        return handlePlayRequest(requestPtr);
     case rtsp::Method::TEARDOWN:
-        return handleTeardownRequest(request);
+        return handleTeardownRequest(requestPtr);
     default:
         return false;
     }

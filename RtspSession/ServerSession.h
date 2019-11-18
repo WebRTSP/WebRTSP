@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <functional>
 
 #include "RtspParser/Request.h"
@@ -12,14 +13,14 @@ struct ServerSession
 {
     ServerSession(const std::function<void (const rtsp::Response*)>&) noexcept;
 
-    bool handleRequest(const rtsp::Request&) noexcept;
+    bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept;
 
 protected:
-    virtual bool handleOptionsRequest(const rtsp::Request&) noexcept;
-    virtual bool handleDescribeRequest(const rtsp::Request&) noexcept;
-    virtual bool handleSetupRequest(const rtsp::Request&) noexcept;
-    virtual bool handlePlayRequest(const rtsp::Request&) noexcept;
-    virtual bool handleTeardownRequest(const rtsp::Request&) noexcept;
+    virtual bool handleOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept;
+    virtual bool handleDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept;
+    virtual bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept;
+    virtual bool handlePlayRequest(std::unique_ptr<rtsp::Request>&) noexcept;
+    virtual bool handleTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept;
 
     void sendResponse(const rtsp::Response*) noexcept;
 

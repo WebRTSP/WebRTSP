@@ -12,7 +12,7 @@ typedef std::map<std::string, std::unique_ptr<streaming::GstStreamer> > Streamer
 
 struct Request
 {
-    rtsp::Request request;
+    std::unique_ptr<rtsp::Request> requestPtr;
     Streamers::iterator streamerIt;
 };
 
@@ -43,11 +43,11 @@ void ServerSession::Private::streamerPrepared(const Requests::iterator& it)
     } else {
         rtsp::Response response;
         response.protocol = rtsp::Protocol::RTSP_1_0;
-        response.cseq = request.request.cseq;
+        response.cseq = request.requestPtr->cseq;
         response.statusCode = rtsp::OK;
         response.reasonPhrase = "OK";
 
-        response.headerFields.emplace("Content-Base", request.request.uri);
+        response.headerFields.emplace("Content-Base", request.requestPtr->uri);
         response.headerFields.emplace("Content-Type", "application/sdp");
 
         response.body.swap(sdp);
@@ -69,11 +69,11 @@ ServerSession::~ServerSession()
 }
 
 bool ServerSession::handleOptionsRequest(
-    const rtsp::Request& request) noexcept
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     rtsp::Response response;
     response.protocol = rtsp::Protocol::RTSP_1_0;
-    response.cseq = request.cseq;
+    response.cseq = requestPtr->cseq;
     response.statusCode = rtsp::OK;
     response.reasonPhrase = "OK";
 
@@ -84,17 +84,19 @@ bool ServerSession::handleOptionsRequest(
     return true;
 }
 
-bool ServerSession::handleDescribeRequest(const rtsp::Request& request) noexcept
+bool ServerSession::handleDescribeRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     using streaming::GstStreamer;
 
-    auto pair = _p->streamers.emplace(request.uri, std::make_unique<GstStreamer>());
+    auto pair =
+        _p->streamers.emplace(requestPtr->uri, std::make_unique<GstStreamer>());
     if(pair.second) {
         auto requestIterator =
             _p->requests.emplace(
                 _p->requests.end(),
                 Request {
-                    .request = request,
+                    .requestPtr = std::move(requestPtr),
                     .streamerIt = pair.first,
                 });
 
@@ -108,17 +110,20 @@ bool ServerSession::handleDescribeRequest(const rtsp::Request& request) noexcept
     return false;
 }
 
-bool ServerSession::handleSetupRequest(const rtsp::Request&) noexcept
+bool ServerSession::handleSetupRequest(
+    std::unique_ptr<rtsp::Request>&) noexcept
 {
     return false;
 }
 
-bool ServerSession::handlePlayRequest(const rtsp::Request&) noexcept
+bool ServerSession::handlePlayRequest(
+    std::unique_ptr<rtsp::Request>&) noexcept
 {
     return false;
 }
 
-bool ServerSession::handleTeardownRequest(const rtsp::Request&) noexcept
+bool ServerSession::handleTeardownRequest(
+    std::unique_ptr<rtsp::Request>&) noexcept
 {
     return false;
 }

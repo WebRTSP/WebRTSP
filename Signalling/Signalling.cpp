@@ -81,11 +81,12 @@ static bool OnMessage(
     SessionContextData* scd,
     const MessageBuffer& message)
 {
-    rtsp::Request request;
-    if(!rtsp::ParseRequest(message.data(), message.size(), &request))
+    std::unique_ptr<rtsp::Request> requestPtr =
+        std::make_unique<rtsp::Request>();
+    if(!rtsp::ParseRequest(message.data(), message.size(), requestPtr.get()))
         return false;
 
-    if(!scd->data->rtspSession.handleRequest(request))
+    if(!scd->data->rtspSession.handleRequest(requestPtr))
         return false;
 
     return true;
