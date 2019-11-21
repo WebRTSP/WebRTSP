@@ -31,11 +31,13 @@ struct GstStreamer::Private
 
     GstElementPtr rtcbinPtr;
 
+    gulong iceGatheringStateChangedHandlerId = 0;
     std::string sdp;
 
     void prepare();
     gboolean onBusMessage(GstBus*, GstMessage*);
     void onNegotiationNeeded(GstElement* rtcbin);
+    void onIceGatheringStateChanged(GstElement*);
     void onOfferCreated(GstPromise*);
     void onIceCandidate(
         GstElement* rtcbin,
@@ -129,6 +131,18 @@ gboolean GstStreamer::Private::onBusMessage(GstBus* bus, GstMessage* msg)
 
 void GstStreamer::Private::onNegotiationNeeded(GstElement* rtcbin)
 {
+    auto onIceGatheringStateChangedCallback =
+        (void (*) (GstElement*, GParamSpec* , gpointer))
+        [] (GstElement* rtcbin, GParamSpec* paramSpec, gpointer userData)
+    {
+        Private* self = static_cast<Private*>(userData);
+        return self->onIceGatheringStateChanged(rtcbin);
+    };
+    iceGatheringStateChangedHandlerId =
+        g_signal_connect(rtcbin,
+            "notify::ice-gathering-state",
+            G_CALLBACK(onIceGatheringStateChangedCallback), this);
+
     auto onOfferCreatedCallback =
         (void (*) (GstPromise*, gpointer))
         [] (GstPromise* promise, gpointer userData)
@@ -143,6 +157,21 @@ void GstStreamer::Private::onNegotiationNeeded(GstElement* rtcbin)
             this, nullptr);
     g_signal_emit_by_name(
         rtcbin, "create-offer", nullptr, promise);
+}
+
+void GstStreamer::Private::onIceGatheringStateChanged(GstElement* rtcbin)
+{
+    GstWebRTCICEGatheringState state = GST_WEBRTC_ICE_GATHERING_STATE_NEW;
+    g_object_get(rtcbin, "ice-gathering-state", &state, NULL);
+
+    if(GST_WEBRTC_ICE_GATHERING_STATE_COMPLETE == state) {
+        sdp += "a=end-of-candidates\r\n";
+
+        g_signal_handler_disconnect(rtcbin, iceGatheringStateChangedHandlerId);
+        iceGatheringStateChangedHandlerId = 0;
+
+        prepared();
+    }
 }
 
 void GstStreamer::Private::onOfferCreated(GstPromise* promise)
@@ -161,8 +190,6 @@ void GstStreamer::Private::onOfferCreated(GstPromise* promise)
 
     GCharPtr sdpPtr(gst_sdp_message_as_text(sessionDescription->sdp));
     sdp = sdpPtr.get();
-
-    prepared();
 }
 
 void GstStreamer::Private::onIceCandidate(
@@ -170,6 +197,9 @@ void GstStreamer::Private::onIceCandidate(
     guint candidate,
     gchar* arg2)
 {
+    sdp += "a=";
+    sdp += arg2;
+    sdp += "\r\n";
 }
 
 void GstStreamer::Private::setState(GstState state)
