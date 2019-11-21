@@ -127,7 +127,7 @@ gboolean GstStreamer::Private::onBusMessage(GstBus* bus, GstMessage* msg)
     return TRUE;
 }
 
-void GstStreamer::Private::onNegotiationNeeded(GstElement* rtcBin)
+void GstStreamer::Private::onNegotiationNeeded(GstElement* rtcbin)
 {
     auto onOfferCreatedCallback =
         (void (*) (GstPromise*, gpointer))
@@ -142,7 +142,7 @@ void GstStreamer::Private::onNegotiationNeeded(GstElement* rtcBin)
             onOfferCreatedCallback,
             this, nullptr);
     g_signal_emit_by_name(
-        rtcBin, "create-offer", nullptr, promise);
+        rtcbin, "create-offer", nullptr, promise);
 }
 
 void GstStreamer::Private::onOfferCreated(GstPromise* promise)

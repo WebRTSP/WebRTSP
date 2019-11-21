@@ -125,7 +125,6 @@ bool ClientSession::handleResponse(const rtsp::Response& response) noexcept
         default:
             return false;
     }
-
 }
 
 }
