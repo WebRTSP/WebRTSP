@@ -3,8 +3,10 @@
 #include <deque>
 
 #include "CxxPtr/libwebsocketsPtr.h"
+#include <CxxPtr/GlibPtr.h>
 
 #include "Common/MessageBuffer.h"
+#include "Common/LwsSource.h"
 #include "RtspParser/RtspSerialize.h"
 #include "RtspParser/RtspParser.h"
 
@@ -33,6 +35,7 @@ namespace {
 struct ContextData
 {
     const Config *const config;
+    LwsSourcePtr lwsSource;
 
     lws* connection;
     bool connected;
@@ -102,6 +105,46 @@ static bool OnMessage(
     return true;
 }
 
+static void Connect(struct lws_context* context)
+{
+    ContextData* cd = static_cast<ContextData*>(lws_context_user(context));
+
+    if(cd->connection)
+        return;
+
+    if(cd->config->server.empty() || !cd->config->serverPort) {
+        lwsl_err("Missing required connect parameter.\n");
+        return;
+    }
+
+    char hostAndPort[cd->config->server.size() + 1 + 5 + 1];
+    snprintf(hostAndPort, sizeof(hostAndPort), "%s:%u",
+        cd->config->server.c_str(), cd->config->serverPort);
+
+    lwsl_notice("Connecting to %s... \n", hostAndPort);
+
+    struct lws_client_connect_info connectInfo = {};
+    connectInfo.context = context;
+    connectInfo.address = cd->config->server.c_str();
+    connectInfo.port = cd->config->serverPort;
+    connectInfo.path = "/";
+    connectInfo.protocol = "webrtsp";
+    connectInfo.host = hostAndPort;
+
+    cd->connection = lws_client_connect_via_info(&connectInfo);
+    cd->connected = false;
+}
+
+static void ScheduleReconnect(lws_context* context)
+{
+    g_timeout_add_seconds(
+        RECONNECT_TIMEOUT,
+        [] (gpointer userData) -> gboolean {
+            Connect(static_cast<lws_context*>(userData));
+            return false;
+        }, context);
+}
+
 static int WsCallback(
     lws* wsi,
     lws_callback_reasons reason,
@@ -113,6 +156,10 @@ static int WsCallback(
     SessionContextData* scd = static_cast<SessionContextData*>(user);
 
     switch (reason) {
+        case LWS_CALLBACK_ADD_POLL_FD:
+        case LWS_CALLBACK_DEL_POLL_FD:
+        case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
+            return LwsSourceCallback(cd->lwsSource, wsi, reason, in, len);
         case LWS_CALLBACK_CLIENT_ESTABLISHED:
             lwsl_notice("Connection to server established\n");
 
@@ -168,6 +215,8 @@ static int WsCallback(
             cd->connection = nullptr;
             cd->connected = false;
 
+            ScheduleReconnect(context);
+
             break;
         case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
             lwsl_err("Can not connect to server\n");
@@ -178,42 +227,14 @@ static int WsCallback(
             cd->connection = nullptr;
             cd->connected = false;
 
+            ScheduleReconnect(context);
+
             break;
         default:
             break;
     }
 
     return 0;
-}
-
-static void Connect(struct lws_context* context)
-{
-    ContextData* cd = static_cast<ContextData*>(lws_context_user(context));
-
-    if(cd->connection)
-        return;
-
-    if(cd->config->server.empty() || !cd->config->serverPort) {
-        lwsl_err("Missing required connect parameter.\n");
-        return;
-    }
-
-    char hostAndPort[cd->config->server.size() + 1 + 5 + 1];
-    snprintf(hostAndPort, sizeof(hostAndPort), "%s:%u",
-        cd->config->server.c_str(), cd->config->serverPort);
-
-    lwsl_notice("Connecting to %s... \n", hostAndPort);
-
-    struct lws_client_connect_info connectInfo = {};
-    connectInfo.context = context;
-    connectInfo.address = cd->config->server.c_str();
-    connectInfo.port = cd->config->serverPort;
-    connectInfo.path = "/";
-    connectInfo.protocol = "webrtsp";
-    connectInfo.host = hostAndPort;
-
-    cd->connection = lws_client_connect_via_info(&connectInfo);
-    cd->connected = false;
 }
 
 bool Client(const Config* config) noexcept
@@ -229,6 +250,9 @@ bool Client(const Config* config) noexcept
         },
         { nullptr, nullptr, 0, 0, 0, nullptr } /* terminator */
     };
+
+    GMainLoopPtr loopPtr(g_main_loop_new(nullptr, FALSE));
+    GMainLoop* loop = loopPtr.get();
 
     ContextData contextData {
         .config = config
@@ -247,21 +271,13 @@ bool Client(const Config* config) noexcept
     if(!context)
         return false;
 
-    time_t disconnectedTime = 1; // =1 to emulate timeout on startup
+    contextData.lwsSource = LwsSourceNew(context);
+    if(!contextData.lwsSource)
+        return false;
 
-    while(lws_service(context, 50) >= 0) {
-        if(!contextData.connection) {
-            struct timespec now;
-            if(0 == clock_gettime(CLOCK_MONOTONIC, &now)) {
-                if(!disconnectedTime) {
-                    disconnectedTime = now.tv_sec;
-                } else if(now.tv_sec - disconnectedTime > RECONNECT_TIMEOUT) {
-                    Connect(context);
-                    disconnectedTime = 0;
-                }
-            }
-        }
-    }
+    Connect(context);
+
+    g_main_loop_run(loop);
 
     return true;
 }
