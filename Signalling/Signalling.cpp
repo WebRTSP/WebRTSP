@@ -167,6 +167,11 @@ static int WsCallback(
             break;
         }
         case LWS_CALLBACK_CLOSED: {
+            delete scd->data;
+            scd->data = nullptr;
+
+            scd->wsi = nullptr;
+
             break;
         }
         default:
