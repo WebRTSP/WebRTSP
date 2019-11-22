@@ -231,6 +231,8 @@ GstStreamer::GstStreamer() :
 
 GstStreamer::~GstStreamer()
 {
+    if(_p->pipelinePtr)
+        _p->setState(GST_STATE_NULL);
 }
 
 void GstStreamer::prepare(const PreparedCallback& prepared) noexcept
