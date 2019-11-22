@@ -14,12 +14,10 @@ struct LibGst
     ~LibGst() { gst_deinit(); }
 };
 
-std::weak_ptr<LibGst> libGst;
+std::unique_ptr<LibGst> libGst;
 
 struct GstStreamer::Private
 {
-    std::shared_ptr<LibGst> libGst;
-
     GstStreamer *const owner;
 
     PreparedCallback prepared;
@@ -227,12 +225,8 @@ void GstStreamer::Private::setState(GstState state)
 GstStreamer::GstStreamer() :
     _p(new Private{ .owner = this })
 {
-    if(libGst.expired()) {
-        _p->libGst = std::make_shared<LibGst>();
-        libGst = _p->libGst;
-    } else {
-        _p->libGst = libGst.lock();
-    }
+    if(!libGst)
+        libGst = std::make_unique<LibGst>();
 }
 
 GstStreamer::~GstStreamer()
