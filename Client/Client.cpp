@@ -80,6 +80,12 @@ static void SendRequest(
     MessageBuffer requestMessage;
     requestMessage.assign(rtsp::Serialize(*request));
 
+    if(requestMessage.empty()) {
+        scd->data->terminateSession = true;
+        lws_callback_on_writable(scd->wsi);
+        return;
+    }
+
     Send(scd, &requestMessage);
 }
 
