@@ -350,6 +350,8 @@ bool ParseRequest(const char* request, size_t size, Request* out) noexcept
     while(!IsEOS(position, size)) {
         if(!ParseHeaderField(request, &position, size, &(out->headerFields)))
             return false;
+        if(IsEOS(position, size))
+            break;
         if(SkipEOL(request, &position, size))
             break;
     }
