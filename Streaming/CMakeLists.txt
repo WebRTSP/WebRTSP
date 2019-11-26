@@ -17,13 +17,11 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC -DGST_USE_UNSTABLE_API)
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${GSTREAMER_INCLUDE_DIRS}
     ${GSTREAMER_SDP_INCLUDE_DIRS}
-    ${GSTREAMER_WEBRTC_INCLUDE_DIRS}
-    )
+    ${GSTREAMER_WEBRTC_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}
     ${GSTREAMER_LDFLAGS}
     ${GSTREAMER_SDP_LDFLAGS}
-    ${GSTREAMER_WEBRTC_LDFLAGS}
-    )
+    ${GSTREAMER_WEBRTC_LDFLAGS})
 
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})
