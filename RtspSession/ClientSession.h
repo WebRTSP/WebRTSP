@@ -20,9 +20,12 @@ struct ClientSession
 protected:
     CSeq requestOptions(const std::string& uri) noexcept;
     CSeq requestDescribe(const std::string& uri) noexcept;
-    CSeq requestSetup(const std::string& uri, const std::string& sdp) noexcept;
-    CSeq requestPlay(const std::string& uri, const std::string& session) noexcept;
-    CSeq requestTeardown(const std::string& uri, const std::string& session) noexcept;
+    CSeq requestSetup(
+        const std::string& uri,
+        const std::string& sdp,
+        const rtsp::Session&) noexcept;
+    CSeq requestPlay(const std::string& uri, const rtsp::Session&) noexcept;
+    CSeq requestTeardown(const std::string& uri, const rtsp::Session&) noexcept;
 
     virtual bool onOptionsResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept
@@ -39,6 +42,8 @@ protected:
     virtual bool onTeardownResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept
         { return false; }
+
+    void disconnect() noexcept;
 
 private:
     rtsp::Request* createRequest(

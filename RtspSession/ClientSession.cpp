@@ -14,6 +14,11 @@ void ClientSession::sendRequest(const rtsp::Request& request) noexcept
     _requestCallback(&request);
 }
 
+void ClientSession::disconnect() noexcept
+{
+    _requestCallback(nullptr);
+}
+
 rtsp::Request* ClientSession::createRequest(
     rtsp::Method method,
     const std::string& uri) noexcept
@@ -41,7 +46,7 @@ rtsp::Request* ClientSession::createRequest(
 rtsp::Request* ClientSession::createRequest(
     rtsp::Method method,
     const std::string& uri,
-    const std::string& session) noexcept
+    const rtsp::Session& session) noexcept
 {
     rtsp::Request* request = createRequest(method, uri);
 
@@ -70,10 +75,15 @@ CSeq ClientSession::requestDescribe(const std::string& uri) noexcept
     return request.cseq;
 }
 
-CSeq ClientSession::requestSetup(const std::string& uri, const std::string& sdp) noexcept
+CSeq ClientSession::requestSetup(
+    const std::string& uri,
+    const std::string& sdp,
+    const rtsp::Session& session) noexcept
 {
     rtsp::Request& request =
         *createRequest(rtsp::Method::SETUP, uri);
+
+    request.headerFields.emplace("Session", session);
 
     request.body = sdp;
 
@@ -84,7 +94,7 @@ CSeq ClientSession::requestSetup(const std::string& uri, const std::string& sdp)
 
 CSeq ClientSession::requestPlay(
     const std::string& uri,
-    const std::string& session) noexcept
+    const rtsp::Session& session) noexcept
 {
     rtsp::Request& request =
         *createRequest(rtsp::Method::PLAY, uri, session);
@@ -96,7 +106,7 @@ CSeq ClientSession::requestPlay(
 
 CSeq ClientSession::requestTeardown(
     const std::string& uri,
-    const std::string& session) noexcept
+    const rtsp::Session& session) noexcept
 {
     rtsp::Request& request =
         *createRequest(rtsp::Method::TEARDOWN, uri, session);

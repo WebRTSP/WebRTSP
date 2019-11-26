@@ -2,6 +2,19 @@
 
 #include "RtspSession/StatusCode.h"
 
+namespace {
+
+rtsp::Session ResponseSession(const rtsp::Response& response)
+{
+    auto it = response.headerFields.find("session");
+    if(response.headerFields.end() == it)
+        return rtsp::Session();
+
+    return it->second;
+}
+
+}
+
 
 struct ClientSession::Private
 {
@@ -9,6 +22,7 @@ struct ClientSession::Private
 
     GstClient gstClient;
     std::string remoteSdp;
+    rtsp::Session session;
 
     void streamerPrepared();
 };
@@ -17,9 +31,17 @@ void ClientSession::Private::streamerPrepared()
 {
     std::string sdp;
     gstClient.sdp(&sdp);
+    if(sdp.empty()) {
+        owner->disconnect();
+        return;
+    }
 
-    owner->requestSetup("http://example.com/", sdp);
+    owner->requestSetup(
+        "http://example.com/",
+        sdp,
+        session);
 }
+
 
 void ClientSession::onConnected() noexcept
 {
@@ -45,9 +67,6 @@ bool ClientSession::onOptionsResponse(
 
     requestDescribe("http://example.com/");
 
-    _p->gstClient.prepare(
-        std::bind(&ClientSession::Private::streamerPrepared, _p.get()));
-
     return true;
 }
 
@@ -57,6 +76,14 @@ bool ClientSession::onDescribeResponse(
 {
     if(rtsp::StatusCode::OK != response.statusCode)
         return false;
+    _p->session = ResponseSession(response);
+    if(_p->session.empty())
+        return false;
+
+    _p->gstClient.prepare(
+        std::bind(
+            &ClientSession::Private::streamerPrepared,
+            _p.get()));
 
     _p->remoteSdp = response.body;
     if(_p->remoteSdp.empty())
@@ -74,7 +101,7 @@ bool ClientSession::onSetupResponse(
     if(rtsp::StatusCode::OK != response.statusCode)
         return false;
 
-    requestPlay(request.uri, "fake_session_id");
+    requestPlay(request.uri, _p->session);
 
     return true;
 }
