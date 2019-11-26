@@ -70,10 +70,12 @@ CSeq ClientSession::requestDescribe(const std::string& uri) noexcept
     return request.cseq;
 }
 
-CSeq ClientSession::requestSetup(const std::string& uri) noexcept
+CSeq ClientSession::requestSetup(const std::string& uri, const std::string& sdp) noexcept
 {
     rtsp::Request& request =
         *createRequest(rtsp::Method::SETUP, uri);
+
+    request.body = sdp;
 
     sendRequest(request);
 
