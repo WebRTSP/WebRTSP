@@ -18,29 +18,7 @@ struct Request
 
 typedef std::list<Request> Requests;
 
-}
-
-struct ServerSession::Private
-{
-    ServerSession* owner;
-
-    Requests requests;
-    Streamers streamers;
-
-    rtsp::Response* prepareResponse(
-        rtsp::CSeq cseq,
-        rtsp::StatusCode statusCode,
-        const std::string::value_type* reasonPhrase,
-        rtsp::Response* out);
-    rtsp::Response* prepareOkResponse(
-        rtsp::CSeq cseq,
-        rtsp::Response* out);
-    void sendOkResponse(rtsp::CSeq cseq);
-
-    void streamerPrepared(const Requests::iterator& it);
-};
-
-rtsp::Response* ServerSession::Private::prepareResponse(
+rtsp::Response* PrepareResponse(
     rtsp::CSeq cseq,
     rtsp::StatusCode statusCode,
     const std::string::value_type* reasonPhrase,
@@ -54,17 +32,31 @@ rtsp::Response* ServerSession::Private::prepareResponse(
     return out;
 }
 
-rtsp::Response* ServerSession::Private::prepareOkResponse(
+rtsp::Response* PrepareOkResponse(
     rtsp::CSeq cseq,
     rtsp::Response* out)
 {
-    return prepareResponse(cseq, rtsp::OK, "OK", out);
+    return PrepareResponse(cseq, rtsp::OK, "OK", out);
 }
+
+}
+
+struct ServerSession::Private
+{
+    ServerSession* owner;
+
+    Requests requests;
+    Streamers streamers;
+
+    void sendOkResponse(rtsp::CSeq cseq);
+
+    void streamerPrepared(const Requests::iterator& it);
+};
 
 void ServerSession::Private::sendOkResponse(rtsp::CSeq cseq)
 {
     rtsp::Response response;
-    owner->sendResponse(prepareOkResponse(cseq, &response));
+    owner->sendResponse(PrepareOkResponse(cseq, &response));
 }
 
 void ServerSession::Private::streamerPrepared(const Requests::iterator& it)
@@ -79,7 +71,7 @@ void ServerSession::Private::streamerPrepared(const Requests::iterator& it)
         owner->sendResponse(nullptr);
     } else {
         rtsp::Response response;
-        prepareOkResponse(request.requestPtr->cseq, &response);
+        PrepareOkResponse(request.requestPtr->cseq, &response);
 
         response.headerFields.emplace("Content-Base", request.requestPtr->uri);
         response.headerFields.emplace("Content-Type", "application/sdp");
@@ -106,7 +98,7 @@ bool ServerSession::handleOptionsRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     rtsp::Response response;
-    _p->prepareOkResponse(requestPtr->cseq, &response);
+    PrepareOkResponse(requestPtr->cseq, &response);
 
     response.headerFields.emplace("Public", "DESCRIBE, SETUP, PLAY, TEARDOWN");
 
