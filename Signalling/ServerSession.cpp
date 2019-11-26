@@ -106,10 +106,7 @@ bool ServerSession::handleOptionsRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     rtsp::Response response;
-    response.protocol = rtsp::Protocol::RTSP_1_0;
-    response.cseq = requestPtr->cseq;
-    response.statusCode = rtsp::OK;
-    response.reasonPhrase = "OK";
+    _p->prepareOkResponse(requestPtr->cseq, &response);
 
     response.headerFields.emplace("Public", "DESCRIBE, SETUP, PLAY, TEARDOWN");
 
