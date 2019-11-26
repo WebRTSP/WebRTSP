@@ -2,11 +2,14 @@
 
 #include "RtspSession/ClientSession.h"
 
+#include "GstClient.h"
+
 
 class ClientSession : public rtsp::ClientSession
 {
 public:
-    using rtsp::ClientSession::ClientSession;
+    ClientSession(const std::function<void (const rtsp::Request*)>&);
+    ~ClientSession();
 
     void onConnected() noexcept override;
 
@@ -21,4 +24,8 @@ private:
         const rtsp::Request&, const rtsp::Response&) noexcept override;
     bool onTeardownResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept override;
+
+private:
+    struct Private;
+    std::unique_ptr<Private> _p;
 };

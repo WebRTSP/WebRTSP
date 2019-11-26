@@ -3,23 +3,18 @@
 #include <memory>
 #include <functional>
 
-#include "Streamer.h"
 
-
-namespace streaming {
-
-class GstStreamer : public Streamer
+class GstClient
 {
 public:
-    GstStreamer();
-    ~GstStreamer();
+    GstClient();
+    ~GstClient();
 
     typedef std::function<void ()> PreparedCallback;
     void prepare(const PreparedCallback&) noexcept;
-    bool sdp(std::string* sdp) noexcept override;
+    bool sdp(std::string* sdp) noexcept;
 
     void setRemoteSdp(const std::string& sdp) noexcept;
-
     void play() noexcept;
 
 private:
@@ -29,5 +24,3 @@ private:
     struct Private;
     std::unique_ptr<Private> _p;
 };
-
-}

@@ -27,8 +27,45 @@ struct ServerSession::Private
     Requests requests;
     Streamers streamers;
 
+    rtsp::Response* prepareResponse(
+        rtsp::CSeq cseq,
+        rtsp::StatusCode statusCode,
+        const std::string::value_type* reasonPhrase,
+        rtsp::Response* out);
+    rtsp::Response* prepareOkResponse(
+        rtsp::CSeq cseq,
+        rtsp::Response* out);
+    void sendOkResponse(rtsp::CSeq cseq);
+
     void streamerPrepared(const Requests::iterator& it);
 };
+
+rtsp::Response* ServerSession::Private::prepareResponse(
+    rtsp::CSeq cseq,
+    rtsp::StatusCode statusCode,
+    const std::string::value_type* reasonPhrase,
+    rtsp::Response* out)
+{
+    out->protocol = rtsp::Protocol::RTSP_1_0;
+    out->cseq = cseq;
+    out->statusCode = statusCode;
+    out->reasonPhrase = reasonPhrase;
+
+    return out;
+}
+
+rtsp::Response* ServerSession::Private::prepareOkResponse(
+    rtsp::CSeq cseq,
+    rtsp::Response* out)
+{
+    return prepareResponse(cseq, rtsp::OK, "OK", out);
+}
+
+void ServerSession::Private::sendOkResponse(rtsp::CSeq cseq)
+{
+    rtsp::Response response;
+    owner->sendResponse(prepareOkResponse(cseq, &response));
+}
 
 void ServerSession::Private::streamerPrepared(const Requests::iterator& it)
 {
@@ -42,10 +79,7 @@ void ServerSession::Private::streamerPrepared(const Requests::iterator& it)
         owner->sendResponse(nullptr);
     } else {
         rtsp::Response response;
-        response.protocol = rtsp::Protocol::RTSP_1_0;
-        response.cseq = request.requestPtr->cseq;
-        response.statusCode = rtsp::OK;
-        response.reasonPhrase = "OK";
+        prepareOkResponse(request.requestPtr->cseq, &response);
 
         response.headerFields.emplace("Content-Base", request.requestPtr->uri);
         response.headerFields.emplace("Content-Type", "application/sdp");
@@ -91,35 +125,56 @@ bool ServerSession::handleDescribeRequest(
 
     auto pair =
         _p->streamers.emplace(requestPtr->uri, std::make_unique<GstStreamer>());
-    if(pair.second) {
-        auto requestIterator =
-            _p->requests.emplace(
-                _p->requests.end(),
-                Request {
-                    .requestPtr = std::move(requestPtr),
-                    .streamerIt = pair.first,
-                });
+    if(!pair.second)
+        return false;
 
-        std::unique_ptr<GstStreamer>& streamerPtr = pair.first->second;
-        streamerPtr->prepare(
-            std::bind(&ServerSession::Private::streamerPrepared, _p.get(), requestIterator));
+    auto requestIterator =
+        _p->requests.emplace(
+            _p->requests.end(),
+            Request {
+                .requestPtr = std::move(requestPtr),
+                .streamerIt = pair.first,
+            });
 
-        return true;
-    }
+    std::unique_ptr<GstStreamer>& streamerPtr = pair.first->second;
+    streamerPtr->prepare(
+        std::bind(&ServerSession::Private::streamerPrepared, _p.get(), requestIterator));
 
-    return false;
+    return true;
 }
 
 bool ServerSession::handleSetupRequest(
-    std::unique_ptr<rtsp::Request>&) noexcept
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    return false;
+    auto it = _p->streamers.find(requestPtr->uri);
+    if(it == _p->streamers.end())
+        return false;
+
+    using streaming::GstStreamer;
+    GstStreamer* streamer = it->second.get();
+
+    streamer->setRemoteSdp(requestPtr->body);
+
+    _p->sendOkResponse(requestPtr->cseq);
+
+    return true;
 }
 
 bool ServerSession::handlePlayRequest(
-    std::unique_ptr<rtsp::Request>&) noexcept
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    return false;
+    auto it = _p->streamers.find(requestPtr->uri);
+    if(it == _p->streamers.end())
+        return false;
+
+    using streaming::GstStreamer;
+    GstStreamer* streamer = it->second.get();
+
+    streamer->play();
+
+    _p->sendOkResponse(requestPtr->cseq);
+
+    return true;
 }
 
 bool ServerSession::handleTeardownRequest(
