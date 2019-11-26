@@ -53,7 +53,7 @@ bool ServerSession::handleRequest(
     case rtsp::Method::DESCRIBE:
         return handleDescribeRequest(requestPtr);
     case rtsp::Method::SETUP:
-        return handleRequest(requestPtr);
+        return handleSetupRequest(requestPtr);
     case rtsp::Method::PLAY:
         return handlePlayRequest(requestPtr);
     case rtsp::Method::TEARDOWN:
