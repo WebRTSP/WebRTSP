@@ -17,6 +17,8 @@ public:
     const Buffer::value_type* data() const;
     Buffer::value_type* data();
 
+    bool empty() const
+        { return size() == 0; }
     size_t size() const;
 
     void append(const char*, size_t);
