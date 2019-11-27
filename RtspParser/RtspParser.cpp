@@ -183,28 +183,31 @@ static Token GetProtocol(const char* buf, size_t* pos, size_t size)
 {
     Token token;
 
-    if(size - *pos < 8)
+    const char protocolName[] = "WEBRTSP";
+    const unsigned protocolNameLength = sizeof(protocolName) - 1;
+
+    if(size - *pos < protocolNameLength + 4)
         return token;
 
-    if(0 != strncmp(buf + *pos, "RTSP", 4))
+    if(0 != strncmp(buf + *pos, protocolName, protocolNameLength))
         return token;
 
-    if(buf[*pos + 4] != '/')
+    if(buf[*pos + protocolNameLength] != '/')
         return token;
 
-    if(!IsDigit(buf[*pos + 5]))
+    if(!IsDigit(buf[*pos + protocolNameLength + 1]))
         return token;
 
-    if(buf[*pos + 6] != '.')
+    if(buf[*pos + protocolNameLength + 2] != '.')
         return token;
 
-    if(!IsDigit(buf[*pos + 7]))
+    if(!IsDigit(buf[*pos + protocolNameLength + 3]))
         return token;
 
     token.token = buf + *pos;
-    token.size = 8;
+    token.size = protocolNameLength + 4;
 
-    *pos += 8;
+    *pos += token.size;
 
     return token;
 }

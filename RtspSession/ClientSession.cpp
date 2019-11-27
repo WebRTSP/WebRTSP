@@ -29,7 +29,7 @@ rtsp::Request* ClientSession::createRequest(
                 _nextCSeq,
                 rtsp::Request{
                     .method = method,
-                    .protocol = Protocol::RTSP_1_0,
+                    .protocol = Protocol::WEBRTSP_0_1,
                     .cseq = _nextCSeq
                 });
 

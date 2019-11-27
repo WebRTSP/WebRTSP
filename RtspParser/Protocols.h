@@ -9,7 +9,7 @@ namespace rtsp {
 
 enum class Protocol {
     NONE,
-    RTSP_1_0
+    WEBRTSP_0_1
 };
 
 const char* ProtocolName(Protocol) noexcept;

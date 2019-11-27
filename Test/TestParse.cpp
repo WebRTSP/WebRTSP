@@ -9,7 +9,7 @@ void TestParse()
 {
     {
         const char OPTIONSRequest[] =
-            " OPTIONS * RTSP/1.0";
+            " OPTIONS * WEBRTSP/0.1";
         rtsp::Request request;
         const bool success =
             rtsp::ParseRequest(OPTIONSRequest, sizeof(OPTIONSRequest) - 1, &request);
@@ -18,7 +18,7 @@ void TestParse()
 
     {
         const char OPTIONSRequest[] =
-            "OPTIONS * RTSP/1.0 ";
+            "OPTIONS * WEBRTSP/0.1 ";
         rtsp::Request request;
         const bool success =
             rtsp::ParseRequest(OPTIONSRequest, sizeof(OPTIONSRequest) - 1, &request);
@@ -27,7 +27,7 @@ void TestParse()
 
     {
         const char OPTIONSRequest[] =
-            "OPTIONS*RTSP/1.0";
+            "OPTIONS*WEBRTSP/0.1";
         rtsp::Request request;
         const bool success =
             rtsp::ParseRequest(OPTIONSRequest, sizeof(OPTIONSRequest) - 1, &request);
@@ -36,7 +36,7 @@ void TestParse()
 
     {
         const char OPTIONSRequest[] =
-            "OPTION * RTSP/1.0";
+            "OPTION * WEBRTSP/0.1";
         rtsp::Request request;
         const bool success =
             rtsp::ParseRequest(OPTIONSRequest, sizeof(OPTIONSRequest) - 1, &request);
@@ -72,7 +72,7 @@ void TestParse()
 
     {
         const char OPTIONSRequest[] =
-            "OPTIONS * RTSP/1.0";
+            "OPTIONS * WEBRTSP/0.1";
         rtsp::Request request;
         const bool success =
             rtsp::ParseRequest(OPTIONSRequest, sizeof(OPTIONSRequest) - 1, &request);
@@ -81,7 +81,7 @@ void TestParse()
 
     {
         const char OPTIONSRequest[] =
-            "OPTIONS * RTSP/1.0\r\n";
+            "OPTIONS * WEBRTSP/0.1\r\n";
         rtsp::Request request;
         const bool success =
             rtsp::ParseRequest(OPTIONSRequest, sizeof(OPTIONSRequest) - 1, &request);
@@ -90,7 +90,7 @@ void TestParse()
 
     {
         const char OPTIONSRequest[] =
-            "OPTIONS * RTSP/1.0\r\n"
+            "OPTIONS * WEBRTSP/0.1\r\n"
             "CSeq: 1";
         rtsp::Request request;
         const bool success =
@@ -100,7 +100,7 @@ void TestParse()
 
     {
         const char OPTIONSRequest[] =
-            "OPTIONS * RTSP/1.0\r\n"
+            "OPTIONS * WEBRTSP/0.1\r\n"
             "CSeq: 1\r\n";
         rtsp::Request request;
         const bool success =
@@ -108,13 +108,13 @@ void TestParse()
         assert(success);
         assert(request.method == rtsp::Method::OPTIONS);
         assert(request.uri == "*");
-        assert(request.protocol == rtsp::Protocol::RTSP_1_0);
+        assert(request.protocol == rtsp::Protocol::WEBRTSP_0_1);
         assert(request.cseq == 1);
         assert(request.headerFields.empty());
     }
     {
         const char OPTIONSRequest[] =
-            "OPTIONS * RTSP/1.0\r\n"
+            "OPTIONS * WEBRTSP/0.1\r\n"
             "CSeq:       1\r\n";
         rtsp::Request request;
         const bool success =
@@ -122,14 +122,14 @@ void TestParse()
         assert(success);
         assert(request.method == rtsp::Method::OPTIONS);
         assert(request.uri == "*");
-        assert(request.protocol == rtsp::Protocol::RTSP_1_0);
+        assert(request.protocol == rtsp::Protocol::WEBRTSP_0_1);
         assert(request.cseq == 1);
         assert(request.headerFields.empty());
     }
 
     {
         const char SETUPRequest[] =
-            "SETUP rtsp://example.com/meida.ogg/streamid=0 RTSP/1.0\r\n"
+            "SETUP rtsp://example.com/meida.ogg/streamid=0 WEBRTSP/0.1\r\n"
             "CSeq: 3\r\n"
             "Transport: RTP/AVP;unicast;client_port=8000-8001\r\n";
         rtsp::Request request;
@@ -138,7 +138,7 @@ void TestParse()
         assert(success);
         assert(request.method == rtsp::Method::SETUP);
         assert(request.uri == "rtsp://example.com/meida.ogg/streamid=0");
-        assert(request.protocol == rtsp::Protocol::RTSP_1_0);
+        assert(request.protocol == rtsp::Protocol::WEBRTSP_0_1);
         assert(request.cseq == 3);
         assert(request.headerFields.size() == 1);
         if(request.headerFields.size() == 1) {
@@ -151,7 +151,7 @@ void TestParse()
 
     {
         const char GET_PARAMETERRequest[] =
-            "GET_PARAMETER rtsp://example.com/media.mp4 RTSP/1.0\r\n"
+            "GET_PARAMETER rtsp://example.com/media.mp4 WEBRTSP/0.1\r\n"
             "CSeq: 9\r\n"
             "Content-Type: text/parameters\r\n"
             "Session: 12345678\r\n"
@@ -171,7 +171,7 @@ void TestParse()
 
     {
         const char GET_PARAMETERResponse[] =
-            "RTSP/1.0 200 OK\r\n"
+            "WEBRTSP/0.1 200 OK\r\n"
             "CSeq: 9\r\n"
             "Content-Length: 46\r\n"
             "Content-Type: text/parameters\r\n"
@@ -182,7 +182,7 @@ void TestParse()
         const bool success =
             rtsp::ParseResponse(GET_PARAMETERResponse, sizeof(GET_PARAMETERResponse) - 1, &response);
         assert(success);
-        assert(response.protocol == rtsp::Protocol::RTSP_1_0);
+        assert(response.protocol == rtsp::Protocol::WEBRTSP_0_1);
         assert(response.statusCode == 200);
         assert(response.reasonPhrase == "OK");
         assert(response.cseq == 9);

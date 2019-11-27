@@ -40,7 +40,7 @@ rtsp::Response* PrepareResponse(
     const rtsp::Session& session,
     rtsp::Response* out)
 {
-    out->protocol = rtsp::Protocol::RTSP_1_0;
+    out->protocol = rtsp::Protocol::WEBRTSP_0_1;
     out->cseq = cseq;
     out->statusCode = statusCode;
     out->reasonPhrase = reasonPhrase;
