@@ -14,49 +14,23 @@ struct StreamerInfo
     streaming::GstStreamer streamer;
 };
 
-typedef std::map<rtsp::Session, std::unique_ptr<StreamerInfo>> Streamers;
+typedef std::map<rtsp::SessionId, std::unique_ptr<StreamerInfo>> Streamers;
 
 struct RequestInfo
 {
     std::unique_ptr<rtsp::Request> requestPtr;
-    const rtsp::Session session;
+    const rtsp::SessionId session;
 };
 
 typedef std::map<rtsp::CSeq, RequestInfo> Requests;
 
-rtsp::Session RequestSession(const rtsp::Request& request)
+rtsp::SessionId RequestSession(const rtsp::Request& request)
 {
     auto it = request.headerFields.find("session");
     if(request.headerFields.end() == it)
-        return rtsp::Session();
+        return rtsp::SessionId();
 
     return it->second;
-}
-
-rtsp::Response* PrepareResponse(
-    rtsp::CSeq cseq,
-    rtsp::StatusCode statusCode,
-    const std::string::value_type* reasonPhrase,
-    const rtsp::Session& session,
-    rtsp::Response* out)
-{
-    out->protocol = rtsp::Protocol::WEBRTSP_0_1;
-    out->cseq = cseq;
-    out->statusCode = statusCode;
-    out->reasonPhrase = reasonPhrase;
-
-    if(!session.empty())
-        out->headerFields.emplace("session", session);
-
-    return out;
-}
-
-rtsp::Response* PrepareOkResponse(
-    rtsp::CSeq cseq,
-    const rtsp::Session& session,
-    rtsp::Response* out)
-{
-    return PrepareResponse(cseq, rtsp::OK, "OK", session, out);
 }
 
 }
@@ -74,8 +48,6 @@ struct ServerSession::Private
 
     std::string nextSession()
         { return std::to_string(_nextSession++); }
-
-    void sendOkResponse(rtsp::CSeq, const rtsp::Session&);
 
     void streamerPrepared(rtsp::CSeq describeRequestCSeq);
 };
@@ -96,14 +68,6 @@ private:
     Requests::const_iterator _it;
 };
 
-void ServerSession::Private::sendOkResponse(
-    rtsp::CSeq cseq,
-    const rtsp::Session& session)
-{
-    rtsp::Response response;
-    owner->sendResponse(PrepareOkResponse(cseq, session, &response));
-}
-
 void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
 {
     using streaming::GstStreamer;
@@ -112,23 +76,23 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
     if(requests.end() == requestIt ||
        rtsp::Method::DESCRIBE != requestIt->second.requestPtr->method)
     {
-        owner->sendResponse(nullptr);
+        owner->disconnect();
         return;
     }
 
     AutoEraseRequest autoEraseRequest(this, requestIt);
 
     const RequestInfo& requestInfo = requestIt->second;
-    const rtsp::Session& session = requestInfo.session;
+    const rtsp::SessionId& session = requestInfo.session;
 
     if(streamers.end() == streamers.find(session)) {
-        owner->sendResponse(nullptr);
+        owner->disconnect();
         return;
     };
 
     auto it = streamers.find(session);
     if(streamers.end() == it) {
-        owner->sendResponse(nullptr);
+        owner->disconnect();
         return;
     }
 
@@ -137,22 +101,23 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
 
     std::string sdp;
     if(!streamer.sdp(&sdp))
-        owner->sendResponse(nullptr);
+        owner->disconnect();
     else {
         rtsp::Response response;
-        PrepareOkResponse(requestInfo.requestPtr->cseq, session, &response);
+        prepareOkResponse(requestInfo.requestPtr->cseq, session, &response);
 
         response.headerFields.emplace("Content-Type", "application/sdp");
 
         response.body.swap(sdp);
 
-        owner->sendResponse(&response);
+        owner->sendResponse(response);
     }
 }
 
 ServerSession::ServerSession(
-    const std::function<void (const rtsp::Response*)>& sendResponse) :
-    rtsp::ServerSession(sendResponse),
+    const std::function<void (const rtsp::Request*)>& sendRequest,
+    const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
+    rtsp::ServerSession(sendRequest, sendResponse),
     _p(new Private { .owner = this })
 {
 }
@@ -165,11 +130,11 @@ bool ServerSession::handleOptionsRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     rtsp::Response response;
-    PrepareOkResponse(requestPtr->cseq, rtsp::Session(), &response);
+    prepareOkResponse(requestPtr->cseq, rtsp::SessionId(), &response);
 
     response.headerFields.emplace("Public", "DESCRIBE, SETUP, PLAY, TEARDOWN");
 
-    sendResponse(&response);
+    sendResponse(response);
 
     return true;
 }
@@ -179,7 +144,7 @@ bool ServerSession::handleDescribeRequest(
 {
     using streaming::GstStreamer;
 
-    const rtsp::Session session = _p->nextSession();
+    const rtsp::SessionId session = _p->nextSession();
     auto requestPair =
         _p->requests.emplace(
             requestPtr->cseq,
@@ -219,7 +184,7 @@ bool ServerSession::handleDescribeRequest(
 bool ServerSession::handleSetupRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    const rtsp::Session session = RequestSession(*requestPtr);
+    const rtsp::SessionId session = RequestSession(*requestPtr);
 
     auto it = _p->streamers.find(session);
     if(it == _p->streamers.end())
@@ -230,7 +195,7 @@ bool ServerSession::handleSetupRequest(
 
     streamer.setRemoteSdp(requestPtr->body);
 
-    _p->sendOkResponse(requestPtr->cseq, session);
+    sendOkResponse(requestPtr->cseq, session);
 
     return true;
 }
@@ -238,7 +203,7 @@ bool ServerSession::handleSetupRequest(
 bool ServerSession::handlePlayRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    const rtsp::Session session = RequestSession(*requestPtr);
+    const rtsp::SessionId session = RequestSession(*requestPtr);
 
     auto it = _p->streamers.find(session);
     if(it == _p->streamers.end())
@@ -249,7 +214,7 @@ bool ServerSession::handlePlayRequest(
 
     streamer.play();
 
-    _p->sendOkResponse(requestPtr->cseq, session);
+    sendOkResponse(requestPtr->cseq, session);
 
     return true;
 }

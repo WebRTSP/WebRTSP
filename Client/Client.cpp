@@ -89,6 +89,23 @@ static void SendRequest(
     Send(scd, &requestMessage);
 }
 
+static void SendResponse(
+    ContextData* cd,
+    SessionContextData* scd,
+    const rtsp::Response* response)
+{
+    if(!response) {
+        scd->data->terminateSession = true;
+        lws_callback_on_writable(scd->wsi);
+        return;
+    }
+
+    MessageBuffer responseMessage;
+    responseMessage.assign(rtsp::Serialize(*response));
+
+    Send(scd, &responseMessage);
+}
+
 static bool OnConnected(ContextData* cd, SessionContextData* scd)
 {
     scd->data->rtspSession.onConnected();
@@ -173,7 +190,9 @@ static int WsCallback(
                 new SessionData {
                     .incomingMessage ={},
                     .sendMessages = {},
-                    .rtspSession = { std::bind(SendRequest, cd, scd, std::placeholders::_1) }
+                    .rtspSession = {
+                        std::bind(SendRequest, cd, scd, std::placeholders::_1),
+                        std::bind(SendResponse, cd, scd, std::placeholders::_1) }
                 };
             scd->wsi = wsi;
 

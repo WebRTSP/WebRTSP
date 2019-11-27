@@ -6,14 +6,16 @@
 #include "RtspParser/Request.h"
 #include "RtspParser/Response.h"
 
+#include "Session.h"
+
 
 namespace rtsp {
 
-struct ServerSession
+struct ServerSession : public Session
 {
-    ServerSession(const std::function<void (const rtsp::Response*)>&) noexcept;
+    using Session::Session;
 
-    bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept;
+    bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 protected:
     virtual bool handleOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept;
@@ -21,11 +23,6 @@ protected:
     virtual bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept;
     virtual bool handlePlayRequest(std::unique_ptr<rtsp::Request>&) noexcept;
     virtual bool handleTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept;
-
-    void sendResponse(const rtsp::Response*) noexcept;
-
-private:
-    std::function<void (const rtsp::Response*)> _responseCallback;
 };
 
 }

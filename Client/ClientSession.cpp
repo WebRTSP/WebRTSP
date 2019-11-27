@@ -4,11 +4,11 @@
 
 namespace {
 
-rtsp::Session ResponseSession(const rtsp::Response& response)
+rtsp::SessionId ResponseSession(const rtsp::Response& response)
 {
     auto it = response.headerFields.find("session");
     if(response.headerFields.end() == it)
-        return rtsp::Session();
+        return rtsp::SessionId();
 
     return it->second;
 }
@@ -22,7 +22,7 @@ struct ClientSession::Private
 
     GstClient gstClient;
     std::string remoteSdp;
-    rtsp::Session session;
+    rtsp::SessionId session;
 
     void streamerPrepared();
 };
@@ -49,8 +49,10 @@ void ClientSession::onConnected() noexcept
 }
 
 ClientSession::ClientSession(
-    const std::function<void (const rtsp::Request*)>& cb) :
-    rtsp::ClientSession(cb), _p(new Private { .owner = this })
+    const std::function<void (const rtsp::Request*)>& sendRequest,
+    const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
+    rtsp::ClientSession(sendRequest, sendResponse),
+    _p(new Private { .owner = this })
 {
 }
 

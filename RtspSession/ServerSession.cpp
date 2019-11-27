@@ -3,17 +3,6 @@
 
 namespace rtsp {
 
-ServerSession::ServerSession(
-    const std::function<void (const rtsp::Response*)>& cb) noexcept :
-    _responseCallback(cb)
-{
-}
-
-void ServerSession::sendResponse(const rtsp::Response* response) noexcept
-{
-    _responseCallback(response);
-}
-
 bool ServerSession::handleOptionsRequest(
     std::unique_ptr<rtsp::Request>&) noexcept
 {

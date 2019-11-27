@@ -6,6 +6,6 @@
 namespace rtsp {
 
 typedef unsigned CSeq;
-typedef std::string Session;
+typedef std::string SessionId;
 
 }

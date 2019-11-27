@@ -6,26 +6,29 @@
 #include "RtspParser/Request.h"
 #include "RtspParser/Response.h"
 
+#include "Session.h"
+
 
 namespace rtsp {
 
-struct ClientSession
+struct ClientSession : public Session
 {
-    ClientSession(const std::function<void (const rtsp::Request*)>&) noexcept;
-
-    virtual void onConnected() noexcept {}
-
-    bool handleResponse(const rtsp::Response&) noexcept;
+    using Session::Session;
+    using Session::handleResponse;
 
 protected:
+    bool handleResponse(
+        const rtsp::Request&,
+        const rtsp::Response&) noexcept override;
+
     CSeq requestOptions(const std::string& uri) noexcept;
     CSeq requestDescribe(const std::string& uri) noexcept;
     CSeq requestSetup(
         const std::string& uri,
         const std::string& sdp,
-        const rtsp::Session&) noexcept;
-    CSeq requestPlay(const std::string& uri, const rtsp::Session&) noexcept;
-    CSeq requestTeardown(const std::string& uri, const rtsp::Session&) noexcept;
+        const rtsp::SessionId&) noexcept;
+    CSeq requestPlay(const std::string& uri, const rtsp::SessionId&) noexcept;
+    CSeq requestTeardown(const std::string& uri, const rtsp::SessionId&) noexcept;
 
     virtual bool onOptionsResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept
@@ -42,26 +45,6 @@ protected:
     virtual bool onTeardownResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept
         { return false; }
-
-    void disconnect() noexcept;
-
-private:
-    rtsp::Request* createRequest(
-        rtsp::Method,
-        const std::string& uri) noexcept;
-    rtsp::Request* createRequest(
-        rtsp::Method,
-        const std::string& uri,
-        const std::string& session) noexcept;
-
-    void sendRequest(const rtsp::Request&) noexcept;
-
-private:
-    std::function<void (const rtsp::Request*)> _requestCallback;
-
-    CSeq _nextCSeq = 1;
-
-    std::map<CSeq, rtsp::Request> _sentRequests;
 };
 
 }

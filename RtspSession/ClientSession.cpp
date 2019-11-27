@@ -3,58 +3,6 @@
 
 namespace rtsp {
 
-ClientSession::ClientSession(
-    const std::function<void (const rtsp::Request*)>& cb) noexcept :
-    _requestCallback(cb)
-{
-}
-
-void ClientSession::sendRequest(const rtsp::Request& request) noexcept
-{
-    _requestCallback(&request);
-}
-
-void ClientSession::disconnect() noexcept
-{
-    _requestCallback(nullptr);
-}
-
-rtsp::Request* ClientSession::createRequest(
-    rtsp::Method method,
-    const std::string& uri) noexcept
-{
-    for(;;) {
-        const auto& pair =
-            _sentRequests.emplace(
-                _nextCSeq,
-                rtsp::Request{
-                    .method = method,
-                    .protocol = Protocol::WEBRTSP_0_1,
-                    .cseq = _nextCSeq
-                });
-
-        ++_nextCSeq;
-
-        if(pair.second) {
-            rtsp::Request& request = pair.first->second;
-            request.uri = uri;
-            return &request;
-        }
-    }
-}
-
-rtsp::Request* ClientSession::createRequest(
-    rtsp::Method method,
-    const std::string& uri,
-    const rtsp::Session& session) noexcept
-{
-    rtsp::Request* request = createRequest(method, uri);
-
-    request->headerFields.emplace("Session", session);
-
-    return request;
-}
-
 CSeq ClientSession::requestOptions(const std::string& uri) noexcept
 {
     rtsp::Request& request =
@@ -78,7 +26,7 @@ CSeq ClientSession::requestDescribe(const std::string& uri) noexcept
 CSeq ClientSession::requestSetup(
     const std::string& uri,
     const std::string& sdp,
-    const rtsp::Session& session) noexcept
+    const rtsp::SessionId& session) noexcept
 {
     rtsp::Request& request =
         *createRequest(rtsp::Method::SETUP, uri);
@@ -94,7 +42,7 @@ CSeq ClientSession::requestSetup(
 
 CSeq ClientSession::requestPlay(
     const std::string& uri,
-    const rtsp::Session& session) noexcept
+    const rtsp::SessionId& session) noexcept
 {
     rtsp::Request& request =
         *createRequest(rtsp::Method::PLAY, uri, session);
@@ -106,7 +54,7 @@ CSeq ClientSession::requestPlay(
 
 CSeq ClientSession::requestTeardown(
     const std::string& uri,
-    const rtsp::Session& session) noexcept
+    const rtsp::SessionId& session) noexcept
 {
     rtsp::Request& request =
         *createRequest(rtsp::Method::TEARDOWN, uri, session);
@@ -116,13 +64,9 @@ CSeq ClientSession::requestTeardown(
     return request.cseq;
 }
 
-bool ClientSession::handleResponse(const rtsp::Response& response) noexcept
+bool ClientSession::handleResponse(
+    const rtsp::Request& request, const rtsp::Response& response) noexcept
 {
-    auto it = _sentRequests.find(response.cseq);
-    if(it == _sentRequests.end())
-        return false;
-
-    const Request& request = it->second;
     switch(request.method) {
         case rtsp::Method::OPTIONS:
             return onOptionsResponse(request, response);

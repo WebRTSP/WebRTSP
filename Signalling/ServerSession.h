@@ -8,7 +8,9 @@
 class ServerSession: public rtsp::ServerSession
 {
 public:
-    ServerSession(const std::function<void (const rtsp::Response*)>& sendResponse);
+    ServerSession(
+        const std::function<void (const rtsp::Request*)>& sendRequest,
+        const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
     ~ServerSession();
 
 protected:
