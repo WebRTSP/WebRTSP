@@ -76,6 +76,7 @@ bool ClientSession::onDescribeResponse(
 {
     if(rtsp::StatusCode::OK != response.statusCode)
         return false;
+
     _p->session = ResponseSession(response);
     if(_p->session.empty())
         return false;
@@ -101,6 +102,9 @@ bool ClientSession::onSetupResponse(
     if(rtsp::StatusCode::OK != response.statusCode)
         return false;
 
+    if(ResponseSession(response) != _p->session)
+        return false;
+
     requestPlay(request.uri, _p->session);
 
     return true;
@@ -113,6 +117,9 @@ bool ClientSession::onPlayResponse(
     if(rtsp::StatusCode::OK != response.statusCode)
         return false;
 
+    if(ResponseSession(response) != _p->session)
+        return false;
+
     _p->gstClient.play();
 
     return true;
@@ -122,5 +129,8 @@ bool ClientSession::onTeardownResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
 {
+    if(ResponseSession(response) != _p->session)
+        return false;
+
     return false;
 }
