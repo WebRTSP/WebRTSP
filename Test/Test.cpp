@@ -7,6 +7,7 @@
 
 #include "Client/Native/Client.h"
 
+#define ENABLE_CLIENT 0
 
 int main(int argc, char *argv[])
 {
@@ -25,6 +26,7 @@ int main(int argc, char *argv[])
             signalling::Signalling(&config);
         });
 
+#if ENABLE_CLIENT
     std::thread clientThread(
         [] () {
             client::Config config {};
@@ -33,12 +35,15 @@ int main(int argc, char *argv[])
 
             client::Client(&config);
         });
+#endif
 
     if(signallingThread.joinable())
         signallingThread.join();
 
+#if ENABLE_CLIENT
     if(clientThread.joinable())
         clientThread.join();
+#endif
 
     return 0;
 }

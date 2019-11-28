@@ -24,6 +24,7 @@ add_subdirectory(RtspSession)
 add_subdirectory(Signalling)
 add_subdirectory(Streaming)
 add_subdirectory(Client/Native)
+add_subdirectory(Client/Html)
 add_subdirectory(Test)
 
 #get_cmake_property(_variableNames VARIABLES)
