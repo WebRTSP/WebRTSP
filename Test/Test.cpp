@@ -5,7 +5,7 @@
 
 #include "Signalling/Signalling.h"
 
-#include "Client/Client.h"
+#include "Client/Native/Client.h"
 
 
 int main(int argc, char *argv[])

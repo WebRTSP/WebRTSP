@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(Client)
+project(NativeClient)
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(WS REQUIRED libwebsockets)
