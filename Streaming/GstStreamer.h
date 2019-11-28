@@ -15,10 +15,15 @@ public:
     ~GstStreamer();
 
     typedef std::function<void ()> PreparedCallback;
-    void prepare(const PreparedCallback&) noexcept;
+    typedef std::function<
+        void (unsigned mlineIndex, const std::string& candidate)> IceCandidateCallback;
+    void prepare(
+        const PreparedCallback&,
+        const IceCandidateCallback&) noexcept;
     bool sdp(std::string* sdp) noexcept override;
 
     void setRemoteSdp(const std::string& sdp) noexcept;
+    void addIceCandidate(unsigned mlineIndex, const std::string& candidate);
 
     void play() noexcept;
 

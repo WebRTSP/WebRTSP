@@ -479,4 +479,18 @@ bool ParseResponse(const char* response, size_t size, Response* out) noexcept
     return true;
 }
 
+bool IsRequest(const char* request, size_t size) noexcept
+{
+    size_t position = 0;
+    const Token methodToken = GetToken(request, &position, size);
+
+    if(IsEmptyToken(methodToken))
+        return false;
+
+    if(ParseMethod(methodToken) == Method::NONE)
+        return false;
+
+    return true;
+}
+
 }

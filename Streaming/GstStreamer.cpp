@@ -21,6 +21,7 @@ struct GstStreamer::Private
     GstStreamer *const owner;
 
     PreparedCallback prepared;
+    IceCandidateCallback iceCandidate;
 
     GstElementPtr pipelinePtr;
 
@@ -190,12 +191,10 @@ void GstStreamer::Private::onIceGatheringStateChanged(GstElement* rtcbin)
     g_object_get(rtcbin, "ice-gathering-state", &state, NULL);
 
     if(GST_WEBRTC_ICE_GATHERING_STATE_COMPLETE == state) {
-        sdp += "a=end-of-candidates\r\n";
+        iceCandidate(0, "a=end-of-candidates");
 
         g_signal_handler_disconnect(rtcbin, iceGatheringStateChangedHandlerId);
         iceGatheringStateChangedHandlerId = 0;
-
-        prepared();
     }
 }
 
@@ -215,6 +214,8 @@ void GstStreamer::Private::onOfferCreated(GstPromise* promise)
 
     GCharPtr sdpPtr(gst_sdp_message_as_text(sessionDescription->sdp));
     sdp = sdpPtr.get();
+
+    prepared();
 }
 
 void GstStreamer::Private::onIceCandidate(
@@ -222,9 +223,8 @@ void GstStreamer::Private::onIceCandidate(
     guint candidate,
     gchar* arg2)
 {
-    sdp += "a=";
-    sdp += arg2;
-    sdp += "\r\n";
+    static std::string prefix("a=");
+    iceCandidate(candidate, prefix + arg2);
 }
 
 void GstStreamer::Private::setState(GstState state)
@@ -262,9 +262,12 @@ GstStreamer::~GstStreamer()
         _p->setState(GST_STATE_NULL);
 }
 
-void GstStreamer::prepare(const PreparedCallback& prepared) noexcept
+void GstStreamer::prepare(
+    const PreparedCallback& prepared,
+    const IceCandidateCallback& iceCandidate) noexcept
 {
     _p->prepared = prepared;
+    _p->iceCandidate = iceCandidate;
 
     _p->prepare();
 }
@@ -286,17 +289,11 @@ void GstStreamer::setRemoteSdp(const std::string& sdp) noexcept
 {
     GstElement* rtcbin = _p->rtcbinPtr.get();
 
-    std::string::size_type candidatesPos = sdp.find("\r\na=candidate");
-    if(candidatesPos == std::string::npos)
-        return;
-
     GstSDPMessage* sdpMessage;
-    gst_sdp_message_new(&sdpMessage);
+    gst_sdp_message_new_from_text(
+        sdp.data(),
+        &sdpMessage);
     GstSDPMessagePtr sdpMessagePtr(sdpMessage);
-    gst_sdp_message_parse_buffer(
-        reinterpret_cast<const guint8*>(sdp.data()),
-        candidatesPos + 2,
-        sdpMessage);
 
     GstWebRTCSessionDescriptionPtr sessionDescriptionPtr(
         gst_webrtc_session_description_new(
@@ -305,24 +302,17 @@ void GstStreamer::setRemoteSdp(const std::string& sdp) noexcept
     GstWebRTCSessionDescription* sessionDescription =
         sessionDescriptionPtr.get();
 
-    g_signal_emit_by_name(_p->rtcbinPtr.get(),
+    g_signal_emit_by_name(rtcbin,
         "set-remote-description", sessionDescription, NULL);
+}
 
-    for(std::string::size_type candidatePos = candidatesPos += 2;;) {
-        std::string::size_type candidateEnd = sdp.find("\r\n", candidatePos);
-        if(candidateEnd == std::string::npos)
-            return;
+void GstStreamer::addIceCandidate(
+    unsigned mlineIndex,
+    const std::string& candidate)
+{
+    GstElement* rtcbin = _p->rtcbinPtr.get();
 
-        if(0 == sdp.compare(candidatePos, sizeof("a=candidate") -1, "a=candidate")) {
-            const std::string candidate =
-                sdp.substr(candidatePos + 2, candidateEnd - candidatePos - 2);
-            g_signal_emit_by_name(rtcbin, "add-ice-candidate", 0, candidate.data());
-        } else if(0 == sdp.compare(candidatePos, sizeof("a=end-of-candidates") -1, "a=end-of-candidates"))
-            break;
-
-        candidatePos = candidateEnd + 2;
-    }
-
+    g_signal_emit_by_name(rtcbin, "add-ice-candidate", mlineIndex, candidate.data());
 }
 
 void GstStreamer::eos(bool error)

@@ -20,8 +20,8 @@ struct Session
 
     virtual void onConnected() noexcept {}
 
-    virtual bool handleRequest(std::unique_ptr<Request>&) noexcept
-        { return false; }
+    virtual bool handleRequest(std::unique_ptr<Request>&) noexcept;
+
     bool handleResponse(const Response&) noexcept;
 
 protected:
@@ -48,6 +48,15 @@ protected:
     void sendRequest(const Request&) noexcept;
     void sendResponse(const Response&) noexcept;
     void disconnect() noexcept;
+
+    CSeq requestSetup(
+        const std::string& uri,
+        const std::string& contentType,
+        const rtsp::SessionId& session,
+        const std::string& body) noexcept;
+
+    virtual bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept
+        { return false; }
 
     virtual bool handleResponse(const Request&, const Response&) noexcept
         { return false; }

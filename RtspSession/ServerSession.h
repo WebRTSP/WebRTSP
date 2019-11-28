@@ -20,7 +20,6 @@ struct ServerSession : public Session
 protected:
     virtual bool handleOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept;
     virtual bool handleDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept;
-    virtual bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept;
     virtual bool handlePlayRequest(std::unique_ptr<rtsp::Request>&) noexcept;
     virtual bool handleTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept;
 };

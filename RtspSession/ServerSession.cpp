@@ -15,12 +15,6 @@ bool ServerSession::handleDescribeRequest(
     return false;
 }
 
-bool ServerSession::handleSetupRequest(
-    std::unique_ptr<rtsp::Request>&) noexcept
-{
-    return false;
-}
-
 bool ServerSession::handlePlayRequest(
     std::unique_ptr<rtsp::Request>&) noexcept
 {
@@ -48,7 +42,7 @@ bool ServerSession::handleRequest(
     case rtsp::Method::TEARDOWN:
         return handleTeardownRequest(requestPtr);
     default:
-        return false;
+        return Session::handleRequest(requestPtr);
     }
 }
 

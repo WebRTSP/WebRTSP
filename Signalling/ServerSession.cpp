@@ -1,4 +1,4 @@
-#include "ServerSession.h"
+﻿#include "ServerSession.h"
 
 #include <list>
 #include <map>
@@ -11,6 +11,7 @@ namespace {
 struct StreamerInfo
 {
     std::string uri;
+    std::unique_ptr<rtsp::Request> describeRequest;
     streaming::GstStreamer streamer;
 };
 
@@ -23,15 +24,6 @@ struct RequestInfo
 };
 
 typedef std::map<rtsp::CSeq, RequestInfo> Requests;
-
-rtsp::SessionId RequestSession(const rtsp::Request& request)
-{
-    auto it = request.headerFields.find("session");
-    if(request.headerFields.end() == it)
-        return rtsp::SessionId();
-
-    return it->second;
-}
 
 }
 
@@ -50,6 +42,9 @@ struct ServerSession::Private
         { return std::to_string(_nextSession++); }
 
     void streamerPrepared(rtsp::CSeq describeRequestCSeq);
+    void iceCandidate(
+        const rtsp::SessionId&,
+        unsigned, const std::string&);
 };
 
 struct ServerSession::Private::AutoEraseRequest
@@ -82,13 +77,8 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
 
     AutoEraseRequest autoEraseRequest(this, requestIt);
 
-    const RequestInfo& requestInfo = requestIt->second;
+    RequestInfo& requestInfo = requestIt->second;
     const rtsp::SessionId& session = requestInfo.session;
-
-    if(streamers.end() == streamers.find(session)) {
-        owner->disconnect();
-        return;
-    };
 
     auto it = streamers.find(session);
     if(streamers.end() == it) {
@@ -111,7 +101,28 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
         response.body.swap(sdp);
 
         owner->sendResponse(response);
+
+        streamerInfo.describeRequest.swap(requestInfo.requestPtr);
     }
+}
+
+void ServerSession::Private::iceCandidate(
+    const rtsp::SessionId& session,
+    unsigned mlineIndex, const std::string& candidate)
+{
+    auto it = streamers.find(session);
+    if(streamers.end() == it) {
+        owner->disconnect();
+        return;
+    }
+
+    const StreamerInfo& streamerInfo = *(it->second);
+
+    owner->requestSetup(
+        streamerInfo.uri,
+        "application/x-ice-candidate",
+        session,
+        std::to_string(mlineIndex) + "/" + candidate + "\r\n");
 }
 
 ServerSession::ServerSession(
@@ -174,7 +185,13 @@ bool ServerSession::handleDescribeRequest(
         std::bind(
             &ServerSession::Private::streamerPrepared,
             _p.get(),
-            request.cseq));
+            request.cseq),
+        std::bind(
+            &ServerSession::Private::iceCandidate,
+            _p.get(),
+            session,
+            std::placeholders::_1,
+            std::placeholders::_2));
 
     autoEraseRequest.discard();
 
@@ -193,11 +210,49 @@ bool ServerSession::handleSetupRequest(
     using streaming::GstStreamer;
     GstStreamer& streamer = it->second->streamer;
 
-    streamer.setRemoteSdp(requestPtr->body);
+    if(RequestContentType(*requestPtr) == "application/sdp") {
+        streamer.setRemoteSdp(requestPtr->body);
 
-    sendOkResponse(requestPtr->cseq, session);
+        sendOkResponse(requestPtr->cseq, session);
 
-    return true;
+        return true;
+    }
+
+    if(RequestContentType(*requestPtr) != "application/x-ice-candidate")
+        return false;
+
+    const std::string& ice = requestPtr->body;
+
+    const std::string::size_type delimiterPos = ice.find("/");
+    if(delimiterPos == std::string::npos || 0 == delimiterPos)
+        return false;
+
+    const std::string::size_type lineEndPos = ice.find("\r\n", delimiterPos + 1);
+    if(lineEndPos == std::string::npos)
+        return false;
+
+    try{
+        int idx = std::stoi(ice.substr(0, delimiterPos - 0));
+        if(idx < 0)
+            return false;
+
+        const std::string candidate =
+            ice.substr(delimiterPos + 1, lineEndPos - (delimiterPos + 1));
+
+        if(candidate.empty())
+            return false;
+
+        if(candidate == "a=end-of-candidates")
+            ;
+        else
+            streamer.addIceCandidate(idx, candidate);
+
+        sendOkResponse(requestPtr->cseq, session);
+
+        return true;
+    } catch(...) {
+        return false;
+    }
 }
 
 bool ServerSession::handlePlayRequest(

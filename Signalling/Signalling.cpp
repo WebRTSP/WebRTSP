@@ -104,13 +104,22 @@ static bool OnMessage(
     SessionContextData* scd,
     const MessageBuffer& message)
 {
-    std::unique_ptr<rtsp::Request> requestPtr =
-        std::make_unique<rtsp::Request>();
-    if(!rtsp::ParseRequest(message.data(), message.size(), requestPtr.get()))
-        return false;
+    if(rtsp::IsRequest(message.data(), message.size())) {
+        std::unique_ptr<rtsp::Request> requestPtr =
+            std::make_unique<rtsp::Request>();
+        if(!rtsp::ParseRequest(message.data(), message.size(), requestPtr.get()))
+            return false;
 
-    if(!scd->data->rtspSession.handleRequest(requestPtr))
-        return false;
+        if(!scd->data->rtspSession.handleRequest(requestPtr))
+            return false;
+    } else {
+        rtsp::Response response;
+        if(!rtsp::ParseResponse(message.data(), message.size(), &response))
+            return false;
+
+        if(!scd->data->rtspSession.handleResponse(response))
+            return false;
+    }
 
     return true;
 }
@@ -162,7 +171,7 @@ static int WsCallback(
         }
         case LWS_CALLBACK_RECEIVE: {
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
-                lwsl_notice("%.*s\n", static_cast<int>(scd->data->incomingMessage.size()), scd->data->incomingMessage.data());
+                lwsl_notice("-> Signalling: %.*s\n", static_cast<int>(scd->data->incomingMessage.size()), scd->data->incomingMessage.data());
 
                 if(!OnMessage(cd, scd, scd->data->incomingMessage))
                     return -1;

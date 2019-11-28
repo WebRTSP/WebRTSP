@@ -23,23 +23,6 @@ CSeq ClientSession::requestDescribe(const std::string& uri) noexcept
     return request.cseq;
 }
 
-CSeq ClientSession::requestSetup(
-    const std::string& uri,
-    const std::string& sdp,
-    const rtsp::SessionId& session) noexcept
-{
-    rtsp::Request& request =
-        *createRequest(rtsp::Method::SETUP, uri);
-
-    request.headerFields.emplace("Session", session);
-
-    request.body = sdp;
-
-    sendRequest(request);
-
-    return request.cseq;
-}
-
 CSeq ClientSession::requestPlay(
     const std::string& uri,
     const rtsp::SessionId& session) noexcept

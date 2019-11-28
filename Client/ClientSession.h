@@ -27,6 +27,8 @@ private:
     bool onTeardownResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept override;
 
+    bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+
 private:
     struct Private;
     std::unique_ptr<Private> _p;

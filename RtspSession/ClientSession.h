@@ -23,10 +23,6 @@ protected:
 
     CSeq requestOptions(const std::string& uri) noexcept;
     CSeq requestDescribe(const std::string& uri) noexcept;
-    CSeq requestSetup(
-        const std::string& uri,
-        const std::string& sdp,
-        const rtsp::SessionId&) noexcept;
     CSeq requestPlay(const std::string& uri, const rtsp::SessionId&) noexcept;
     CSeq requestTeardown(const std::string& uri, const rtsp::SessionId&) noexcept;
 

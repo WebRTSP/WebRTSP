@@ -13,7 +13,7 @@ public:
         const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
     ~ServerSession();
 
-protected:
+private:
     bool handleOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool handleDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;

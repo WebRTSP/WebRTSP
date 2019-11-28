@@ -46,6 +46,16 @@ Request* Session::createRequest(
     return request;
 }
 
+bool Session::handleRequest(std::unique_ptr<Request>& requestPtr) noexcept
+{
+    switch(requestPtr->method) {
+    case rtsp::Method::SETUP:
+        return handleSetupRequest(requestPtr);
+    default:
+        return false;
+    }
+}
+
 Response* Session::prepareResponse(
     CSeq cseq,
     StatusCode statusCode,
@@ -83,6 +93,25 @@ void Session::sendOkResponse(
 void Session::sendRequest(const Request& request) noexcept
 {
     _sendRequest(&request);
+}
+
+CSeq Session::requestSetup(
+    const std::string& uri,
+    const std::string& contentType,
+    const rtsp::SessionId& session,
+    const std::string& body) noexcept
+{
+    rtsp::Request& request =
+        *createRequest(rtsp::Method::SETUP, uri);
+
+    request.headerFields.emplace("Session", session);
+    request.headerFields.emplace("content-type", contentType);
+
+    request.body = body;
+
+    sendRequest(request);
+
+    return request.cseq;
 }
 
 void Session::sendResponse(const Response& response) noexcept
