@@ -5,6 +5,8 @@ project(HtmlClient)
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.html
     *.js
+    *.mjs
+    *.json
     *.cmake)
 
 add_custom_target(${PROJECT_NAME} SOURCES ${SOURCES})
