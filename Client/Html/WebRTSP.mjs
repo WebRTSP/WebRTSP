@@ -1,26 +1,25 @@
-
 function onSocketOpen()
 {
     console.log("onSocketOpen");
     this._socket.send(
         "OPTIONS * WEBRTSP/0.1\r\n" +
         "CSeq: 1\r\n");
-};
+}
 
 function onSocketClose(event)
 {
     console.log(event.code, event.reason);
-};
+}
 
 function onSocketError(error)
 {
     console.log(error.message);
-};
+}
 
 function onSocketMessage(event)
 {
     console.log(event.data);
-};
+}
 
 function connect(url)
 {
