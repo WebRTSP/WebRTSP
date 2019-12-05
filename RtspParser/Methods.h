@@ -14,7 +14,7 @@ enum class Method {
     // ANNOUNCE,
     SETUP,
     PLAY,
-    PAUSE,
+//     PAUSE,
     TEARDOWN,
     GET_PARAMETER,
     SET_PARAMETER,
