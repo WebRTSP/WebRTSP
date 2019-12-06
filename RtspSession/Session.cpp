@@ -57,9 +57,9 @@ bool Session::handleRequest(std::unique_ptr<Request>& requestPtr) noexcept
 }
 
 Response* Session::prepareResponse(
-    CSeq cseq,
     StatusCode statusCode,
     const std::string::value_type* reasonPhrase,
+    CSeq cseq,
     const SessionId& session,
     Response* out)
 {
@@ -69,7 +69,7 @@ Response* Session::prepareResponse(
     out->reasonPhrase = reasonPhrase;
 
     if(!session.empty())
-        out->headerFields.emplace("session", session);
+        out->headerFields.emplace("Session", session);
 
     return out;
 }
@@ -79,7 +79,7 @@ Response* Session::prepareOkResponse(
     const SessionId& session,
     Response* out)
 {
-    return prepareResponse(cseq, OK, "OK", session, out);
+    return prepareResponse(OK, "OK", cseq, session, out);
 }
 
 void Session::sendOkResponse(

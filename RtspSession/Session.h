@@ -34,9 +34,9 @@ protected:
         const std::string& session) noexcept;
 
     static Response* prepareResponse(
-        CSeq cseq,
         StatusCode statusCode,
         const std::string::value_type* reasonPhrase,
+        CSeq cseq,
         const SessionId& session,
         Response* out);
     static Response* prepareOkResponse(
