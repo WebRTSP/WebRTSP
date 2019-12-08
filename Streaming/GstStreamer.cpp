@@ -50,7 +50,7 @@ void GstStreamer::Private::prepare()
 {
     const char* pipelineDesc =
 #if 1
-        "videotestsrc pattern=smpte100 ! "
+        "videotestsrc ! "
         "x264enc ! video/x-h264, profile=baseline ! rtph264pay pt=96 ! "
         "webrtcbin name=srcrtcbin";
 #else
