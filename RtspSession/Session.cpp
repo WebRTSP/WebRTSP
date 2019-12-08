@@ -134,4 +134,22 @@ bool Session::handleResponse(const Response& response) noexcept
     return handleResponse(request, response);
 }
 
+bool Session::handleResponse(const Request& request, const Response& response) noexcept
+{
+    switch(request.method) {
+    case rtsp::Method::SETUP:
+        return handleSetupResponse(request, response);
+    default:
+        return false;
+    }
+}
+
+bool Session::handleSetupResponse(const Request& request, const Response& response) noexcept
+{
+    if(StatusCode::OK == response.statusCode)
+        return true;
+
+    return false;
+}
+
 }

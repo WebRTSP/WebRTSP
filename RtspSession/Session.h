@@ -58,8 +58,8 @@ protected:
     virtual bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept
         { return false; }
 
-    virtual bool handleResponse(const Request&, const Response&) noexcept
-        { return false; }
+    virtual bool handleResponse(const Request&, const Response&) noexcept;
+    virtual bool handleSetupResponse(const Request&, const Response&) noexcept;
 
 private:
     const std::function<void (const Request*)> _sendRequest;
