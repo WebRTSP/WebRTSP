@@ -353,6 +353,12 @@ export function ParseRequest(buffer)
 
     request.headerFields.delete("cseq");
 
+    const sessionValue = request.headerFields.get("session");
+    if(sessionValue) {
+        request.session = sessionValue;
+        request.headerFields.delete("session");
+    }
+
     return request;
 }
 
@@ -456,6 +462,12 @@ export function ParseResponse(buffer)
         return undefined;
 
     response.headerFields.delete("cseq");
+
+    const sessionValue = response.headerFields.get("session");
+    if(sessionValue) {
+        response.session = sessionValue;
+        response.headerFields.delete("session");
+    }
 
     return response;
 }

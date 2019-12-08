@@ -5,6 +5,7 @@ export default class Request
         this.uri = null;
         this.protocol = null;
         this.cseq = null;
+        this.session = null;
 
         this.headerFields = new Map();
 

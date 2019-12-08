@@ -5,6 +5,7 @@ export default class Response
         this.statusCode = null;
         this.reasonPhrase = null;
         this.cseq = null;
+        this.session = null;
 
         this.headerFields = new Map();
 

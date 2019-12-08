@@ -24,6 +24,12 @@ export function SerializeRequest(request)
     out += request.cseq.toString();
     out += "\r\n";
 
+    if(request.session) {
+        out += "Session: ";
+        out += request.session;
+        out += "\r\n";
+    }
+
     for(let [key, value] of request.headerFields) {
         out += key;
         out += ": ";
@@ -51,6 +57,12 @@ export function SerializeResponse(response)
     out += "CSeq: ";
     out += response.cseq.toString();
     out += "\r\n";
+
+    if(response.session) {
+        out += "Session: ";
+        out += response.session;
+        out += "\r\n";
+    }
 
     for(let [key, value] of response.headerFields) {
         out += key;
