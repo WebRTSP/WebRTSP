@@ -471,3 +471,19 @@ export function ParseResponse(buffer)
 
     return response;
 }
+
+export function IsRequest(buffer)
+{
+    let parseBuffer = new ParseBuffer(buffer);
+    let request = new Request;
+
+    const methodToken = GetToken(parseBuffer);
+    if(!methodToken)
+        return false;
+
+    request.method = Method.Parse(methodToken);
+    if(!request.method)
+        return false;
+
+    return true;
+}
