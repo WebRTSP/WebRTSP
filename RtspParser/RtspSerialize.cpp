@@ -48,7 +48,6 @@ void Serialize(const Request& request, std::string* out) noexcept
         if(!request.body.empty()) {
             *out +="\r\n";
             *out += request.body;
-            *out += "\r\n";
         }
     } catch(...) {
         out->clear();
@@ -86,7 +85,6 @@ void Serialize(const Response& response, std::string* out) noexcept
         if(!response.body.empty()) {
             *out +="\r\n";
             *out += response.body;
-            *out += "\r\n";
         }
     } catch(...) {
         out->clear();
