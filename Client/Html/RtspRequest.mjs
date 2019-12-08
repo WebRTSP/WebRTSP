@@ -1,9 +1,9 @@
 export default class Request
 {
     constructor() {
+        this.method = null;
+        this.uri = null;
         this.protocol = null;
-        this.statusCode = null;
-        this.reasonPhrase = null;
         this.cseq = null;
 
         this.headerFields = new Map();
