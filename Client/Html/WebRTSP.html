@@ -7,12 +7,15 @@
       let webrtsp = null;
 
       async function onLoad() {
-        let WebRTSP = await import("./WebRTSP.js");
-        webrtsp = new WebRTSP.WebRTSP();
+        let WebRTSP = await import("./WebRTSP.mjs");
+        const videoElement =
+          document.querySelector("#video");
+        webrtsp = new WebRTSP.WebRTSP(videoElement);
         webrtsp.connect("ws://localhost:8081/");
       }
     </script>
   </head>
   <body onload="onLoad()">
+    <video id="video" widht="200" height="200" autoplay="true" muted="muted"> </video>
   </body>
 </html>
