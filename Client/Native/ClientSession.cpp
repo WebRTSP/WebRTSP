@@ -68,7 +68,7 @@ bool ClientSession::onOptionsResponse(
     if(rtsp::StatusCode::OK != response.statusCode)
         return false;
 
-    requestDescribe("http://example.com/");
+    requestDescribe(_p->uri);
 
     return true;
 }
