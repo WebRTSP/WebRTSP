@@ -5,7 +5,7 @@
 
 #include "Signalling/Signalling.h"
 
-#include "Client/Native/Client.h"
+#include "Client/Client.h"
 
 #define ENABLE_CLIENT 0
 
