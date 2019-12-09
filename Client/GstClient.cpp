@@ -109,7 +109,7 @@ void GstClient::Private::prepare()
 #if 1
                 "rtph264depay ! avdec_h264 ! "
 #else
-                "rtpvp8depay ! "vp8dec ! "
+                "rtpvp8depay ! vp8dec ! "
 #endif
                 "videoconvert ! queue ! "
                 "autovideosink", TRUE, NULL);
