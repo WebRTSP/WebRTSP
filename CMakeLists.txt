@@ -4,7 +4,7 @@ project(WebRTSP)
 
 if(CMAKE_COMPILER_IS_GNUCC)
     add_definitions(-Wall)
-endif(CMAKE_COMPILER_IS_GNUCC)
+endif()
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
