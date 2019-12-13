@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.0)
 project(WebRTSP)
 
 option(BUILD_TEST "Build test application" ON)
+option(BUILD_BASIC_SERVER "Build basic server application" ON)
+
 if(CMAKE_COMPILER_IS_GNUCC)
     add_definitions(-Wall)
 endif()
@@ -28,6 +30,10 @@ add_subdirectory(Client)
 
 if(BUILD_TEST)
     add_subdirectory(Test)
+endif()
+
+if(BUILD_BASIC_SERVER)
+    add_subdirectory(Apps/BasicServer)
 endif()
 
 #get_cmake_property(_variableNames VARIABLES)
