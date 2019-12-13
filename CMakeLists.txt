@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project(WebRTSP)
 
+option(BUILD_TEST "Build test application" ON)
 if(CMAKE_COMPILER_IS_GNUCC)
     add_definitions(-Wall)
 endif()
@@ -24,7 +25,10 @@ add_subdirectory(RtspSession)
 add_subdirectory(Signalling)
 add_subdirectory(Streaming)
 add_subdirectory(Client)
-add_subdirectory(Test)
+
+if(BUILD_TEST)
+    add_subdirectory(Test)
+endif()
 
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})
