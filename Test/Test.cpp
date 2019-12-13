@@ -1,13 +1,22 @@
 #include <thread>
 
+#include <CxxPtr/GlibPtr.h>
+
+#include "Client/Client.h"
+#include "Signalling/WsServer.h"
+#include "Signalling/ServerSession.h"
+
 #include "TestParse.h"
 #include "TestSerialize.h"
 
-#include "Signalling/Signalling.h"
+#define ENABLE_CLIENT 1
 
-#include "Client/Client.h"
-
-#define ENABLE_CLIENT 0
+static std::unique_ptr<rtsp::ServerSession> CreateSession (
+    const std::function<void (const rtsp::Request*)>& sendRequest,
+    const std::function<void (const rtsp::Response*)>& sendResponse) noexcept
+{
+    return std::make_unique<ServerSession>(sendRequest, sendResponse);
+}
 
 int main(int argc, char *argv[])
 {
@@ -23,7 +32,13 @@ int main(int argc, char *argv[])
             signalling::Config config {};
             config.port = SERVER_PORT;
 
-            signalling::Signalling(&config);
+            GMainLoopPtr loopPtr(g_main_loop_new(nullptr, FALSE));
+            GMainLoop* loop = loopPtr.get();
+
+            signalling::WsServer server(config, loop, CreateSession);
+
+            if(server.init())
+                g_main_loop_run(loop);
         });
 
 #if ENABLE_CLIENT
