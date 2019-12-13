@@ -13,10 +13,11 @@ namespace rtsp {
 
 struct ClientSession : public Session
 {
-    using Session::Session;
     using Session::handleResponse;
 
 protected:
+    using Session::Session;
+
     bool handleResponse(
         const rtsp::Request&,
         const rtsp::Response&) noexcept override;

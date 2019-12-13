@@ -13,11 +13,11 @@ namespace rtsp {
 
 struct ServerSession : public Session
 {
-    using Session::Session;
-
     bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 protected:
+    using Session::Session;
+
     virtual bool handleOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept;
     virtual bool handleDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept;
     virtual bool handlePlayRequest(std::unique_ptr<rtsp::Request>&) noexcept;

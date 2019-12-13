@@ -14,10 +14,6 @@ namespace rtsp {
 
 struct Session
 {
-    Session(
-        const std::function<void (const Request*)>& sendRequest,
-        const std::function<void (const Response*)>& sendResponse) noexcept;
-
     virtual void onConnected() noexcept {}
 
     virtual bool handleRequest(std::unique_ptr<Request>&) noexcept;
@@ -25,6 +21,10 @@ struct Session
     bool handleResponse(const Response&) noexcept;
 
 protected:
+    Session(
+        const std::function<void (const Request*)>& sendRequest,
+        const std::function<void (const Response*)>& sendResponse) noexcept;
+
     Request* createRequest(
         Method,
         const std::string& uri) noexcept;
