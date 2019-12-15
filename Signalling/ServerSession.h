@@ -1,14 +1,14 @@
 #pragma once
 
+#include "RtspSession/WebRTCPeer.h"
 #include "RtspSession/ServerSession.h"
-
-#include "Streaming/GstStreamer.h"
 
 
 class ServerSession: public rtsp::ServerSession
 {
 public:
     ServerSession(
+        const std::function<std::unique_ptr<WebRTCPeer> ()>& createPeer,
         const std::function<void (const rtsp::Request*)>& sendRequest,
         const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
     ~ServerSession();

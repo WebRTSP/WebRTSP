@@ -21,8 +21,8 @@ public:
             const std::function<void (const rtsp::Request*)>& sendRequest,
             const std::function<void (const rtsp::Response*)>& sendResponse) noexcept> CreateSession;
 
-    WsServer(const Config&, GMainLoop*, const CreateSession&);
-    bool init();
+    WsServer(const Config&, GMainLoop*, const CreateSession&) noexcept;
+    bool init() noexcept;
     ~WsServer();
 
 private:

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(Streaming)
+project(GstStreaming)
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GSTREAMER REQUIRED gstreamer-1.0)
@@ -17,11 +17,14 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC -DGST_USE_UNSTABLE_API)
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${GSTREAMER_INCLUDE_DIRS}
     ${GSTREAMER_SDP_INCLUDE_DIRS}
-    ${GSTREAMER_WEBRTC_INCLUDE_DIRS})
+    ${GSTREAMER_WEBRTC_INCLUDE_DIRS}
+    ${WS_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}
     ${GSTREAMER_LDFLAGS}
     ${GSTREAMER_SDP_LDFLAGS}
-    ${GSTREAMER_WEBRTC_LDFLAGS})
+    ${GSTREAMER_WEBRTC_LDFLAGS}
+    RtspSession
+    Common)
 
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})

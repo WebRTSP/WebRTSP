@@ -1,17 +1,16 @@
-#include "WsServer.h"
+#include "WsClient.h"
 
 #include <deque>
 
-#include <CxxPtr/libwebsocketsPtr.h>
+#include "CxxPtr/libwebsocketsPtr.h"
 
-#include "Common/LwsSource.h"
 #include "Common/MessageBuffer.h"
+#include "Common/LwsSource.h"
+#include "RtspParser/RtspSerialize.h"
+#include "RtspParser/RtspParser.h"
 
-#include <RtspParser/RtspParser.h>
-#include <RtspParser/RtspSerialize.h>
 
-
-namespace signalling {
+namespace client {
 
 namespace {
 
@@ -20,18 +19,21 @@ enum {
 };
 
 enum {
-    HTTP_PROTOCOL_ID,
     PROTOCOL_ID,
-    HTTPS_PROTOCOL_ID,
-    SECURE_PROTOCOL_ID,
 };
+
+#if LWS_LIBRARY_VERSION_MAJOR < 3
+enum {
+    LWS_CALLBACK_CLIENT_CLOSED = LWS_CALLBACK_CLOSED
+};
+#endif
 
 struct SessionData
 {
     bool terminateSession = false;
     MessageBuffer incomingMessage;
     std::deque<MessageBuffer> sendMessages;
-    std::unique_ptr<rtsp::ServerSession> rtspSession;
+    std::unique_ptr<rtsp::ClientSession > rtspSession;
 };
 
 // Should contain only POD types,
@@ -44,10 +46,14 @@ struct SessionContextData
 
 }
 
-
-struct WsServer::Private
+struct WsClient::Private
 {
-    Private(WsServer*, const Config&, GMainLoop*, const WsServer::CreateSession&);
+    Private(
+        WsClient*,
+        const Config&,
+        GMainLoop*,
+        const CreateSession&,
+        const Disconnected&);
 
     bool init();
     int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len);
@@ -58,54 +64,50 @@ struct WsServer::Private
     void sendRequest(SessionContextData*, const rtsp::Request*);
     void sendResponse(SessionContextData*, const rtsp::Response*);
 
-    WsServer *const owner;
+    void connect();
+    bool onConnected(SessionContextData* scd);
+
+
+    WsClient *const owner;
     Config config;
-    GMainLoop* loop;
+    GMainLoop* loop = nullptr;
     CreateSession createSession;
+    Disconnected disconnected;
 
     LwsSourcePtr lwsSourcePtr;
     LwsContextPtr contextPtr;
+
+    lws* connection = nullptr;
+    bool connected = false;
 };
 
-WsServer::Private::Private(
-    WsServer* owner,
+WsClient::Private::Private(
+    WsClient* owner,
     const Config& config,
     GMainLoop* loop,
-    const WsServer::CreateSession& createSession) :
-    owner(owner), config(config), loop(loop), createSession(createSession)
+    const WsClient::CreateSession& createSession,
+    const Disconnected& disconnected) :
+    owner(owner), config(config), loop(loop),
+    createSession(createSession), disconnected(disconnected)
 {
 }
 
-int WsServer::Private::httpCallback(
-    lws* wsi,
-    lws_callback_reasons reason,
-    void* user, void* in, size_t len)
-{
-    switch(reason) {
-        case LWS_CALLBACK_ADD_POLL_FD:
-        case LWS_CALLBACK_DEL_POLL_FD:
-        case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
-            return LwsSourceCallback(lwsSourcePtr, wsi, reason, in, len);
-        default:
-            return lws_callback_http_dummy(wsi, reason, user, in, len);
-    }
-
-    return 0;
-}
-
-int WsServer::Private::wsCallback(
+int WsClient::Private::wsCallback(
     lws* wsi,
     lws_callback_reasons reason,
     void* user,
     void* in, size_t len)
 {
     SessionContextData* scd = static_cast<SessionContextData*>(user);
+    switch(reason) {
+        case LWS_CALLBACK_ADD_POLL_FD:
+        case LWS_CALLBACK_DEL_POLL_FD:
+        case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
+            return LwsSourceCallback(lwsSourcePtr, wsi, reason, in, len);
+        case LWS_CALLBACK_CLIENT_ESTABLISHED: {
+            lwsl_notice("Connection to server established\n");
 
-    switch (reason) {
-        case LWS_CALLBACK_PROTOCOL_INIT:
-            break;
-        case LWS_CALLBACK_ESTABLISHED: {
-            std::unique_ptr<rtsp::ServerSession> session =
+            std::unique_ptr<rtsp::ClientSession> session =
                 createSession(
                     std::bind(&Private::sendRequest, this, scd, std::placeholders::_1),
                     std::bind(&Private::sendResponse, this, scd, std::placeholders::_1));
@@ -118,14 +120,17 @@ int WsServer::Private::wsCallback(
                     .sendMessages = {},
                     .rtspSession = std::move(session)};
             scd->wsi = wsi;
+
+            connected = true;
+
+            if(!onConnected(scd))
+                return -1;
+
             break;
         }
-        case LWS_CALLBACK_RECEIVE: {
+        case LWS_CALLBACK_CLIENT_RECEIVE:
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
-                lwsl_notice(
-                    "-> Signalling: %.*s\n",
-                    static_cast<int>(scd->data->incomingMessage.size()),
-                    scd->data->incomingMessage.data());
+                lwsl_notice("-> Client: %.*s\n", static_cast<int>(scd->data->incomingMessage.size()), scd->data->incomingMessage.data());
 
                 if(!onMessage(scd, scd->data->incomingMessage))
                     return -1;
@@ -134,15 +139,14 @@ int WsServer::Private::wsCallback(
             }
 
             break;
-        }
-        case LWS_CALLBACK_SERVER_WRITEABLE: {
+        case LWS_CALLBACK_CLIENT_WRITEABLE:
             if(scd->data->terminateSession)
                 return -1;
 
             if(!scd->data->sendMessages.empty()) {
                 MessageBuffer& buffer = scd->data->sendMessages.front();
                 if(!buffer.writeAsText(wsi)) {
-                    lwsl_err("write failed\n");
+                    lwsl_err("Write failed\n");
                     return -1;
                 }
 
@@ -153,15 +157,32 @@ int WsServer::Private::wsCallback(
             }
 
             break;
-        }
-        case LWS_CALLBACK_CLOSED: {
-            delete scd->data;
-            scd->data = nullptr;
+        case LWS_CALLBACK_CLIENT_CLOSED:
+            lwsl_notice("Connection to server is closed\n");
 
-            scd->wsi = nullptr;
+            delete scd->data;
+            scd = nullptr;
+
+            connection = nullptr;
+            connected = false;
+
+            if(disconnected)
+                disconnected();
 
             break;
-        }
+        case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
+            lwsl_err("Can not connect to server\n");
+
+            delete scd->data;
+            scd = nullptr;
+
+            connection = nullptr;
+            connected = false;
+
+            if(disconnected)
+                disconnected();
+
+            break;
         default:
             break;
     }
@@ -169,15 +190,8 @@ int WsServer::Private::wsCallback(
     return 0;
 }
 
-bool WsServer::Private::init()
+bool WsClient::Private::init()
 {
-    auto HttpCallback =
-        [] (lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) -> int {
-            lws_context* context = lws_get_context(wsi);
-            Private* p = static_cast<Private*>(lws_context_user(context));
-
-            return p->httpCallback(wsi, reason, user, in, len);
-        };
     auto WsCallback =
         [] (lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) -> int {
             lws_context* context = lws_get_context(wsi);
@@ -186,8 +200,7 @@ bool WsServer::Private::init()
             return p->wsCallback(wsi, reason, user, in, len);
         };
 
-    const lws_protocols protocols[] = {
-        { "http", HttpCallback, 0, 0, HTTP_PROTOCOL_ID },
+    static const lws_protocols protocols[] = {
         {
             "webrtsp",
             WsCallback,
@@ -196,26 +209,15 @@ bool WsServer::Private::init()
             PROTOCOL_ID,
             nullptr
         },
-        { nullptr, nullptr, 0, 0 }
-    };
-
-    const lws_protocols secureProtocols[] = {
-        { "http", HttpCallback, 0, 0, HTTPS_PROTOCOL_ID },
-        {
-            "webrtsp",
-            WsCallback,
-            sizeof(SessionContextData),
-            RX_BUFFER_SIZE,
-            SECURE_PROTOCOL_ID,
-            nullptr
-        },
-        { nullptr, nullptr, 0, 0 }
+        { nullptr, nullptr, 0, 0, 0, nullptr } /* terminator */
     };
 
     lws_context_creation_info wsInfo {};
     wsInfo.gid = -1;
     wsInfo.uid = -1;
-    wsInfo.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
+    wsInfo.port = CONTEXT_PORT_NO_LISTEN;
+    wsInfo.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+    wsInfo.protocols = protocols;
     wsInfo.user = this;
 
     contextPtr.reset(lws_create_context(&wsInfo));
@@ -227,36 +229,45 @@ bool WsServer::Private::init()
     if(!lwsSourcePtr)
         return false;
 
-    if(config.port != 0) {
-        lws_context_creation_info vhostInfo {};
-        vhostInfo.port = config.port;
-        vhostInfo.protocols = protocols;
+    return true;
+}
 
-        lws_vhost* vhost = lws_create_vhost(context, &vhostInfo);
-        if(!vhost)
-             return false;
+void WsClient::Private::connect()
+{
+    if(connection)
+        return;
+
+    if(config.server.empty() || !config.serverPort) {
+        lwsl_err("Missing required connect parameter.\n");
+        return;
     }
 
-    if(!config.serverName.empty() && config.securePort != 0 &&
-        !config.certificate.empty() && !config.key.empty())
-    {
-        lws_context_creation_info secureVhostInfo {};
-        secureVhostInfo.port = config.securePort;
-        secureVhostInfo.protocols = secureProtocols;
-        secureVhostInfo.ssl_cert_filepath = config.certificate.c_str();
-        secureVhostInfo.ssl_private_key_filepath = config.key.c_str();
-        secureVhostInfo.vhost_name = config.serverName.c_str();
-        secureVhostInfo.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+    char hostAndPort[config.server.size() + 1 + 5 + 1];
+    snprintf(hostAndPort, sizeof(hostAndPort), "%s:%u",
+        config.server.c_str(), config.serverPort);
 
-        lws_vhost* secureVhost = lws_create_vhost(context, &secureVhostInfo);
-        if(!secureVhost)
-             return false;
-    }
+    lwsl_notice("Connecting to %s... \n", hostAndPort);
+
+    struct lws_client_connect_info connectInfo = {};
+    connectInfo.context = contextPtr.get();
+    connectInfo.address = config.server.c_str();
+    connectInfo.port = config.serverPort;
+    connectInfo.path = "/";
+    connectInfo.protocol = "webrtsp";
+    connectInfo.host = hostAndPort;
+
+    connection = lws_client_connect_via_info(&connectInfo);
+    connected = false;
+}
+
+bool WsClient::Private::onConnected(SessionContextData* scd)
+{
+    scd->data->rtspSession->onConnected();
 
     return true;
 }
 
-bool WsServer::Private::onMessage(
+bool WsClient::Private::onMessage(
     SessionContextData* scd,
     const MessageBuffer& message)
 {
@@ -280,14 +291,14 @@ bool WsServer::Private::onMessage(
     return true;
 }
 
-void WsServer::Private::send(SessionContextData* scd, MessageBuffer* message)
+void WsClient::Private::send(SessionContextData* scd, MessageBuffer* message)
 {
     scd->data->sendMessages.emplace_back(std::move(*message));
 
     lws_callback_on_writable(scd->wsi);
 }
 
-void WsServer::Private::sendRequest(
+void WsClient::Private::sendRequest(
     SessionContextData* scd,
     const rtsp::Request* request)
 {
@@ -309,7 +320,7 @@ void WsServer::Private::sendRequest(
     send(scd, &requestMessage);
 }
 
-void WsServer::Private::sendResponse(
+void WsClient::Private::sendResponse(
     SessionContextData* scd,
     const rtsp::Response* response)
 {
@@ -331,21 +342,27 @@ void WsServer::Private::sendResponse(
     send(scd, &responseMessage);
 }
 
-WsServer::WsServer(
+WsClient::WsClient(
     const Config& config,
     GMainLoop* loop,
-    const CreateSession& createSession) noexcept :
-    _p(std::make_unique<Private>(this, config, loop, createSession))
+    const CreateSession& createSession,
+    const Disconnected& disconnected) noexcept:
+    _p(std::make_unique<Private>(this, config, loop, createSession, disconnected))
 {
 }
 
-WsServer::~WsServer()
+WsClient::~WsClient()
 {
 }
 
-bool WsServer::init() noexcept
+bool WsClient::init() noexcept
 {
     return _p->init();
+}
+
+void WsClient::connect() noexcept
+{
+    _p->connect();
 }
 
 }

@@ -3,8 +3,10 @@
 #include <memory>
 #include <functional>
 
+#include "RtspSession/WebRTCPeer.h"
 
-class GstClient
+
+class GstClient : public WebRTCPeer
 {
 public:
     GstClient();
@@ -15,13 +17,15 @@ public:
         void (unsigned mlineIndex, const std::string& candidate)> IceCandidateCallback;
     void prepare(
         const PreparedCallback&,
-        const IceCandidateCallback&) noexcept;
-    bool sdp(std::string* sdp) noexcept;
+        const IceCandidateCallback&) noexcept override;
+    bool sdp(std::string* sdp) noexcept override;
 
-    void setRemoteSdp(const std::string& sdp) noexcept;
-    void addIceCandidate(unsigned mlineIndex, const std::string& candidate);
+    void setRemoteSdp(const std::string& sdp) noexcept override;
+    void addIceCandidate(
+        unsigned mlineIndex,
+        const std::string& candidate) noexcept override;
 
-    void play() noexcept;
+    void play() noexcept override;
 
 private:
     void eos(bool error);

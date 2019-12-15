@@ -5,11 +5,15 @@
 
 struct ClientSession::Private
 {
+    Private(
+        ClientSession* owner,
+        std::function<std::unique_ptr<WebRTCPeer> ()> createPeer);
+
     ClientSession* owner;
 
     const std::string uri = "http://example.com/";
 
-    GstClient gstClient;
+    std::unique_ptr<WebRTCPeer> client;
     std::string remoteSdp;
     rtsp::SessionId session;
 
@@ -17,10 +21,17 @@ struct ClientSession::Private
     void iceCandidate(unsigned, const std::string&);
 };
 
+ClientSession::Private::Private(
+    ClientSession* owner,
+    std::function<std::unique_ptr<WebRTCPeer> ()> createPeer) :
+    owner(owner), client(createPeer())
+{
+}
+
 void ClientSession::Private::streamerPrepared()
 {
     std::string sdp;
-    gstClient.sdp(&sdp);
+    client->sdp(&sdp);
     if(sdp.empty()) {
         owner->disconnect();
         return;
@@ -50,10 +61,11 @@ void ClientSession::onConnected() noexcept
 }
 
 ClientSession::ClientSession(
+    const std::function<std::unique_ptr<WebRTCPeer> ()>& createPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
     rtsp::ClientSession(sendRequest, sendResponse),
-    _p(new Private { .owner = this })
+    _p(new Private(this, createPeer))
 {
 }
 
@@ -84,7 +96,7 @@ bool ClientSession::onDescribeResponse(
     if(_p->session.empty())
         return false;
 
-    _p->gstClient.prepare(
+    _p->client->prepare(
         std::bind(
             &ClientSession::Private::streamerPrepared,
             _p.get()),
@@ -98,7 +110,7 @@ bool ClientSession::onDescribeResponse(
     if(_p->remoteSdp.empty())
         return false;
 
-    _p->gstClient.setRemoteSdp(_p->remoteSdp);
+    _p->client->setRemoteSdp(_p->remoteSdp);
 
     return true;
 }
@@ -129,7 +141,7 @@ bool ClientSession::onPlayResponse(
     if(ResponseSession(response) != _p->session)
         return false;
 
-    _p->gstClient.play();
+    _p->client->play();
 
     return true;
 }
@@ -176,7 +188,7 @@ bool ClientSession::handleSetupRequest(std::unique_ptr<rtsp::Request>& requestPt
         if(candidate == "a=end-of-candidates")
             ;
         else
-            _p->gstClient.addIceCandidate(idx, candidate);
+            _p->client->addIceCandidate(idx, candidate);
 
         return true;
     } catch(...) {

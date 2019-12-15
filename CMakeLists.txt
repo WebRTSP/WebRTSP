@@ -24,8 +24,8 @@ add_subdirectory(Common)
 
 add_subdirectory(RtspParser)
 add_subdirectory(RtspSession)
+add_subdirectory(GstStreaming)
 add_subdirectory(Signalling)
-add_subdirectory(Streaming)
 add_subdirectory(Client)
 
 if(BUILD_TEST)

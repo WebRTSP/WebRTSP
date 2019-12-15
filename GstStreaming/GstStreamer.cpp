@@ -1,6 +1,4 @@
-#include "GstClient.h"
-
-#include <deque>
+#include "GstStreamer.h"
 
 #include <gst/gst.h>
 
@@ -8,21 +6,17 @@
 #include <CxxPtr/GstPtr.h>
 
 
-namespace {
-
 struct LibGst
 {
     LibGst() { gst_init(0, 0); }
     ~LibGst() { gst_deinit(); }
 };
 
-static std::unique_ptr<LibGst> libGst;
+std::unique_ptr<LibGst> libGst;
 
-}
-
-struct GstClient::Private
+struct GstStreamer::Private
 {
-    GstClient*const owner;
+    GstStreamer *const owner;
 
     PreparedCallback prepared;
     IceCandidateCallback iceCandidate;
@@ -39,8 +33,9 @@ struct GstClient::Private
 
     void prepare();
     gboolean onBusMessage(GstBus*, GstMessage*);
+    void onNegotiationNeeded(GstElement* rtcbin);
     void onIceGatheringStateChanged(GstElement* rtcbin);
-    void onAnswerCreated(GstPromise*);
+    void onOfferCreated(GstPromise*);
     void onIceCandidate(
         GstElement* rtcbin,
         guint candidate,
@@ -49,33 +44,35 @@ struct GstClient::Private
     void setState(GstState);
 };
 
-void GstClient::Private::prepare()
+void GstStreamer::Private::prepare()
 {
-    pipelinePtr.reset(gst_pipeline_new("Client Pipeline"));
+    const char* pipelineDesc =
+#if 1
+        "videotestsrc ! "
+        "x264enc ! video/x-h264, profile=baseline ! rtph264pay pt=96 ! "
+        "webrtcbin name=srcrtcbin";
+#else
+        "videotestsrc pattern=ball ! "
+        "vp8enc ! rtpvp8pay pt=96 ! "
+        "webrtcbin name=srcrtcbin"
+#endif
+      ;
+
+    GError* parseError = nullptr;
+    pipelinePtr.reset(gst_parse_launch(pipelineDesc, &parseError));
+    GErrorPtr parseErrorPtr(parseError);
+    if(parseError) {
+        return;
+    }
     GstElement* pipeline = pipelinePtr.get();
-
-    rtcbinPtr.reset(
-        gst_element_factory_make("webrtcbin", "clientrtcbin"));
-    GstElement* rtcbin = rtcbinPtr.get();
-
-    gst_bin_add_many(GST_BIN(pipeline), rtcbin, NULL);
-    gst_object_ref(rtcbin);
-
-    GstCapsPtr capsPtr(gst_caps_from_string("application/x-rtp, media=video"));
-    GstWebRTCRTPTransceiver* recvonlyTransceiver = nullptr;
-    g_signal_emit_by_name(
-        rtcbin, "add-transceiver",
-        GST_WEBRTC_RTP_TRANSCEIVER_DIRECTION_RECVONLY, capsPtr.get(),
-        &recvonlyTransceiver);
-    GstWebRTCRTPTransceiverPtr recvonlyTransceiverPtr(recvonlyTransceiver);
 
     auto onBusMessageCallback =
         (gboolean (*) (GstBus*, GstMessage*, gpointer))
         [] (GstBus* bus, GstMessage* message, gpointer userData) -> gboolean
-    {
-        Private* self = static_cast<Private*>(userData);
-        return self->onBusMessage(bus, message);
-    };
+        {
+            Private* self = static_cast<Private*>(userData);
+            return self->onBusMessage(bus, message);
+        };
 
     busPtr.reset(gst_pipeline_get_bus(GST_PIPELINE(pipeline)));
     GstBus* bus = busPtr.get();
@@ -83,50 +80,55 @@ void GstClient::Private::prepare()
     busWatchId =
         gst_bus_add_watch(bus, onBusMessageCallback, this);
 
+    rtcbinPtr.reset(
+        gst_bin_get_by_name(GST_BIN(pipeline), "srcrtcbin"));
+    GstElement* rtcbin = rtcbinPtr.get();
+
+    auto onNegotiationNeededCallback =
+        (void (*) (GstElement*, gpointer))
+        [] (GstElement* rtcbin, gpointer userData)
+        {
+            Private* self = static_cast<Private*>(userData);
+            return self->onNegotiationNeeded(rtcbin);
+        };
+    g_signal_connect(rtcbin, "on-negotiation-needed",
+        G_CALLBACK(onNegotiationNeededCallback), this);
+
     auto onIceCandidateCallback =
         (void (*) (GstElement*, guint, gchar*, gpointer))
         [] (GstElement* rtcbin, guint candidate, gchar* arg2, gpointer userData)
-    {
-        Private* self = static_cast<Private*>(userData);
-        return self->onIceCandidate(rtcbin, candidate, arg2);
-    };
+        {
+            Private* self = static_cast<Private*>(userData);
+            return self->onIceCandidate(rtcbin, candidate, arg2);
+        };
     g_signal_connect(rtcbin, "on-ice-candidate",
         G_CALLBACK(onIceCandidateCallback), this);
 
     auto onPadAddedCallback =
         (void (*) (GstElement* webrtc, GstPad* pad, gpointer* userData))
-    [] (GstElement* webrtc, GstPad* pad, gpointer* userData)
-    {
-        GstPad *sink;
+        [] (GstElement* webrtc, GstPad* pad, gpointer* userData)
+        {
+            GstElement* pipeline = reinterpret_cast<GstElement*>(userData);
 
-        GstElement* pipeline = reinterpret_cast<GstElement*>(userData);
+            if(GST_PAD_DIRECTION(pad) != GST_PAD_SRC)
+                return;
 
-        if(GST_PAD_DIRECTION(pad) != GST_PAD_SRC)
-            return;
+            GstElement* out = gst_parse_bin_from_description("rtpvp8depay ! vp8dec ! "
+                "videoconvert ! queue ! xvimagesink", TRUE, NULL);
+            gst_bin_add(GST_BIN(pipeline), out);
+            gst_element_sync_state_with_parent(out);
 
-        GstElement* out =
-            gst_parse_bin_from_description(
-#if 1
-                "rtph264depay ! avdec_h264 ! "
-#else
-                "rtpvp8depay ! vp8dec ! "
-#endif
-                "videoconvert ! queue ! "
-                "autovideosink", TRUE, NULL);
-        gst_bin_add(GST_BIN(pipeline), out);
-        gst_element_sync_state_with_parent(out);
+            GstPad* sink = (GstPad*)out->sinkpads->data;
 
-        sink = (GstPad*)out->sinkpads->data;
-
-        gst_pad_link(pad, sink);
-    };
+            gst_pad_link(pad, sink);
+        };
     g_signal_connect(rtcbin, "pad-added",
         G_CALLBACK(onPadAddedCallback), pipeline);
 
     setState(GST_STATE_PAUSED);
 }
 
-gboolean GstClient::Private::onBusMessage(GstBus* bus, GstMessage* msg)
+gboolean GstStreamer::Private::onBusMessage(GstBus* bus, GstMessage* msg)
 {
     switch(GST_MESSAGE_TYPE(msg)) {
         case GST_MESSAGE_EOS:
@@ -151,7 +153,37 @@ gboolean GstClient::Private::onBusMessage(GstBus* bus, GstMessage* msg)
     return TRUE;
 }
 
-void GstClient::Private::onIceGatheringStateChanged(GstElement* rtcbin)
+void GstStreamer::Private::onNegotiationNeeded(GstElement* rtcbin)
+{
+    auto onIceGatheringStateChangedCallback =
+        (void (*) (GstElement*, GParamSpec* , gpointer))
+        [] (GstElement* rtcbin, GParamSpec* paramSpec, gpointer userData)
+    {
+        Private* self = static_cast<Private*>(userData);
+        return self->onIceGatheringStateChanged(rtcbin);
+    };
+    iceGatheringStateChangedHandlerId =
+        g_signal_connect(rtcbin,
+            "notify::ice-gathering-state",
+            G_CALLBACK(onIceGatheringStateChangedCallback), this);
+
+    auto onOfferCreatedCallback =
+        (void (*) (GstPromise*, gpointer))
+        [] (GstPromise* promise, gpointer userData)
+    {
+        Private* self = static_cast<Private*>(userData);
+        return self->onOfferCreated(promise);
+    };
+
+    GstPromise *promise =
+        gst_promise_new_with_change_func(
+            onOfferCreatedCallback,
+            this, nullptr);
+    g_signal_emit_by_name(
+        rtcbin, "create-offer", nullptr, promise);
+}
+
+void GstStreamer::Private::onIceGatheringStateChanged(GstElement* rtcbin)
 {
     GstWebRTCICEGatheringState state = GST_WEBRTC_ICE_GATHERING_STATE_NEW;
     g_object_get(rtcbin, "ice-gathering-state", &state, NULL);
@@ -164,13 +196,13 @@ void GstClient::Private::onIceGatheringStateChanged(GstElement* rtcbin)
     }
 }
 
-void GstClient::Private::onAnswerCreated(GstPromise* promise)
+void GstStreamer::Private::onOfferCreated(GstPromise* promise)
 {
     GstPromisePtr promisePtr(promise);
 
     const GstStructure* reply = gst_promise_get_reply(promise);
     GstWebRTCSessionDescription* sessionDescription = nullptr;
-    gst_structure_get(reply, "answer",
+    gst_structure_get(reply, "offer",
         GST_TYPE_WEBRTC_SESSION_DESCRIPTION,
         &sessionDescription, NULL);
     GstWebRTCSessionDescriptionPtr sessionDescriptionPtr(sessionDescription);
@@ -184,7 +216,7 @@ void GstClient::Private::onAnswerCreated(GstPromise* promise)
     prepared();
 }
 
-void GstClient::Private::onIceCandidate(
+void GstStreamer::Private::onIceCandidate(
     GstElement* rtcbin,
     guint candidate,
     gchar* arg2)
@@ -193,7 +225,7 @@ void GstClient::Private::onIceCandidate(
     iceCandidate(candidate, prefix + arg2);
 }
 
-void GstClient::Private::setState(GstState state)
+void GstStreamer::Private::setState(GstState state)
 {
     GstElement* pipeline = pipelinePtr.get();
     if(!pipeline) {
@@ -215,20 +247,20 @@ void GstClient::Private::setState(GstState state)
 }
 
 
-GstClient::GstClient() :
+GstStreamer::GstStreamer() :
     _p(new Private{ .owner = this })
 {
     if(!libGst)
         libGst = std::make_unique<LibGst>();
 }
 
-GstClient::~GstClient()
+GstStreamer::~GstStreamer()
 {
     if(_p->pipelinePtr)
         _p->setState(GST_STATE_NULL);
 }
 
-void GstClient::prepare(
+void GstStreamer::prepare(
     const PreparedCallback& prepared,
     const IceCandidateCallback& iceCandidate) noexcept
 {
@@ -238,7 +270,7 @@ void GstClient::prepare(
     _p->prepare();
 }
 
-bool GstClient::sdp(std::string* sdp) noexcept
+bool GstStreamer::sdp(std::string* sdp) noexcept
 {
     if(!sdp)
         return false;
@@ -251,21 +283,9 @@ bool GstClient::sdp(std::string* sdp) noexcept
     return true;
 }
 
-void GstClient::setRemoteSdp(const std::string& sdp) noexcept
+void GstStreamer::setRemoteSdp(const std::string& sdp) noexcept
 {
     GstElement* rtcbin = _p->rtcbinPtr.get();
-
-    auto onIceGatheringStateChangedCallback =
-        (void (*) (GstElement*, GParamSpec* , gpointer))
-        [] (GstElement* rtcbin, GParamSpec* paramSpec, gpointer userData)
-    {
-        Private* self = static_cast<Private*>(userData);
-        return self->onIceGatheringStateChanged(rtcbin);
-    };
-    _p->iceGatheringStateChangedHandlerId =
-        g_signal_connect(rtcbin,
-            "notify::ice-gathering-state",
-            G_CALLBACK(onIceGatheringStateChangedCallback), _p.get());
 
     GstSDPMessage* sdpMessage;
     gst_sdp_message_new_from_text(
@@ -275,44 +295,29 @@ void GstClient::setRemoteSdp(const std::string& sdp) noexcept
 
     GstWebRTCSessionDescriptionPtr sessionDescriptionPtr(
         gst_webrtc_session_description_new(
-            GST_WEBRTC_SDP_TYPE_OFFER,
+            GST_WEBRTC_SDP_TYPE_ANSWER,
             sdpMessagePtr.release()));
     GstWebRTCSessionDescription* sessionDescription =
         sessionDescriptionPtr.get();
 
-    g_signal_emit_by_name(_p->rtcbinPtr.get(),
+    g_signal_emit_by_name(rtcbin,
         "set-remote-description", sessionDescription, NULL);
-
-    auto onAnswerCreatedCallback =
-        (void (*) (GstPromise*, gpointer))
-        [] (GstPromise* promise, gpointer userData)
-    {
-        Private* self = static_cast<Private*>(userData);
-        return self->onAnswerCreated(promise);
-    };
-
-    GstPromise* promise =
-        gst_promise_new_with_change_func(
-            onAnswerCreatedCallback,
-            _p.get(), nullptr);
-    g_signal_emit_by_name(
-        _p->rtcbinPtr.get(), "create-answer", nullptr, promise);
 }
 
-void GstClient::addIceCandidate(
+void GstStreamer::addIceCandidate(
     unsigned mlineIndex,
-    const std::string& candidate)
+    const std::string& candidate) noexcept
 {
     GstElement* rtcbin = _p->rtcbinPtr.get();
 
     g_signal_emit_by_name(rtcbin, "add-ice-candidate", mlineIndex, candidate.data());
 }
 
-void GstClient::eos(bool error)
+void GstStreamer::eos(bool error)
 {
 }
 
-void GstClient::play() noexcept
+void GstStreamer::play() noexcept
 {
     if(_p->pipelinePtr)
         _p->setState(GST_STATE_PLAYING);

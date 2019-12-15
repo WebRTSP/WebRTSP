@@ -1,14 +1,22 @@
+#include <memory>
+
 #include <CxxPtr/GlibPtr.h>
 
 #include "Signalling/WsServer.h"
 #include "Signalling/ServerSession.h"
+#include "GstStreaming/GstStreamer.h"
 
+
+static std::unique_ptr<WebRTCPeer> CreatePeer()
+{
+    return std::make_unique<GstStreamer>();
+}
 
 static std::unique_ptr<rtsp::ServerSession> CreateSession (
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept
 {
-    return std::make_unique<ServerSession>(sendRequest, sendResponse);
+    return std::make_unique<ServerSession>(CreatePeer, sendRequest, sendResponse);
 }
 
 int main(int argc, char *argv[])

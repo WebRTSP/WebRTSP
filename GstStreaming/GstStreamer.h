@@ -3,12 +3,10 @@
 #include <memory>
 #include <functional>
 
-#include "Streamer.h"
+#include "RtspSession/WebRTCPeer.h"
 
 
-namespace streaming {
-
-class GstStreamer : public Streamer
+class GstStreamer : public WebRTCPeer
 {
 public:
     GstStreamer();
@@ -19,13 +17,13 @@ public:
         void (unsigned mlineIndex, const std::string& candidate)> IceCandidateCallback;
     void prepare(
         const PreparedCallback&,
-        const IceCandidateCallback&) noexcept;
+        const IceCandidateCallback&) noexcept override;
     bool sdp(std::string* sdp) noexcept override;
 
-    void setRemoteSdp(const std::string& sdp) noexcept;
-    void addIceCandidate(unsigned mlineIndex, const std::string& candidate);
+    void setRemoteSdp(const std::string& sdp) noexcept override;
+    void addIceCandidate(unsigned mlineIndex, const std::string& candidate) noexcept override;
 
-    void play() noexcept;
+    void play() noexcept override;
 
 private:
     void eos(bool error);
@@ -34,5 +32,3 @@ private:
     struct Private;
     std::unique_ptr<Private> _p;
 };
-
-}

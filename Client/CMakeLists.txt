@@ -25,6 +25,7 @@ target_link_libraries(${PROJECT_NAME}
     ${GSTREAMER_LDFLAGS}
     ${GSTREAMER_SDP_LDFLAGS}
     ${GSTREAMER_WEBRTC_LDFLAGS}
+    GstStreaming
     Common)
 
 #get_cmake_property(_variableNames VARIABLES)

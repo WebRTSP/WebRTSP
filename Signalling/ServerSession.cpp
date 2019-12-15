@@ -5,6 +5,8 @@
 
 #include "RtspSession/StatusCode.h"
 
+#include "GstStreaming/GstStreamer.h"
+
 
 namespace {
 
@@ -12,7 +14,7 @@ struct StreamerInfo
 {
     std::string uri;
     std::unique_ptr<rtsp::Request> describeRequest;
-    streaming::GstStreamer streamer;
+    std::unique_ptr<WebRTCPeer> streamer;
 };
 
 typedef std::map<rtsp::SessionId, std::unique_ptr<StreamerInfo>> Streamers;
@@ -29,14 +31,19 @@ typedef std::map<rtsp::CSeq, RequestInfo> Requests;
 
 struct ServerSession::Private
 {
+    struct AutoEraseRequest;
+
+    Private(
+        ServerSession* owner,
+        std::function<std::unique_ptr<WebRTCPeer> ()> createPeer);
+
     ServerSession* owner;
+    std::function<std::unique_ptr<WebRTCPeer> ()> createPeer;
 
     unsigned _nextSession = 1;
 
     Requests requests;
     Streamers streamers;
-
-    struct AutoEraseRequest;
 
     std::string nextSession()
         { return std::to_string(_nextSession++); }
@@ -63,10 +70,15 @@ private:
     Requests::const_iterator _it;
 };
 
+ServerSession::Private::Private(
+    ServerSession* owner,
+    std::function<std::unique_ptr<WebRTCPeer> ()> createPeer) :
+    owner(owner), createPeer(createPeer)
+{
+}
+
 void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
 {
-    using streaming::GstStreamer;
-
     auto requestIt = requests.find(describeRequestCSeq);
     if(requests.end() == requestIt ||
        rtsp::Method::DESCRIBE != requestIt->second.requestPtr->method)
@@ -87,7 +99,7 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
     }
 
     StreamerInfo& streamerInfo = *(it->second);
-    GstStreamer& streamer = streamerInfo.streamer;
+    WebRTCPeer& streamer = *streamerInfo.streamer;
 
     std::string sdp;
     if(!streamer.sdp(&sdp))
@@ -126,11 +138,13 @@ void ServerSession::Private::iceCandidate(
 }
 
 ServerSession::ServerSession(
+    const std::function<std::unique_ptr<WebRTCPeer> ()>& createPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
     rtsp::ServerSession(sendRequest, sendResponse),
-    _p(new Private { .owner = this })
+    _p(new Private(this, createPeer))
 {
+
 }
 
 ServerSession::~ServerSession()
@@ -153,8 +167,6 @@ bool ServerSession::handleOptionsRequest(
 bool ServerSession::handleDescribeRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    using streaming::GstStreamer;
-
     const rtsp::SessionId session = _p->nextSession();
     auto requestPair =
         _p->requests.emplace(
@@ -180,8 +192,9 @@ bool ServerSession::handleDescribeRequest(
 
     StreamerInfo& streamerInfo = *(streamerPair.first->second);
     streamerInfo.uri = request.uri;
+    streamerInfo.streamer = _p->createPeer();
 
-    streamerInfo.streamer.prepare(
+    streamerInfo.streamer->prepare(
         std::bind(
             &ServerSession::Private::streamerPrepared,
             _p.get(),
@@ -207,8 +220,7 @@ bool ServerSession::handleSetupRequest(
     if(it == _p->streamers.end())
         return false;
 
-    using streaming::GstStreamer;
-    GstStreamer& streamer = it->second->streamer;
+    WebRTCPeer& streamer = *it->second->streamer;
 
     if(RequestContentType(*requestPtr) == "application/sdp") {
         streamer.setRemoteSdp(requestPtr->body);
@@ -264,8 +276,7 @@ bool ServerSession::handlePlayRequest(
     if(it == _p->streamers.end())
         return false;
 
-    using streaming::GstStreamer;
-    GstStreamer& streamer = it->second->streamer;
+    WebRTCPeer& streamer = *(it->second->streamer);
 
     streamer.play();
 

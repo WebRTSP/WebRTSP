@@ -16,7 +16,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_link_libraries(${PROJECT_NAME}
     ${WS_LIBRARIES}
     RtspSession
-    Streaming
     Common)
 
 #get_cmake_property(_variableNames VARIABLES)
