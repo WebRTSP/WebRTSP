@@ -54,9 +54,8 @@ void GstStreamer::Private::prepare()
 #else
         "videotestsrc pattern=ball ! "
         "vp8enc ! rtpvp8pay pt=96 ! "
-        "webrtcbin name=srcrtcbin"
+        "webrtcbin name=srcrtcbin";
 #endif
-      ;
 
     GError* parseError = nullptr;
     pipelinePtr.reset(gst_parse_launch(pipelineDesc, &parseError));
