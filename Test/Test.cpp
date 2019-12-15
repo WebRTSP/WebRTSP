@@ -8,6 +8,7 @@
 #include "Client/WsClient.h"
 #include "Client/ClientSession.h"
 #include "GstStreaming/GstTestStreamer.h"
+#include "GstStreaming/GstRtspReStreamer.h"
 #include "GstStreaming/GstClient.h"
 
 #include "TestParse.h"
@@ -15,6 +16,7 @@
 
 #define ENABLE_SERVER 1
 #define ENABLE_CLIENT 1
+#define USE_RTSP_RESTREAMER 1
 
 enum {
     RECONNECT_TIMEOUT = 5,
@@ -24,7 +26,13 @@ enum {
 #if ENABLE_SERVER
 static std::unique_ptr<WebRTCPeer> CreateServerPeer()
 {
+#if USE_RTSP_RESTREAMER
+    const std::string rtspSource =
+        "rtsp://camproxy.online:8554/bars";
+    return std::make_unique<GstRtspReStreamer>(rtspSource);
+#else
     return std::make_unique<GstTestStreamer>();
+#endif
 }
 
 static std::unique_ptr<rtsp::ServerSession> CreateServerSession (
