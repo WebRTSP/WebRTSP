@@ -7,18 +7,11 @@
 #include <CxxPtr/GlibPtr.h>
 #include <CxxPtr/GstPtr.h>
 
+#include "LibGst.h"
 
-namespace {
-
-struct LibGst
-{
-    LibGst() { gst_init(0, 0); }
-    ~LibGst() { gst_deinit(); }
-};
 
 static std::unique_ptr<LibGst> libGst;
 
-}
 
 struct GstClient::Private
 {

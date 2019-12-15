@@ -5,14 +5,11 @@
 #include <CxxPtr/GlibPtr.h>
 #include <CxxPtr/GstPtr.h>
 
+#include "LibGst.h"
 
-struct LibGst
-{
-    LibGst() { gst_init(0, 0); }
-    ~LibGst() { gst_deinit(); }
-};
 
-std::unique_ptr<LibGst> libGst;
+static std::unique_ptr<LibGst> libGst;
+
 
 struct GstTestStreamer::Private
 {
