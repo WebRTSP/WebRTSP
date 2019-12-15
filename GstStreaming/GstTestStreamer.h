@@ -6,11 +6,11 @@
 #include "RtspSession/WebRTCPeer.h"
 
 
-class GstStreamer : public WebRTCPeer
+class GstTestStreamer : public WebRTCPeer
 {
 public:
-    GstStreamer();
-    ~GstStreamer();
+    GstTestStreamer();
+    ~GstTestStreamer();
 
     typedef std::function<void ()> PreparedCallback;
     typedef std::function<

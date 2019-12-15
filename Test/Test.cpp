@@ -7,7 +7,7 @@
 #include "Signalling/ServerSession.h"
 #include "Client/WsClient.h"
 #include "Client/ClientSession.h"
-#include "GstStreaming/GstStreamer.h"
+#include "GstStreaming/GstTestStreamer.h"
 #include "GstStreaming/GstClient.h"
 
 #include "TestParse.h"
@@ -24,7 +24,7 @@ enum {
 #if ENABLE_SERVER
 static std::unique_ptr<WebRTCPeer> CreateServerPeer()
 {
-    return std::make_unique<GstStreamer>();
+    return std::make_unique<GstTestStreamer>();
 }
 
 static std::unique_ptr<rtsp::ServerSession> CreateServerSession (

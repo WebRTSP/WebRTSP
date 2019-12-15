@@ -5,7 +5,7 @@
 
 #include "RtspSession/StatusCode.h"
 
-#include "GstStreaming/GstStreamer.h"
+#include "GstStreaming/GstTestStreamer.h"
 
 
 namespace {

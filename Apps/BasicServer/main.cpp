@@ -4,12 +4,12 @@
 
 #include "Signalling/WsServer.h"
 #include "Signalling/ServerSession.h"
-#include "GstStreaming/GstStreamer.h"
+#include "GstStreaming/GstTestStreamer.h"
 
 
 static std::unique_ptr<WebRTCPeer> CreatePeer()
 {
-    return std::make_unique<GstStreamer>();
+    return std::make_unique<GstTestStreamer>();
 }
 
 static std::unique_ptr<rtsp::ServerSession> CreateSession (

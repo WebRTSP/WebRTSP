@@ -1,4 +1,4 @@
-#include "GstStreamer.h"
+#include "GstTestStreamer.h"
 
 #include <gst/gst.h>
 
@@ -14,9 +14,9 @@ struct LibGst
 
 std::unique_ptr<LibGst> libGst;
 
-struct GstStreamer::Private
+struct GstTestStreamer::Private
 {
-    GstStreamer *const owner;
+    GstTestStreamer *const owner;
 
     PreparedCallback prepared;
     IceCandidateCallback iceCandidate;
@@ -44,7 +44,7 @@ struct GstStreamer::Private
     void setState(GstState);
 };
 
-void GstStreamer::Private::prepare()
+void GstTestStreamer::Private::prepare()
 {
     const char* pipelineDesc =
 #if 1
@@ -127,7 +127,7 @@ void GstStreamer::Private::prepare()
     setState(GST_STATE_PAUSED);
 }
 
-gboolean GstStreamer::Private::onBusMessage(GstBus* bus, GstMessage* msg)
+gboolean GstTestStreamer::Private::onBusMessage(GstBus* bus, GstMessage* msg)
 {
     switch(GST_MESSAGE_TYPE(msg)) {
         case GST_MESSAGE_EOS:
@@ -152,7 +152,7 @@ gboolean GstStreamer::Private::onBusMessage(GstBus* bus, GstMessage* msg)
     return TRUE;
 }
 
-void GstStreamer::Private::onNegotiationNeeded(GstElement* rtcbin)
+void GstTestStreamer::Private::onNegotiationNeeded(GstElement* rtcbin)
 {
     auto onIceGatheringStateChangedCallback =
         (void (*) (GstElement*, GParamSpec* , gpointer))
@@ -182,7 +182,7 @@ void GstStreamer::Private::onNegotiationNeeded(GstElement* rtcbin)
         rtcbin, "create-offer", nullptr, promise);
 }
 
-void GstStreamer::Private::onIceGatheringStateChanged(GstElement* rtcbin)
+void GstTestStreamer::Private::onIceGatheringStateChanged(GstElement* rtcbin)
 {
     GstWebRTCICEGatheringState state = GST_WEBRTC_ICE_GATHERING_STATE_NEW;
     g_object_get(rtcbin, "ice-gathering-state", &state, NULL);
@@ -195,7 +195,7 @@ void GstStreamer::Private::onIceGatheringStateChanged(GstElement* rtcbin)
     }
 }
 
-void GstStreamer::Private::onOfferCreated(GstPromise* promise)
+void GstTestStreamer::Private::onOfferCreated(GstPromise* promise)
 {
     GstPromisePtr promisePtr(promise);
 
@@ -215,7 +215,7 @@ void GstStreamer::Private::onOfferCreated(GstPromise* promise)
     prepared();
 }
 
-void GstStreamer::Private::onIceCandidate(
+void GstTestStreamer::Private::onIceCandidate(
     GstElement* rtcbin,
     guint candidate,
     gchar* arg2)
@@ -224,7 +224,7 @@ void GstStreamer::Private::onIceCandidate(
     iceCandidate(candidate, prefix + arg2);
 }
 
-void GstStreamer::Private::setState(GstState state)
+void GstTestStreamer::Private::setState(GstState state)
 {
     GstElement* pipeline = pipelinePtr.get();
     if(!pipeline) {
@@ -246,20 +246,20 @@ void GstStreamer::Private::setState(GstState state)
 }
 
 
-GstStreamer::GstStreamer() :
+GstTestStreamer::GstTestStreamer() :
     _p(new Private{ .owner = this })
 {
     if(!libGst)
         libGst = std::make_unique<LibGst>();
 }
 
-GstStreamer::~GstStreamer()
+GstTestStreamer::~GstTestStreamer()
 {
     if(_p->pipelinePtr)
         _p->setState(GST_STATE_NULL);
 }
 
-void GstStreamer::prepare(
+void GstTestStreamer::prepare(
     const PreparedCallback& prepared,
     const IceCandidateCallback& iceCandidate) noexcept
 {
@@ -269,7 +269,7 @@ void GstStreamer::prepare(
     _p->prepare();
 }
 
-bool GstStreamer::sdp(std::string* sdp) noexcept
+bool GstTestStreamer::sdp(std::string* sdp) noexcept
 {
     if(!sdp)
         return false;
@@ -282,7 +282,7 @@ bool GstStreamer::sdp(std::string* sdp) noexcept
     return true;
 }
 
-void GstStreamer::setRemoteSdp(const std::string& sdp) noexcept
+void GstTestStreamer::setRemoteSdp(const std::string& sdp) noexcept
 {
     GstElement* rtcbin = _p->rtcbinPtr.get();
 
@@ -303,7 +303,7 @@ void GstStreamer::setRemoteSdp(const std::string& sdp) noexcept
         "set-remote-description", sessionDescription, NULL);
 }
 
-void GstStreamer::addIceCandidate(
+void GstTestStreamer::addIceCandidate(
     unsigned mlineIndex,
     const std::string& candidate) noexcept
 {
@@ -312,11 +312,11 @@ void GstStreamer::addIceCandidate(
     g_signal_emit_by_name(rtcbin, "add-ice-candidate", mlineIndex, candidate.data());
 }
 
-void GstStreamer::eos(bool error)
+void GstTestStreamer::eos(bool error)
 {
 }
 
-void GstStreamer::play() noexcept
+void GstTestStreamer::play() noexcept
 {
     if(_p->pipelinePtr)
         _p->setState(GST_STATE_PLAYING);
