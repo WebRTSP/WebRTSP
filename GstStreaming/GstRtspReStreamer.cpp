@@ -114,7 +114,7 @@ void GstRtspReStreamer::Private::rtspSrcPadAdded(
 
 void GstRtspReStreamer::Private::rtspNoMorePads(GstElement* /*rtspsrc*/)
 {
-    // setState(GST_STATE_PAUSED);
+    setState(GST_STATE_PAUSED);
 }
 
 void GstRtspReStreamer::Private::prepare()
