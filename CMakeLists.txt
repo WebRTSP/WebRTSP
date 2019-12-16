@@ -29,7 +29,7 @@ add_subdirectory(Signalling)
 add_subdirectory(Client)
 
 if(BUILD_TEST)
-    add_subdirectory(Test)
+    add_subdirectory(Apps/Test)
 endif()
 
 if(BUILD_BASIC_SERVER)
