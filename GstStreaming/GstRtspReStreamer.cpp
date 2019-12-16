@@ -363,3 +363,9 @@ void GstRtspReStreamer::play() noexcept
     if(_p->pipelinePtr)
         _p->setState(GST_STATE_PLAYING);
 }
+
+void GstRtspReStreamer::stop() noexcept
+{
+    if(_p->pipelinePtr)
+        _p->setState(GST_STATE_NULL);
+}

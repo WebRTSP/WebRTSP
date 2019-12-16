@@ -23,4 +23,5 @@ struct WebRTCPeer
         const std::string& candidate) noexcept = 0;
 
     virtual void play() noexcept = 0;
+    virtual void stop() noexcept = 0;
 };

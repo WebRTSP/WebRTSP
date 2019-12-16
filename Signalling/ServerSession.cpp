@@ -290,7 +290,21 @@ bool ServerSession::handlePlayRequest(
 }
 
 bool ServerSession::handleTeardownRequest(
-    std::unique_ptr<rtsp::Request>&) noexcept
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    return false;
+    const rtsp::SessionId session = RequestSession(*requestPtr);
+
+    auto it = _p->streamers.find(session);
+    if(it == _p->streamers.end())
+        return false;
+
+    WebRTCPeer& streamer = *(it->second->streamer);
+
+    streamer.stop();
+
+    sendOkResponse(requestPtr->cseq, session);
+
+    _p->streamers.erase(it);
+
+    return true;
 }

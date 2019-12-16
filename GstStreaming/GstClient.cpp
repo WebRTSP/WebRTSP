@@ -317,3 +317,9 @@ void GstClient::play() noexcept
     if(_p->pipelinePtr)
         _p->setState(GST_STATE_PLAYING);
 }
+
+void GstClient::stop() noexcept
+{
+    if(_p->pipelinePtr)
+        _p->setState(GST_STATE_NULL);
+}

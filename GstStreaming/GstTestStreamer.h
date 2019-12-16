@@ -24,6 +24,7 @@ public:
     void addIceCandidate(unsigned mlineIndex, const std::string& candidate) noexcept override;
 
     void play() noexcept override;
+    void stop() noexcept override;
 
 private:
     void eos(bool error);
