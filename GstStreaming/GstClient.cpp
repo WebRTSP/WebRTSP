@@ -15,7 +15,9 @@ static std::unique_ptr<LibGst> libGst;
 
 struct GstClient::Private
 {
-    GstClient*const owner;
+    Private(GstClient* owner);
+
+    GstClient *const owner;
 
     PreparedCallback prepared;
     IceCandidateCallback iceCandidate;
@@ -41,6 +43,11 @@ struct GstClient::Private
 
     void setState(GstState);
 };
+
+GstClient::Private::Private(GstClient* owner) :
+    owner(owner)
+{
+}
 
 void GstClient::Private::prepare()
 {
@@ -209,7 +216,7 @@ void GstClient::Private::setState(GstState state)
 
 
 GstClient::GstClient() :
-    _p(new Private{ .owner = this })
+    _p(new Private(this))
 {
     if(!libGst)
         libGst = std::make_unique<LibGst>();
