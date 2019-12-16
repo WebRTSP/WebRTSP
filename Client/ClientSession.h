@@ -8,6 +8,7 @@ class ClientSession : public rtsp::ClientSession
 {
 public:
     ClientSession(
+        const std::string& uri,
         const std::function<std::unique_ptr<WebRTCPeer> () noexcept>& createPeer,
         const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
         const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept;

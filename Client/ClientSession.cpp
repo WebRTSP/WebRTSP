@@ -7,11 +7,12 @@ struct ClientSession::Private
 {
     Private(
         ClientSession* owner,
+        const std::string& uri,
         std::function<std::unique_ptr<WebRTCPeer> ()> createPeer);
 
     ClientSession* owner;
 
-    const std::string uri = "http://example.com/";
+    const std::string uri;
 
     std::unique_ptr<WebRTCPeer> client;
     std::string remoteSdp;
@@ -23,8 +24,9 @@ struct ClientSession::Private
 
 ClientSession::Private::Private(
     ClientSession* owner,
+    const std::string& uri,
     std::function<std::unique_ptr<WebRTCPeer> ()> createPeer) :
-    owner(owner), client(createPeer())
+    owner(owner), uri(uri), client(createPeer())
 {
 }
 
@@ -57,15 +59,16 @@ void ClientSession::Private::iceCandidate(
 
 void ClientSession::onConnected() noexcept
 {
-    requestOptions("*");
+    requestOptions(_p->uri);
 }
 
 ClientSession::ClientSession(
+    const std::string& uri,
     const std::function<std::unique_ptr<WebRTCPeer> ()>& createPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
     rtsp::ClientSession(sendRequest, sendResponse),
-    _p(new Private(this, createPeer))
+    _p(new Private(this, uri, createPeer))
 {
 }
 

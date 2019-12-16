@@ -24,11 +24,11 @@ enum {
 
 
 #if ENABLE_SERVER
-static std::unique_ptr<WebRTCPeer> CreateServerPeer()
+static std::unique_ptr<WebRTCPeer> CreateServerPeer(const std::string& uri)
 {
 #if USE_RTSP_RESTREAMER
     const std::string rtspSource =
-        "rtsp://camproxy.online:8554/bars";
+        uri;
     return std::make_unique<GstRtspReStreamer>(rtspSource);
 #else
     return std::make_unique<GstTestStreamer>();
@@ -53,7 +53,14 @@ static std::unique_ptr<rtsp::ClientSession> CreateClientSession (
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
-    return std::make_unique<ClientSession>(CreateClientPeer, sendRequest, sendResponse);
+    const std::string url =
+        "rtsp://camproxy.online:8554/bars";
+    return
+        std::make_unique<ClientSession>(
+            url,
+            CreateClientPeer,
+            sendRequest,
+            sendResponse);
 }
 
 static void ClientDisconnected(client::WsClient* client) noexcept
