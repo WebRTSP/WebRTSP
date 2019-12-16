@@ -35,10 +35,10 @@ struct ServerSession::Private
 
     Private(
         ServerSession* owner,
-        std::function<std::unique_ptr<WebRTCPeer> ()> createPeer);
+        std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer);
 
     ServerSession* owner;
-    std::function<std::unique_ptr<WebRTCPeer> ()> createPeer;
+    std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer;
 
     unsigned _nextSession = 1;
 
@@ -72,7 +72,7 @@ private:
 
 ServerSession::Private::Private(
     ServerSession* owner,
-    std::function<std::unique_ptr<WebRTCPeer> ()> createPeer) :
+    std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer) :
     owner(owner), createPeer(createPeer)
 {
 }
@@ -138,7 +138,7 @@ void ServerSession::Private::iceCandidate(
 }
 
 ServerSession::ServerSession(
-    const std::function<std::unique_ptr<WebRTCPeer> ()>& createPeer,
+    const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
     rtsp::ServerSession(sendRequest, sendResponse),
@@ -167,6 +167,10 @@ bool ServerSession::handleOptionsRequest(
 bool ServerSession::handleDescribeRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
+    std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(requestPtr->uri);
+    if(!peerPtr)
+        return false;
+
     const rtsp::SessionId session = _p->nextSession();
     auto requestPair =
         _p->requests.emplace(
@@ -192,7 +196,7 @@ bool ServerSession::handleDescribeRequest(
 
     StreamerInfo& streamerInfo = *(streamerPair.first->second);
     streamerInfo.uri = request.uri;
-    streamerInfo.streamer = _p->createPeer();
+    streamerInfo.streamer = std::move(peerPtr);
 
     streamerInfo.streamer->prepare(
         std::bind(

@@ -7,7 +7,7 @@
 #include "GstStreaming/GstTestStreamer.h"
 
 
-static std::unique_ptr<WebRTCPeer> CreatePeer()
+static std::unique_ptr<WebRTCPeer> CreatePeer(const std::string& /*uri*/)
 {
     return std::make_unique<GstTestStreamer>();
 }
