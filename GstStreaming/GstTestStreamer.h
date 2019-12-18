@@ -9,7 +9,7 @@
 class GstTestStreamer : public WebRTCPeer
 {
 public:
-    GstTestStreamer();
+    GstTestStreamer(const std::string& pattern = std::string());
     ~GstTestStreamer();
 
     typedef std::function<void ()> PreparedCallback;

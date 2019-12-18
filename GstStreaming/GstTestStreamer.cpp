@@ -13,7 +13,11 @@ static std::unique_ptr<LibGst> libGst;
 
 struct GstTestStreamer::Private
 {
+    Private(GstTestStreamer* owner, const std::string& pattern);
+
     GstTestStreamer *const owner;
+
+    const std::string pattern;
 
     PreparedCallback prepared;
     IceCandidateCallback iceCandidate;
@@ -41,15 +45,34 @@ struct GstTestStreamer::Private
     void setState(GstState);
 };
 
+GstTestStreamer::Private::Private(
+    GstTestStreamer* owner,
+    const std::string& pattern) :
+    owner(owner), pattern(pattern)
+{
+}
+
 void GstTestStreamer::Private::prepare()
 {
+    std::string usePattern = "smpte";
+    if(pattern == "bars")
+        usePattern = "smpte100";
+    else if(
+        pattern == "white" ||
+        pattern == "red" ||
+        pattern == "green" ||
+        pattern == "blue")
+    {
+        usePattern = pattern;
+    }
+
     const char* pipelineDesc =
 #if 1
-        "videotestsrc ! "
+        "videotestsrc name=src ! "
         "x264enc ! video/x-h264, profile=baseline ! rtph264pay pt=96 ! "
         "webrtcbin name=srcrtcbin";
 #else
-        "videotestsrc pattern=ball ! "
+        "videotestsrc name=src ! "
         "vp8enc ! rtpvp8pay pt=96 ! "
         "webrtcbin name=srcrtcbin";
 #endif
@@ -61,6 +84,11 @@ void GstTestStreamer::Private::prepare()
         return;
     }
     GstElement* pipeline = pipelinePtr.get();
+
+    GstElementPtr srcPtr(gst_bin_get_by_name(GST_BIN(pipeline), "src"));
+    GstElement* src = srcPtr.get();
+
+    gst_util_set_object_arg(G_OBJECT(src), "pattern", usePattern.c_str());
 
     auto onBusMessageCallback =
         (gboolean (*) (GstBus*, GstMessage*, gpointer))
@@ -243,8 +271,8 @@ void GstTestStreamer::Private::setState(GstState state)
 }
 
 
-GstTestStreamer::GstTestStreamer() :
-    _p(new Private{ .owner = this })
+GstTestStreamer::GstTestStreamer(const std::string& pattern) :
+    _p(new Private(this, pattern))
 {
     if(!libGst)
         libGst = std::make_unique<LibGst>();
