@@ -105,6 +105,9 @@ static bool SkipWSP(const char* buf, size_t* pos, size_t size)
 
 static bool SkipEOL(const char* buf, size_t* pos, size_t size)
 {
+    if(IsEOS(*pos, size))
+        return false;
+
     switch(buf[*pos]) {
     case '\n':
         ++*pos;
