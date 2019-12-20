@@ -14,7 +14,7 @@ public:
         const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept;
     ~ClientSession();
 
-    void onConnected() noexcept override;
+    bool onConnected() noexcept override;
 
 private:
     bool onOptionsResponse(

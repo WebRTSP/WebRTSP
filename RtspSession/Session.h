@@ -14,7 +14,7 @@ namespace rtsp {
 
 struct Session
 {
-    virtual void onConnected() noexcept {}
+    virtual bool onConnected() noexcept { return true; }
 
     virtual bool handleRequest(std::unique_ptr<Request>&) noexcept;
 

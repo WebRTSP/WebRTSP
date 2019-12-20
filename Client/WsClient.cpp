@@ -262,9 +262,7 @@ void WsClient::Private::connect()
 
 bool WsClient::Private::onConnected(SessionContextData* scd)
 {
-    scd->data->rtspSession->onConnected();
-
-    return true;
+    return scd->data->rtspSession->onConnected();
 }
 
 bool WsClient::Private::onMessage(

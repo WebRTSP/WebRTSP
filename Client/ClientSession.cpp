@@ -57,9 +57,11 @@ void ClientSession::Private::iceCandidate(
 }
 
 
-void ClientSession::onConnected() noexcept
+bool ClientSession::onConnected() noexcept
 {
     requestOptions(_p->uri);
+
+    return true;
 }
 
 ClientSession::ClientSession(

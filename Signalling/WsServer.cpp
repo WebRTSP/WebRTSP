@@ -58,6 +58,8 @@ struct WsServer::Private
     void sendRequest(SessionContextData*, const rtsp::Request*);
     void sendResponse(SessionContextData*, const rtsp::Response*);
 
+    bool onConnected(SessionContextData*);
+
     WsServer *const owner;
     Config config;
     GMainLoop* loop;
@@ -118,6 +120,10 @@ int WsServer::Private::wsCallback(
                     .sendMessages = {},
                     .rtspSession = std::move(session)};
             scd->wsi = wsi;
+
+            if(!onConnected(scd))
+                return -1;
+
             break;
         }
         case LWS_CALLBACK_RECEIVE: {
@@ -257,6 +263,11 @@ bool WsServer::Private::init(lws_context* context)
     }
 
     return true;
+}
+
+bool WsServer::Private::onConnected(SessionContextData* scd)
+{
+    return scd->data->rtspSession->onConnected();
 }
 
 bool WsServer::Private::onMessage(
