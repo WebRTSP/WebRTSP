@@ -49,7 +49,7 @@ struct WsServer::Private
 {
     Private(WsServer*, const Config&, GMainLoop*, const WsServer::CreateSession&);
 
-    bool init();
+    bool init(lws_context* context);
     int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len);
     int wsCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len);
     bool onMessage(SessionContextData*, const MessageBuffer&);
@@ -169,19 +169,19 @@ int WsServer::Private::wsCallback(
     return 0;
 }
 
-bool WsServer::Private::init()
+bool WsServer::Private::init(lws_context* context)
 {
     auto HttpCallback =
         [] (lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) -> int {
-            lws_context* context = lws_get_context(wsi);
-            Private* p = static_cast<Private*>(lws_context_user(context));
+            lws_vhost* vhost = lws_get_vhost(wsi);
+            Private* p = static_cast<Private*>(lws_get_vhost_user(vhost));
 
             return p->httpCallback(wsi, reason, user, in, len);
         };
     auto WsCallback =
         [] (lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) -> int {
-            lws_context* context = lws_get_context(wsi);
-            Private* p = static_cast<Private*>(lws_context_user(context));
+            lws_vhost* vhost = lws_get_vhost(wsi);
+            Private* p = static_cast<Private*>(lws_get_vhost_user(vhost));
 
             return p->wsCallback(wsi, reason, user, in, len);
         };
@@ -212,14 +212,15 @@ bool WsServer::Private::init()
         { nullptr, nullptr, 0, 0 }
     };
 
-    lws_context_creation_info wsInfo {};
-    wsInfo.gid = -1;
-    wsInfo.uid = -1;
-    wsInfo.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
-    wsInfo.user = this;
+    if(!context) {
+        lws_context_creation_info wsInfo {};
+        wsInfo.gid = -1;
+        wsInfo.uid = -1;
+        wsInfo.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
 
-    contextPtr.reset(lws_create_context(&wsInfo));
-    lws_context* context = contextPtr.get();
+        contextPtr.reset(lws_create_context(&wsInfo));
+        context = contextPtr.get();
+    }
     if(!context)
         return false;
 
@@ -231,6 +232,7 @@ bool WsServer::Private::init()
         lws_context_creation_info vhostInfo {};
         vhostInfo.port = config.port;
         vhostInfo.protocols = protocols;
+        vhostInfo.user = this;
 
         lws_vhost* vhost = lws_create_vhost(context, &vhostInfo);
         if(!vhost)
@@ -247,6 +249,7 @@ bool WsServer::Private::init()
         secureVhostInfo.ssl_private_key_filepath = config.key.c_str();
         secureVhostInfo.vhost_name = config.serverName.c_str();
         secureVhostInfo.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+        secureVhostInfo.user = this;
 
         lws_vhost* secureVhost = lws_create_vhost(context, &secureVhostInfo);
         if(!secureVhost)
@@ -343,9 +346,9 @@ WsServer::~WsServer()
 {
 }
 
-bool WsServer::init() noexcept
+bool WsServer::init(lws_context* context /*= nullptr*/) noexcept
 {
-    return _p->init();
+    return _p->init(context);
 }
 
 }

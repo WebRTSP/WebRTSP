@@ -22,7 +22,7 @@ public:
             const std::function<void (const rtsp::Response*)>& sendResponse) noexcept> CreateSession;
 
     WsServer(const Config&, GMainLoop*, const CreateSession&) noexcept;
-    bool init() noexcept;
+    bool init(lws_context* = nullptr) noexcept;
     ~WsServer();
 
 private:
