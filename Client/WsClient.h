@@ -17,7 +17,7 @@ class WsClient
 {
 public:
     typedef std::function<
-        std::unique_ptr<rtsp::ClientSession> (
+        std::unique_ptr<rtsp::Session> (
             const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
             const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept> CreateSession;
 
