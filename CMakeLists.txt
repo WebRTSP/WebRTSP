@@ -6,7 +6,7 @@ option(BUILD_TEST "Build test application" ON)
 option(BUILD_BASIC_SERVER "Build basic server application" ON)
 
 if(CMAKE_COMPILER_IS_GNUCC)
-    add_definitions(-Wall)
+    set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -O0")
 endif()
 
 set(CMAKE_CXX_STANDARD 14)
