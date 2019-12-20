@@ -65,7 +65,7 @@ struct WsClient::Private
     void sendResponse(SessionContextData*, const rtsp::Response*);
 
     void connect();
-    bool onConnected(SessionContextData* scd);
+    bool onConnected(SessionContextData*);
 
 
     WsClient *const owner;
