@@ -11,13 +11,15 @@
 #include "Config.h"
 
 
+struct lws_context;
+
 namespace signalling {
 
 class WsServer
 {
 public:
     typedef std::function<
-        std::unique_ptr<rtsp::ServerSession> (
+        std::unique_ptr<rtsp::Session> (
             const std::function<void (const rtsp::Request*)>& sendRequest,
             const std::function<void (const rtsp::Response*)>& sendResponse) noexcept> CreateSession;
 
