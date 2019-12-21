@@ -54,8 +54,14 @@ protected:
         const std::string& contentType,
         const rtsp::SessionId& session,
         const std::string& body) noexcept;
+    CSeq requestSetParameter(
+        const std::string& uri,
+        const std::string& contentType,
+        const std::string& body) noexcept;
 
     virtual bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept
+        { return false; }
+    virtual bool handleSetParameterRequest(std::unique_ptr<rtsp::Request>&) noexcept
         { return false; }
 
     virtual bool handleResponse(const Request&, const Response&) noexcept;
