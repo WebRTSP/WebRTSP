@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.0)
 
 project(InverseProxyServer)
 
-find_package(Threads REQUIRED)
-
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.cpp
     *.h
