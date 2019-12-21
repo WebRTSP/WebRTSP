@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(InverseProxyTest)
+project(InverseProxyClient)
 
 find_package(Threads REQUIRED)
 
@@ -9,13 +9,13 @@ file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.h
     *.cmake)
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_library(${PROJECT_NAME} ${SOURCES})
 #target_include_directories(${PROJECT_NAME} PRIVATE
 #    )
 target_link_libraries(${PROJECT_NAME}
-    InverseProxyServer
-    InverseProxyClient
-    Threads::Threads)
+    RtspParser
+    Client
+    GstStreaming)
 
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})

@@ -7,31 +7,16 @@
 #include "Signalling/ServerSession.h"
 #include "Client/WsClient.h"
 #include "Client/ClientSession.h"
-#include "GstStreaming/GstTestStreamer.h"
 #include "GstStreaming/GstRtspReStreamer.h"
 #include "GstStreaming/GstClient.h"
 
 #include "../InverseProxyServer/InverseProxyServer.h"
+#include "../InverseProxyClient/InverseProxyClient.h"
 
 enum {
     RECONNECT_TIMEOUT = 5,
 };
 
-
-static std::unique_ptr<WebRTCPeer> CreateStreamSourceClientPeer(const std::string& /*uri*/)
-{
-    return std::make_unique<GstTestStreamer>();
-}
-
-static std::unique_ptr<rtsp::ServerSession> CreateStreamSourceClientSession (
-    const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
-    const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
-{
-    return
-        std::make_unique<ServerSession>(
-            CreateStreamSourceClientPeer,
-            sendRequest, sendResponse);
-}
 
 static std::unique_ptr<WebRTCPeer> CreateClientPeer()
 {
@@ -86,22 +71,7 @@ int main(int argc, char *argv[])
             config.server = "localhost";
             config.serverPort = BACK_SERVER_PORT;
 
-            GMainContextPtr clientContextPtr(g_main_context_new());
-            GMainContext* clientContext = clientContextPtr.get();
-            g_main_context_push_thread_default(clientContext);
-            GMainLoopPtr loopPtr(g_main_loop_new(clientContext, FALSE));
-            GMainLoop* loop = loopPtr.get();
-
-            client::WsClient client(
-                config,
-                loop,
-                CreateStreamSourceClientSession,
-                std::bind(ClientDisconnected, &client));
-
-            if(client.init()) {
-                client.connect();
-                g_main_loop_run(loop);
-            }
+            InverseProxyClientMain(config);
         });
 
     std::thread clientThread(
