@@ -26,6 +26,8 @@ private:
     bool onTeardownResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept override;
 
+    bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool handleSetParameterRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 private:
