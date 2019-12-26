@@ -11,27 +11,6 @@
 #include "BackSession.h"
 
 
-static std::unique_ptr<rtsp::Session> CreateFrontSession(
-    ForwardContext* forwardContext,
-    const std::function<void (const rtsp::Request*)>& sendRequest,
-    const std::function<void (const rtsp::Response*)>& sendResponse) noexcept
-{
-    return
-        std::make_unique<FrontSession>(
-            forwardContext, sendRequest, sendResponse);
-}
-
-static std::unique_ptr<rtsp::Session> CreateBackSession(
-    ForwardContext* forwardContext,
-    const std::function<void (const rtsp::Request*)>& sendRequest,
-    const std::function<void (const rtsp::Response*)>& sendResponse) noexcept
-{
-    return
-        std::make_unique<BackSession>(
-            forwardContext, sendRequest, sendResponse);
-}
-
-
 int InverseProxyServerMain(const InverseProxyServerConfig& config)
 {
     GMainLoopPtr loopPtr(g_main_loop_new(nullptr, FALSE));
@@ -45,7 +24,7 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
     LwsContextPtr contextPtr(lws_create_context(&wsInfo));
     lws_context* context = contextPtr.get();
 
-    ForwardContext forwardContext {};
+    ForwardContext forwardContext;
 
     signalling::Config frontConfig {
         .serverName = config.serverName,
@@ -58,7 +37,7 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
     signalling::WsServer frontServer(
         frontConfig, loop,
         std::bind(
-            CreateFrontSession, &forwardContext,
+            &ForwardContext::createFrontSession, &forwardContext,
             std::placeholders::_1, std::placeholders::_2));
 
     signalling::Config backConfig {
@@ -71,7 +50,7 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
     signalling::WsServer backServer(
         backConfig, loop,
         std::bind(
-            CreateBackSession, &forwardContext,
+            &ForwardContext::createBackSession, &forwardContext,
             std::placeholders::_1, std::placeholders::_2));
 
     if(frontServer.init(context) && backServer.init(context))

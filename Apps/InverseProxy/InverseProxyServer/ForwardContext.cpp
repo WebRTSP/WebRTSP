@@ -98,6 +98,26 @@ ForwardContext::~ForwardContext()
 {
 }
 
+std::unique_ptr<FrontSession>
+ForwardContext::createFrontSession(
+    const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
+    const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
+{
+    return
+        std::make_unique<FrontSession>(
+            this, sendRequest, sendResponse);
+}
+
+std::unique_ptr<BackSession>
+ForwardContext::createBackSession(
+    const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
+    const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
+{
+    return
+        std::make_unique<BackSession>(
+            this, sendRequest, sendResponse);
+}
+
 void ForwardContext::registerFrontSession(FrontSession* frontSession)
 {
     _p->frontSessionsData.emplace(frontSession, FrontSessionData {});
