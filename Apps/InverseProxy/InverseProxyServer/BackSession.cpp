@@ -11,8 +11,6 @@ struct BackSession::Private
     ForwardContext *const forwardContext;
 
     std::string clientName;
-
-    std::map<std::string, std::string> sessionId2frontSessionId;
 };
 
 BackSession::Private::Private(
