@@ -11,6 +11,8 @@ struct BackSession::Private
     ForwardContext *const forwardContext;
 
     std::string clientName;
+
+    std::map<std::string, std::string> sessionId2frontSessionId;
 };
 
 BackSession::Private::Private(
@@ -24,48 +26,14 @@ BackSession::BackSession(
     ForwardContext* forwardContext,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
-    rtsp::ClientSession(sendRequest, sendResponse),
+    rtsp::Session(sendRequest, sendResponse),
     _p(new Private(this, forwardContext))
 {
 }
 
 BackSession::~BackSession()
 {
-}
-
-bool BackSession::onOptionsResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
-{
-    return false;
-}
-
-bool BackSession::onDescribeResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
-{
-    return false;
-}
-
-bool BackSession::onSetupResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
-{
-    return false;
-}
-
-bool BackSession::onPlayResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
-{
-    return false;
-}
-
-bool BackSession::onTeardownResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
-{
-    return false;
+    _p->forwardContext->removeBackSession(_p->clientName, this);
 }
 
 bool BackSession::handleRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
@@ -73,7 +41,7 @@ bool BackSession::handleRequest(std::unique_ptr<rtsp::Request>& requestPtr) noex
     if(rtsp::Method::SET_PARAMETER != requestPtr->method && _p->clientName.empty())
         return false;
 
-    return rtsp::ClientSession::handleRequest(requestPtr);
+    return rtsp::Session::handleRequest(requestPtr);
 }
 
 bool BackSession::handleSetParameterRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
@@ -99,6 +67,9 @@ bool BackSession::handleSetParameterRequest(std::unique_ptr<rtsp::Request>& requ
     if(name != "name")
         return false;
 
+    if(!_p->clientName.empty())
+        return false;
+
     if(!_p->forwardContext->registerBackSession(value, this))
         return false;
 
@@ -109,6 +80,32 @@ bool BackSession::handleSetParameterRequest(std::unique_ptr<rtsp::Request>& requ
 
 bool BackSession::handleSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    return false;
+    return _p->forwardContext->forwardToFrontSession(this, *requestPtr);
 }
 
+rtsp::CSeq BackSession::forward(std::unique_ptr<rtsp::Request>& requestPtr)
+{
+    rtsp::Request* request = createRequest(requestPtr->method, requestPtr->uri);
+
+    request->headerFields.swap(requestPtr->headerFields);
+    request->body.swap(requestPtr->body);
+    requestPtr.reset();
+
+    sendRequest(*request);
+
+    return request->cseq;
+}
+
+void BackSession::forward(
+    const rtsp::Request& /*request*/,
+    const rtsp::Response& response)
+{
+    sendResponse(response);
+}
+
+bool BackSession::handleResponse(
+    const rtsp::Request& request,
+    const rtsp::Response& response) noexcept
+{
+    return _p->forwardContext->forwardToFrontSession(this, request, response);
+}

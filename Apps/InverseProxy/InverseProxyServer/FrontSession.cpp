@@ -27,47 +27,45 @@ FrontSession::FrontSession(
     ForwardContext* forwardContext,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
-    rtsp::ServerSession(sendRequest, sendResponse),
+    rtsp::Session(sendRequest, sendResponse),
     _p(new Private(this, forwardContext))
 {
+    _p->forwardContext->registerFrontSession(this);
 }
 
 FrontSession::~FrontSession()
 {
+    _p->forwardContext->removeFrontSession(this);
 }
 
-bool FrontSession::handleOptionsRequest(
+bool FrontSession::handleRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    return false;
+    return _p->forwardContext->forwardToBackSession(this, requestPtr);
 }
 
-bool FrontSession::handleDescribeRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+rtsp::CSeq FrontSession::forward(const rtsp::Request& request)
 {
-    return false;
+    rtsp::Request* outRequest = createRequest(request.method, request.uri);
+
+    outRequest->headerFields = request.headerFields;
+    outRequest->body = request.body;
+
+    sendRequest(*outRequest);
+
+    return outRequest->cseq;
 }
 
-bool FrontSession::handleSetupRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+void FrontSession::forward(
+    const rtsp::Request& /*request*/,
+    const rtsp::Response& response)
 {
-    const rtsp::SessionId session = RequestSession(*requestPtr);
-
-    return false;
+    sendResponse(response);
 }
 
-bool FrontSession::handlePlayRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+bool FrontSession::handleResponse(
+    const rtsp::Request& request,
+    const rtsp::Response& response) noexcept
 {
-    const rtsp::SessionId session = RequestSession(*requestPtr);
-
-    return false;
-}
-
-bool FrontSession::handleTeardownRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
-{
-    const rtsp::SessionId session = RequestSession(*requestPtr);
-
-    return false;
+    return _p->forwardContext->forwardToBackSession(this, request, response);
 }

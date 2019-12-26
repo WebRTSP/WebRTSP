@@ -24,14 +24,13 @@ static std::unique_ptr<WebRTCPeer> CreateClientPeer()
 }
 
 static std::unique_ptr<rtsp::ClientSession> CreateClientSession (
+    const std::string& sourceUri,
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
-    const std::string url =
-        "*";
     return
         std::make_unique<ClientSession>(
-            url,
+            sourceUri,
             CreateClientPeer,
             sendRequest,
             sendResponse);
@@ -56,6 +55,8 @@ int main(int argc, char *argv[])
         BACK_SERVER_PORT = 8081,
     };
 
+    const std::string sourceName = "source1";
+
     std::thread serverThread(
         [] () {
             InverseProxyServerConfig config {
@@ -66,16 +67,16 @@ int main(int argc, char *argv[])
         });
 
     std::thread streamSourceClientThread(
-        [] () {
+        [&sourceName] () {
             client::Config config {};
             config.server = "localhost";
             config.serverPort = BACK_SERVER_PORT;
 
-            InverseProxyClientMain(config);
+            InverseProxyClientMain(config, sourceName);
         });
 
     std::thread clientThread(
-        [] () {
+        [&sourceName] () {
             client::Config config {};
             config.server = "localhost";
             config.serverPort = FRONT_SERVER_PORT;
@@ -89,7 +90,11 @@ int main(int argc, char *argv[])
             client::WsClient client(
                 config,
                 loop,
-                CreateClientSession,
+                std::bind(
+                    CreateClientSession,
+                    sourceName,
+                    std::placeholders::_1,
+                    std::placeholders::_2),
                 std::bind(ClientDisconnected, &client));
 
             if(client.init()) {

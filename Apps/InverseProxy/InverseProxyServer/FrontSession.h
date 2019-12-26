@@ -6,7 +6,7 @@
 #include "ForwardContext.h"
 
 
-class FrontSession: public rtsp::ServerSession
+class FrontSession: public rtsp::Session
 {
 public:
     FrontSession(
@@ -15,12 +15,17 @@ public:
         const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
     ~FrontSession();
 
-private:
-    bool handleOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool handleDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool handlePlayRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool handleTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+
+    rtsp::CSeq forward(const rtsp::Request&);
+    void forward(
+        const rtsp::Request&,
+        const rtsp::Response&);
+
+protected:
+    bool handleResponse(
+        const rtsp::Request&,
+        const rtsp::Response&) noexcept override;
 
 private:
     struct Private;

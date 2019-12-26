@@ -11,7 +11,7 @@
 #include "BackSession.h"
 
 
-static std::unique_ptr<rtsp::ServerSession> CreateFrontSession(
+static std::unique_ptr<rtsp::Session> CreateFrontSession(
     ForwardContext* forwardContext,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept
@@ -21,7 +21,7 @@ static std::unique_ptr<rtsp::ServerSession> CreateFrontSession(
             forwardContext, sendRequest, sendResponse);
 }
 
-static std::unique_ptr<rtsp::ClientSession> CreateBackSession(
+static std::unique_ptr<rtsp::Session> CreateBackSession(
     ForwardContext* forwardContext,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept
