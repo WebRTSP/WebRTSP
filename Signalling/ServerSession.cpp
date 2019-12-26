@@ -144,7 +144,6 @@ ServerSession::ServerSession(
     rtsp::ServerSession(sendRequest, sendResponse),
     _p(new Private(this, createPeer))
 {
-
 }
 
 ServerSession::~ServerSession()
