@@ -5,8 +5,8 @@ namespace rtsp {
 
 CSeq ClientSession::requestOptions(const std::string& uri) noexcept
 {
-    rtsp::Request& request =
-        *createRequest(rtsp::Method::OPTIONS, uri);
+    Request& request =
+        *createRequest(Method::OPTIONS, uri);
 
     sendRequest(request);
 
@@ -15,8 +15,8 @@ CSeq ClientSession::requestOptions(const std::string& uri) noexcept
 
 CSeq ClientSession::requestDescribe(const std::string& uri) noexcept
 {
-    rtsp::Request& request =
-        *createRequest(rtsp::Method::DESCRIBE, uri);
+    Request& request =
+        *createRequest(Method::DESCRIBE, uri);
 
     sendRequest(request);
 
@@ -25,10 +25,10 @@ CSeq ClientSession::requestDescribe(const std::string& uri) noexcept
 
 CSeq ClientSession::requestPlay(
     const std::string& uri,
-    const rtsp::SessionId& session) noexcept
+    const SessionId& session) noexcept
 {
-    rtsp::Request& request =
-        *createRequest(rtsp::Method::PLAY, uri, session);
+    Request& request =
+        *createRequest(Method::PLAY, uri, session);
 
     sendRequest(request);
 
@@ -37,10 +37,10 @@ CSeq ClientSession::requestPlay(
 
 CSeq ClientSession::requestTeardown(
     const std::string& uri,
-    const rtsp::SessionId& session) noexcept
+    const SessionId& session) noexcept
 {
-    rtsp::Request& request =
-        *createRequest(rtsp::Method::TEARDOWN, uri, session);
+    Request& request =
+        *createRequest(Method::TEARDOWN, uri, session);
 
     sendRequest(request);
 
@@ -48,16 +48,16 @@ CSeq ClientSession::requestTeardown(
 }
 
 bool ClientSession::handleResponse(
-    const rtsp::Request& request, const rtsp::Response& response) noexcept
+    const Request& request, const Response& response) noexcept
 {
     switch(request.method) {
-        case rtsp::Method::OPTIONS:
+        case Method::OPTIONS:
             return onOptionsResponse(request, response);
-        case rtsp::Method::DESCRIBE:
+        case Method::DESCRIBE:
             return onDescribeResponse(request, response);
-        case rtsp::Method::PLAY:
+        case Method::PLAY:
             return onPlayResponse(request, response);
-        case rtsp::Method::TEARDOWN:
+        case Method::TEARDOWN:
             return onTeardownResponse(request, response);
         default:
             return Session::handleResponse(request, response);

@@ -20,6 +20,6 @@ struct Response {
     std::string body;
 };
 
-rtsp::SessionId ResponseSession(const rtsp::Response&);
+SessionId ResponseSession(const Response&);
 
 }

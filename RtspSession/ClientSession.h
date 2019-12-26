@@ -19,25 +19,25 @@ protected:
     using Session::Session;
 
     bool handleResponse(
-        const rtsp::Request&,
-        const rtsp::Response&) noexcept override;
+        const Request&,
+        const Response&) noexcept override;
 
     CSeq requestOptions(const std::string& uri) noexcept;
     CSeq requestDescribe(const std::string& uri) noexcept;
-    CSeq requestPlay(const std::string& uri, const rtsp::SessionId&) noexcept;
-    CSeq requestTeardown(const std::string& uri, const rtsp::SessionId&) noexcept;
+    CSeq requestPlay(const std::string& uri, const SessionId&) noexcept;
+    CSeq requestTeardown(const std::string& uri, const SessionId&) noexcept;
 
     virtual bool onOptionsResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept
+        const Request&, const Response&) noexcept
         { return false; }
     virtual bool onDescribeResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept
+        const Request&, const Response&) noexcept
         { return false; }
     virtual bool onPlayResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept
+        const Request&, const Response&) noexcept
         { return false; }
     virtual bool onTeardownResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept
+        const Request&, const Response&) noexcept
         { return false; }
 };
 

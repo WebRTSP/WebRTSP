@@ -20,7 +20,7 @@ struct Request {
     std::string body;
 };
 
-rtsp::SessionId RequestSession(const rtsp::Request& request);
-std::string RequestContentType(const rtsp::Request& request);
+SessionId RequestSession(const Request& request);
+std::string RequestContentType(const Request& request);
 
 }

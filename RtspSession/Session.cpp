@@ -49,9 +49,9 @@ Request* Session::createRequest(
 bool Session::handleRequest(std::unique_ptr<Request>& requestPtr) noexcept
 {
     switch(requestPtr->method) {
-    case rtsp::Method::SETUP:
+    case Method::SETUP:
         return handleSetupRequest(requestPtr);
-    case rtsp::Method::SET_PARAMETER:
+    case Method::SET_PARAMETER:
         return handleSetParameterRequest(requestPtr);
     default:
         return false;
@@ -85,10 +85,10 @@ Response* Session::prepareOkResponse(
 }
 
 void Session::sendOkResponse(
-    rtsp::CSeq cseq,
-    const rtsp::SessionId& session)
+    CSeq cseq,
+    const SessionId& session)
 {
-    rtsp::Response response;
+    Response response;
     sendResponse(*prepareOkResponse(cseq, session, &response));
 }
 
@@ -100,11 +100,11 @@ void Session::sendRequest(const Request& request) noexcept
 CSeq Session::requestSetup(
     const std::string& uri,
     const std::string& contentType,
-    const rtsp::SessionId& session,
+    const SessionId& session,
     const std::string& body) noexcept
 {
-    rtsp::Request& request =
-        *createRequest(rtsp::Method::SETUP, uri);
+    Request& request =
+        *createRequest(Method::SETUP, uri);
 
     request.headerFields.emplace("Session", session);
     request.headerFields.emplace("content-type", contentType);
@@ -121,8 +121,8 @@ CSeq Session::requestSetParameter(
     const std::string& contentType,
     const std::string& body) noexcept
 {
-    rtsp::Request& request =
-        *createRequest(rtsp::Method::SET_PARAMETER, uri);
+    Request& request =
+        *createRequest(Method::SET_PARAMETER, uri);
 
     request.headerFields.emplace("content-type", contentType);
 
@@ -156,7 +156,7 @@ bool Session::handleResponse(const Response& response) noexcept
 bool Session::handleResponse(const Request& request, const Response& response) noexcept
 {
     switch(request.method) {
-    case rtsp::Method::SETUP:
+    case Method::SETUP:
         return onSetupResponse(request, response);
     default:
         return false;

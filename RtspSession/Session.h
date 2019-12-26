@@ -14,6 +14,8 @@ namespace rtsp {
 
 struct Session
 {
+    virtual ~Session() {}
+
     virtual bool onConnected() noexcept { return true; }
 
     virtual bool handleRequest(std::unique_ptr<Request>&) noexcept;
@@ -43,7 +45,7 @@ protected:
         CSeq cseq,
         const SessionId& session,
         Response* out);
-    void sendOkResponse(rtsp::CSeq, const rtsp::SessionId&);
+    void sendOkResponse(CSeq, const SessionId&);
 
     void sendRequest(const Request&) noexcept;
     void sendResponse(const Response&) noexcept;
@@ -52,16 +54,16 @@ protected:
     CSeq requestSetup(
         const std::string& uri,
         const std::string& contentType,
-        const rtsp::SessionId& session,
+        const SessionId& session,
         const std::string& body) noexcept;
     CSeq requestSetParameter(
         const std::string& uri,
         const std::string& contentType,
         const std::string& body) noexcept;
 
-    virtual bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept
+    virtual bool handleSetupRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
-    virtual bool handleSetParameterRequest(std::unique_ptr<rtsp::Request>&) noexcept
+    virtual bool handleSetParameterRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
 
     virtual bool handleResponse(const Request&, const Response&) noexcept;

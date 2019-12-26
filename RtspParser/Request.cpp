@@ -3,16 +3,16 @@
 
 namespace rtsp {
 
-rtsp::SessionId RequestSession(const rtsp::Request& request)
+SessionId RequestSession(const Request& request)
 {
     auto it = request.headerFields.find("session");
     if(request.headerFields.end() == it)
-        return rtsp::SessionId();
+        return SessionId();
 
     return it->second;
 }
 
-std::string RequestContentType(const rtsp::Request& request)
+std::string RequestContentType(const Request& request)
 {
     auto it = request.headerFields.find("content-type");
     if(request.headerFields.end() == it)
