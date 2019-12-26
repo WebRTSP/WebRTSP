@@ -33,9 +33,6 @@ protected:
     virtual bool onDescribeResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept
         { return false; }
-    virtual bool onSetupResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept
-        { return false; }
     virtual bool onPlayResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept
         { return false; }

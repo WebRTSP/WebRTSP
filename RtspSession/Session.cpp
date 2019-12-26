@@ -157,13 +157,13 @@ bool Session::handleResponse(const Request& request, const Response& response) n
 {
     switch(request.method) {
     case rtsp::Method::SETUP:
-        return handleSetupResponse(request, response);
+        return onSetupResponse(request, response);
     default:
         return false;
     }
 }
 
-bool Session::handleSetupResponse(const Request& request, const Response& response) noexcept
+bool Session::onSetupResponse(const Request& request, const Response& response) noexcept
 {
     if(StatusCode::OK == response.statusCode)
         return true;

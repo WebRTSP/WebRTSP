@@ -55,14 +55,12 @@ bool ClientSession::handleResponse(
             return onOptionsResponse(request, response);
         case rtsp::Method::DESCRIBE:
             return onDescribeResponse(request, response);
-        case rtsp::Method::SETUP:
-            return onSetupResponse(request, response);
         case rtsp::Method::PLAY:
             return onPlayResponse(request, response);
         case rtsp::Method::TEARDOWN:
             return onTeardownResponse(request, response);
         default:
-            return false;
+            return Session::handleResponse(request, response);
     }
 }
 
