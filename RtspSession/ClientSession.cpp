@@ -48,19 +48,20 @@ CSeq ClientSession::requestTeardown(
 }
 
 bool ClientSession::handleResponse(
-    const Request& request, const Response& response) noexcept
+    const Request& request,
+    std::unique_ptr<Response>& responsePtr) noexcept
 {
     switch(request.method) {
         case Method::OPTIONS:
-            return onOptionsResponse(request, response);
+            return onOptionsResponse(request, *responsePtr);
         case Method::DESCRIBE:
-            return onDescribeResponse(request, response);
+            return onDescribeResponse(request, *responsePtr);
         case Method::PLAY:
-            return onPlayResponse(request, response);
+            return onPlayResponse(request, *responsePtr);
         case Method::TEARDOWN:
-            return onTeardownResponse(request, response);
+            return onTeardownResponse(request, *responsePtr);
         default:
-            return Session::handleResponse(request, response);
+            return Session::handleResponse(request, responsePtr);
     }
 }
 

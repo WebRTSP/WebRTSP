@@ -182,18 +182,18 @@ bool BackSession::manageMediaSessions(
 
 bool BackSession::handleResponse(
     const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
+    std::unique_ptr<rtsp::Response>& responsePtr) noexcept
 {
-    if(!manageMediaSessions(request, response))
+    if(!manageMediaSessions(request, *responsePtr))
         return false;
 
-    const auto requestIt = _p->forwardRequests.find(response.cseq);
+    const auto requestIt = _p->forwardRequests.find(responsePtr->cseq);
     if(requestIt == _p->forwardRequests.end())
         return false;
 
     const RequestSource& requestSource = requestIt->second;
 
-    const rtsp::SessionId responseSessionId = ResponseSession(response);
+    const rtsp::SessionId responseSessionId = ResponseSession(*responsePtr);
     if(rtsp::Method::DESCRIBE == request.method) {
         if(!requestSource.session.empty() || responseSessionId.empty())
             return false;
@@ -202,8 +202,8 @@ bool BackSession::handleResponse(
 
     FrontSession* targetSession = requestSource.source;
 
-    rtsp::Response tmpResponse = response;
-    tmpResponse.cseq = requestSource.sourceCSeq;
+    std::unique_ptr<rtsp::Response> tmpResponsePtr = std::move(responsePtr);
+    tmpResponsePtr->cseq = requestSource.sourceCSeq;
 
-    return _p->forwardContext->forwardToFrontSession(targetSession, tmpResponse);
+    return _p->forwardContext->forwardToFrontSession(targetSession, *tmpResponsePtr);
 }

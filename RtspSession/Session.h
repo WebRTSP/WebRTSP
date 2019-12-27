@@ -20,7 +20,7 @@ struct Session
 
     virtual bool handleRequest(std::unique_ptr<Request>&) noexcept;
 
-    bool handleResponse(const Response&) noexcept;
+    bool handleResponse(std::unique_ptr<Response>& responsePtr) noexcept;
 
 protected:
     Session(
@@ -66,8 +66,12 @@ protected:
     virtual bool handleSetParameterRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
 
-    virtual bool handleResponse(const Request&, const Response&) noexcept;
-    virtual bool onSetupResponse(const Request&, const Response&) noexcept;
+    virtual bool handleResponse(
+        const Request&,
+        std::unique_ptr<Response>&) noexcept;
+    virtual bool onSetupResponse(
+        const Request&,
+        const Response&) noexcept;
 
 private:
     const std::function<void (const Request*)> _sendRequest;

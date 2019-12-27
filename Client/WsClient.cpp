@@ -278,11 +278,12 @@ bool WsClient::Private::onMessage(
         if(!scd->data->rtspSession->handleRequest(requestPtr))
             return false;
     } else {
-        rtsp::Response response;
-        if(!rtsp::ParseResponse(message.data(), message.size(), &response))
+        std::unique_ptr<rtsp::Response > responsePtr =
+            std::make_unique<rtsp::Response>();
+        if(!rtsp::ParseResponse(message.data(), message.size(), responsePtr.get()))
             return false;
 
-        if(!scd->data->rtspSession->handleResponse(response))
+        if(!scd->data->rtspSession->handleResponse(responsePtr))
             return false;
     }
 

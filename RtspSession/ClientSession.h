@@ -20,7 +20,7 @@ protected:
 
     bool handleResponse(
         const Request&,
-        const Response&) noexcept override;
+        std::unique_ptr<Response>&) noexcept override;
 
     CSeq requestOptions(const std::string& uri) noexcept;
     CSeq requestDescribe(const std::string& uri) noexcept;

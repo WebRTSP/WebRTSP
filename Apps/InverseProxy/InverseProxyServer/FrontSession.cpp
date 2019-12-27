@@ -89,23 +89,23 @@ bool FrontSession::forward(const rtsp::Response& response)
 
 bool FrontSession::handleResponse(
     const rtsp::Request& /*request*/,
-    const rtsp::Response& response) noexcept
+    std::unique_ptr<rtsp::Response>& responsePtr) noexcept
 {
-    const auto requestIt = _p->forwardRequests.find(response.cseq);
+    const auto requestIt = _p->forwardRequests.find(responsePtr->cseq);
     if(requestIt == _p->forwardRequests.end())
         return false;
 
     const RequestSource& requestSource = requestIt->second;
 
-    const rtsp::SessionId responseSessionId = ResponseSession(response);
+    const rtsp::SessionId responseSessionId = ResponseSession(*responsePtr);
 
     if(requestSource.session != responseSessionId)
         return false;
 
     BackSession* targetSession = requestSource.source;
 
-    rtsp::Response tmpResponse = response;
-    tmpResponse.cseq = requestSource.sourceCSeq;
+    std::unique_ptr<rtsp::Response> tmpResponsePtr = std::move(responsePtr);
+    tmpResponsePtr->cseq = requestSource.sourceCSeq;
 
-    return _p->forwardContext->forwardToBackSession(targetSession, tmpResponse);
+    return _p->forwardContext->forwardToBackSession(targetSession, *tmpResponsePtr);
 }

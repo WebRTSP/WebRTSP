@@ -143,27 +143,31 @@ void Session::disconnect() noexcept
     _sendRequest(nullptr);
 }
 
-bool Session::handleResponse(const Response& response) noexcept
+bool Session::handleResponse(std::unique_ptr<Response>& responsePtr) noexcept
 {
-    auto it = _sentRequests.find(response.cseq);
+    auto it = _sentRequests.find(responsePtr->cseq);
     if(it == _sentRequests.end())
         return false;
 
     const Request& request = it->second;
-    return handleResponse(request, response);
+    return handleResponse(request, responsePtr);
 }
 
-bool Session::handleResponse(const Request& request, const Response& response) noexcept
+bool Session::handleResponse(
+    const Request& request,
+    std::unique_ptr<Response>& responsePtr) noexcept
 {
     switch(request.method) {
     case Method::SETUP:
-        return onSetupResponse(request, response);
+        return onSetupResponse(request, *responsePtr);
     default:
         return false;
     }
 }
 
-bool Session::onSetupResponse(const Request& request, const Response& response) noexcept
+bool Session::onSetupResponse(
+    const Request& request,
+    const Response& response) noexcept
 {
     if(StatusCode::OK == response.statusCode)
         return true;

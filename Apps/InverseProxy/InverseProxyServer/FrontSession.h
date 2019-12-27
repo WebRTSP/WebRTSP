@@ -26,7 +26,7 @@ public:
 protected:
     bool handleResponse(
         const rtsp::Request&,
-        const rtsp::Response&) noexcept override;
+        std::unique_ptr<rtsp::Response>&) noexcept override;
 
 private:
     struct Private;
