@@ -40,8 +40,6 @@ struct ServerSession::Private
     ServerSession* owner;
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer;
 
-    unsigned _nextSession = 1;
-
     Requests requests;
     Streamers streamers;
 
@@ -52,6 +50,9 @@ struct ServerSession::Private
     void iceCandidate(
         const rtsp::SessionId&,
         unsigned, const std::string&);
+
+private:
+    unsigned _nextSession = 1;
 };
 
 struct ServerSession::Private::AutoEraseRequest
