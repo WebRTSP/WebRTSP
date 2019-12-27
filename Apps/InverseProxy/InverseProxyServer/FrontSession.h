@@ -6,6 +6,7 @@
 #include "ForwardContext.h"
 
 
+// FIXME! force teardown opened media sessions on disconnect
 class FrontSession: public rtsp::Session
 {
 public:
@@ -17,10 +18,10 @@ public:
 
     bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
-    rtsp::CSeq forward(const rtsp::Request&);
-    void forward(
-        const rtsp::Request&,
-        const rtsp::Response&);
+    bool forward(
+        BackSession* source,
+        std::unique_ptr<rtsp::Request>& sourceRequestPtr);
+    bool forward(const rtsp::Response&);
 
 protected:
     bool handleResponse(

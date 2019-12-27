@@ -26,25 +26,21 @@ public:
             const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
             const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept;
 
-    void registerFrontSession(FrontSession*);
-    void removeFrontSession(FrontSession*);
-
     bool registerBackSession(const std::string& name, BackSession*);
     void removeBackSession(const std::string& name, BackSession*);
 
     bool forwardToBackSession(
-        FrontSession*,
+        FrontSession* sourceSession,
         std::unique_ptr<rtsp::Request>&);
     bool forwardToBackSession(
-        FrontSession*,
-        const rtsp::Request&,
+        BackSession* targetSession,
         const rtsp::Response&);
     bool forwardToFrontSession(
-        BackSession*,
-        const rtsp::Request&);
+        BackSession* sourceSession,
+        FrontSession* targetSession,
+        std::unique_ptr<rtsp::Request>&);
     bool forwardToFrontSession(
-        BackSession*,
-        const rtsp::Request&,
+        FrontSession* targetSession,
         const rtsp::Response&);
 
 private:

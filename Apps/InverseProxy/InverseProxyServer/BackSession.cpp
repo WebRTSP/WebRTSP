@@ -1,7 +1,20 @@
 #include "BackSession.h"
 
+#include <cassert>
+#include <map>
+
 #include "RtspSession/StatusCode.h"
 
+
+namespace {
+
+struct RequestSource {
+    FrontSession* source;
+    rtsp::CSeq sourceCSeq;
+    rtsp::SessionId session;
+};
+
+}
 
 struct BackSession::Private
 {
@@ -11,6 +24,9 @@ struct BackSession::Private
     ForwardContext *const forwardContext;
 
     std::string clientName;
+
+    std::map<rtsp::CSeq, RequestSource> forwardRequests;
+    std::map<rtsp::SessionId, FrontSession*> mediaSessions;
 };
 
 BackSession::Private::Private(
@@ -78,32 +94,116 @@ bool BackSession::handleSetParameterRequest(std::unique_ptr<rtsp::Request>& requ
 
 bool BackSession::handleSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    return _p->forwardContext->forwardToFrontSession(this, *requestPtr);
+    rtsp::Request& request = *requestPtr;
+
+    const rtsp::SessionId sessionId = RequestSession(request);
+
+    const auto mediaSessionIt = _p->mediaSessions.find(sessionId);
+    if(_p->mediaSessions.end() == mediaSessionIt)
+        return false;
+
+    FrontSession* targetSession = mediaSessionIt->second;
+
+    return
+        _p->forwardContext->forwardToFrontSession(
+            this, targetSession, requestPtr);
 }
 
-rtsp::CSeq BackSession::forward(std::unique_ptr<rtsp::Request>& requestPtr)
+bool BackSession::forward(
+    FrontSession* source,
+    std::unique_ptr<rtsp::Request>& sourceRequestPtr)
 {
-    rtsp::Request* request = createRequest(requestPtr->method, requestPtr->uri);
+    rtsp::Request& sourceRequest = *sourceRequestPtr;
+    const rtsp::CSeq sourceCSeq = sourceRequest.cseq;
+    const rtsp::SessionId sourceSession = rtsp::RequestSession(sourceRequest);
 
-    request->headerFields.swap(requestPtr->headerFields);
-    request->body.swap(requestPtr->body);
-    requestPtr.reset();
+    rtsp::Request* request =
+        createRequest(sourceRequest.method, sourceRequest.uri);
+    const rtsp::CSeq requestCSeq = request->cseq;
+
+    const bool inserted =
+        _p->forwardRequests.emplace(
+            requestCSeq,
+            RequestSource { source, sourceCSeq, sourceSession }).second;
+    assert(inserted);
+
+    request->headerFields.swap(sourceRequest.headerFields);
+    request->body.swap(sourceRequest.body);
+    sourceRequestPtr.reset();
 
     sendRequest(*request);
 
-    return request->cseq;
+    return true;
 }
 
-void BackSession::forward(
-    const rtsp::Request& /*request*/,
-    const rtsp::Response& response)
+bool BackSession::forward(const rtsp::Response& response)
 {
     sendResponse(response);
+
+    return true;
+}
+
+bool BackSession::manageMediaSessions(
+    const rtsp::Request& request,
+    const rtsp::Response& response) noexcept
+{
+    if((rtsp::Method::DESCRIBE != request.method ||
+        rtsp::Method::TEARDOWN != request.method) &&
+       rtsp::StatusCode::OK != response.statusCode)
+    {
+        return true;
+    }
+
+    const auto requestsIt = _p->forwardRequests.find(response.cseq);
+    if(requestsIt == _p->forwardRequests.end())
+        return false;
+
+    const RequestSource& requestSource = requestsIt->second;
+    FrontSession* requestSourceSession = requestSource.source;
+
+    if(rtsp::Method::DESCRIBE == request.method) {
+        const rtsp::SessionId sessionId = ResponseSession(response);
+        const bool inserted =
+            _p->mediaSessions.emplace(sessionId, requestSourceSession).second;
+
+        if(!inserted)
+            return false;
+    } else if(rtsp::Method::TEARDOWN == request.method) {
+        const rtsp::SessionId sessionId = ResponseSession(response);
+        const bool erased =
+            _p->mediaSessions.erase(sessionId) > 0;
+
+        if(!erased)
+            return false;
+    }
+
+    return true;
 }
 
 bool BackSession::handleResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
 {
-    return _p->forwardContext->forwardToFrontSession(this, request, response);
+    if(!manageMediaSessions(request, response))
+        return false;
+
+    const auto requestIt = _p->forwardRequests.find(response.cseq);
+    if(requestIt == _p->forwardRequests.end())
+        return false;
+
+    const RequestSource& requestSource = requestIt->second;
+
+    const rtsp::SessionId responseSessionId = ResponseSession(response);
+    if(rtsp::Method::DESCRIBE == request.method) {
+        if(!requestSource.session.empty() || responseSessionId.empty())
+            return false;
+    } else if(requestSource.session != responseSessionId)
+        return false;
+
+    FrontSession* targetSession = requestSource.source;
+
+    rtsp::Response tmpResponse = response;
+    tmpResponse.cseq = requestSource.sourceCSeq;
+
+    return _p->forwardContext->forwardToFrontSession(targetSession, tmpResponse);
 }
