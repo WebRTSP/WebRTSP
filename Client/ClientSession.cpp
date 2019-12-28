@@ -195,6 +195,8 @@ bool ClientSession::handleSetupRequest(std::unique_ptr<rtsp::Request>& requestPt
         else
             _p->client->addIceCandidate(idx, candidate);
 
+        sendOkResponse(requestPtr->cseq, rtsp::RequestSession(*requestPtr));
+
         return true;
     } catch(...) {
         return false;
