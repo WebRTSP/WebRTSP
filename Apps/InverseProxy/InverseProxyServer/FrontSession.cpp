@@ -79,6 +79,47 @@ bool FrontSession::handleRequest(
     return _p->forwardContext->forwardToBackSession(this, targetSession, requestPtr);
 }
 
+bool FrontSession::handleResponse(
+    const rtsp::Request& request,
+    std::unique_ptr<rtsp::Response>& responsePtr) noexcept
+{
+    const rtsp::SessionId requestSessionId = rtsp::RequestSession(request);
+    const rtsp::SessionId responseSessionId = rtsp::ResponseSession(*responsePtr);
+    if(requestSessionId != responseSessionId)
+        return false;
+
+    BackSession* targetSession = nullptr;
+    rtsp::SessionId targetSessionId;
+    if(!responseSessionId.empty()) {
+        const auto sessionIt = _p->sessionsIdx.find(responseSessionId);
+        if(_p->sessionsIdx.end() == sessionIt)
+            return false;
+
+        const BackSession2SessionId& back2backId = sessionIt->second;
+        targetSession = back2backId.first;
+        targetSessionId = back2backId.second;
+
+        rtsp::SetResponseSession(responsePtr.get(), targetSessionId);
+    }
+
+    const auto requestIt = _p->forwardRequests.find(responsePtr->cseq);
+    if(requestIt == _p->forwardRequests.end())
+        return false;
+
+    const RequestSource& requestSource = requestIt->second;
+
+    if(requestSource.session != targetSessionId)
+        return false;
+
+    responsePtr->cseq = requestSource.sourceCSeq;
+
+    BackSession* targetSession2 = requestSource.source;
+    if(targetSession && targetSession != targetSession2)
+        return false;
+
+    return _p->forwardContext->forwardToBackSession(targetSession2, *responsePtr);
+}
+
 bool FrontSession::forward(
     BackSession* source,
     std::unique_ptr<rtsp::Request>& sourceRequestPtr)
@@ -167,45 +208,4 @@ bool FrontSession::forward(
     }
 
     return true;
-}
-
-bool FrontSession::handleResponse(
-    const rtsp::Request& request,
-    std::unique_ptr<rtsp::Response>& responsePtr) noexcept
-{
-    const rtsp::SessionId requestSessionId = rtsp::RequestSession(request);
-    const rtsp::SessionId responseSessionId = rtsp::ResponseSession(*responsePtr);
-    if(requestSessionId != responseSessionId)
-        return false;
-
-    BackSession* targetSession = nullptr;
-    rtsp::SessionId targetSessionId;
-    if(!responseSessionId.empty()) {
-        const auto sessionIt = _p->sessionsIdx.find(responseSessionId);
-        if(_p->sessionsIdx.end() == sessionIt)
-            return false;
-
-        const BackSession2SessionId& back2backId = sessionIt->second;
-        targetSession = back2backId.first;
-        targetSessionId = back2backId.second;
-
-        rtsp::SetResponseSession(responsePtr.get(), targetSessionId);
-    }
-
-    const auto requestIt = _p->forwardRequests.find(responsePtr->cseq);
-    if(requestIt == _p->forwardRequests.end())
-        return false;
-
-    const RequestSource& requestSource = requestIt->second;
-
-    if(requestSource.session != targetSessionId)
-        return false;
-
-    responsePtr->cseq = requestSource.sourceCSeq;
-
-    BackSession* targetSession2 = requestSource.source;
-    if(targetSession && targetSession != targetSession2)
-        return false;
-
-    return _p->forwardContext->forwardToBackSession(targetSession2, *responsePtr);
 }
