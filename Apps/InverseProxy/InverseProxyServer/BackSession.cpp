@@ -205,5 +205,7 @@ bool BackSession::handleResponse(
     std::unique_ptr<rtsp::Response> tmpResponsePtr = std::move(responsePtr);
     tmpResponsePtr->cseq = requestSource.sourceCSeq;
 
-    return _p->forwardContext->forwardToFrontSession(targetSession, *tmpResponsePtr);
+    return
+        _p->forwardContext->forwardToFrontSession(
+            this, targetSession, request, tmpResponsePtr);
 }

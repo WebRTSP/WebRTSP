@@ -21,7 +21,10 @@ public:
     bool forward(
         BackSession* source,
         std::unique_ptr<rtsp::Request>& sourceRequestPtr);
-    bool forward(const rtsp::Response&);
+    bool forward(
+        BackSession* source,
+        const rtsp::Request&,
+        std::unique_ptr<rtsp::Response>&);
 
 protected:
     bool handleResponse(

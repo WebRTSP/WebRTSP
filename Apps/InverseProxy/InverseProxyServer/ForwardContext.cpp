@@ -65,34 +65,41 @@ void ForwardContext::removeBackSession(
 
 bool ForwardContext::forwardToBackSession(
     FrontSession* source,
+    BackSession* target,
     std::unique_ptr<rtsp::Request>& requestPtr)
 {
     const auto backSessionIt = _p->backSessions.find(requestPtr->uri);
     if(backSessionIt == _p->backSessions.end())
         return false;
 
-    BackSession* backSession = backSessionIt->second;
-    return backSession->forward(source, requestPtr);
+    BackSession* target2 = backSessionIt->second;
+
+    if(target && target != target2)
+        return false;
+
+    return target2->forward(source, requestPtr);
 }
 
 bool ForwardContext::forwardToBackSession(
-    BackSession* targetSession,
+    BackSession* target,
     const rtsp::Response& response)
 {
-    return targetSession->forward(response);
+    return target->forward(response);
 }
 
 bool ForwardContext::forwardToFrontSession(
-    BackSession* requestSource,
-    FrontSession* requestTarget,
+    BackSession* source,
+    FrontSession* target,
     std::unique_ptr<rtsp::Request>& requestPtr)
 {
-    return requestTarget->forward(requestSource, requestPtr);
+    return target->forward(source, requestPtr);
 }
 
 bool ForwardContext::forwardToFrontSession(
-    FrontSession* targetSession,
-    const rtsp::Response& response)
+    BackSession* source,
+    FrontSession* target,
+    const rtsp::Request& request,
+    std::unique_ptr<rtsp::Response>& response)
 {
-    return targetSession->forward(response);
+    return target->forward(source, request, response);
 }

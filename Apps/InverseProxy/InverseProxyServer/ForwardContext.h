@@ -30,18 +30,21 @@ public:
     void removeBackSession(const std::string& name, BackSession*);
 
     bool forwardToBackSession(
-        FrontSession* sourceSession,
+        FrontSession* source,
+        BackSession* target,
         std::unique_ptr<rtsp::Request>&);
     bool forwardToBackSession(
-        BackSession* targetSession,
+        BackSession* target,
         const rtsp::Response&);
     bool forwardToFrontSession(
-        BackSession* sourceSession,
-        FrontSession* targetSession,
+        BackSession* source,
+        FrontSession* target,
         std::unique_ptr<rtsp::Request>&);
     bool forwardToFrontSession(
-        FrontSession* targetSession,
-        const rtsp::Response&);
+        BackSession* source,
+        FrontSession* target,
+        const rtsp::Request&,
+        std::unique_ptr<rtsp::Response>&);
 
 private:
     struct Private;
