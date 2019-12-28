@@ -12,6 +12,11 @@ SessionId RequestSession(const Request& request)
     return it->second;
 }
 
+void SetRequestSession(Request* request, const SessionId& session)
+{
+    request->headerFields["session"] = session;
+}
+
 std::string RequestContentType(const Request& request)
 {
     auto it = request.headerFields.find("content-type");

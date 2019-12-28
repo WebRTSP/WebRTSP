@@ -21,5 +21,6 @@ struct Response {
 };
 
 SessionId ResponseSession(const Response&);
+void SetResponseSession(Response*, const SessionId&);
 
 }

@@ -12,4 +12,9 @@ SessionId ResponseSession(const Response& response)
     return it->second;
 }
 
+void SetResponseSession(Response* response, const SessionId& session)
+{
+    response->headerFields["session"] = session;
+}
+
 }

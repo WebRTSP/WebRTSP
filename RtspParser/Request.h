@@ -21,6 +21,7 @@ struct Request {
 };
 
 SessionId RequestSession(const Request& request);
+void SetRequestSession(Request*, const SessionId&);
 std::string RequestContentType(const Request& request);
 
 }
