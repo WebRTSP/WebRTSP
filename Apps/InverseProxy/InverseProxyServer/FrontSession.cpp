@@ -13,11 +13,9 @@ struct RequestSource
 {
     BackSession* source;
     rtsp::CSeq sourceCSeq;
-    rtsp::SessionId session;
 };
 
-typedef std::map<rtsp::SessionId, rtsp::SessionId> BackSessionId2FrontSessionId;
-typedef std::pair<BackSession*, rtsp::SessionId> BackSession2SessionId;
+typedef std::pair<BackSession*, rtsp::SessionId> BackMediaSession;
 
 }
 
@@ -30,14 +28,13 @@ struct FrontSession::Private
 
     std::map<rtsp::CSeq, RequestSource> forwardRequests;
 
-    std::map<BackSession*, BackSessionId2FrontSessionId> backSessionsIdx;
-    std::map<rtsp::SessionId, BackSession2SessionId> sessionsIdx;
+    std::map<rtsp::SessionId, BackMediaSession> mediaSessions;
 
-    std::string nextSessionId()
-        { return std::to_string(_nextSessionId++); }
+    std::string nextMediaSession()
+        { return std::to_string(_nextMediaSession++); }
 
 private:
-    unsigned _nextSessionId = 1;
+    unsigned _nextMediaSession = 1;
 };
 
 FrontSession::Private::Private(
@@ -64,42 +61,40 @@ bool FrontSession::handleRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     const rtsp::SessionId sessionId = rtsp::RequestSession(*requestPtr);
-    BackSession* targetSession = nullptr;
+    BackSession* target = nullptr;
     if(!sessionId.empty()) {
-        const auto sessionIt = _p->sessionsIdx.find(sessionId);
-        if(_p->sessionsIdx.end() == sessionIt)
+        const auto sessionIt = _p->mediaSessions.find(sessionId);
+        if(_p->mediaSessions.end() == sessionIt)
             return false;
 
-        const BackSession2SessionId& back2backId = sessionIt->second;
-        targetSession = back2backId.first;
+        const BackMediaSession& targetSession = sessionIt->second;
+        target = targetSession.first;
 
-        rtsp::SetRequestSession(requestPtr.get(), back2backId.second);
+        rtsp::SetRequestSession(requestPtr.get(), targetSession.second);
     }
 
-    return _p->forwardContext->forwardToBackSession(this, targetSession, requestPtr);
+    return _p->forwardContext->forwardToBackSession(this, target, requestPtr);
 }
 
 bool FrontSession::handleResponse(
     const rtsp::Request& request,
     std::unique_ptr<rtsp::Response>& responsePtr) noexcept
 {
-    const rtsp::SessionId requestSessionId = rtsp::RequestSession(request);
-    const rtsp::SessionId responseSessionId = rtsp::ResponseSession(*responsePtr);
-    if(requestSessionId != responseSessionId)
+    const rtsp::SessionId requestMediaSession = rtsp::RequestSession(request);
+    const rtsp::SessionId responseMediaSession = rtsp::ResponseSession(*responsePtr);
+    if(requestMediaSession != responseMediaSession)
         return false;
 
-    BackSession* targetSession = nullptr;
-    rtsp::SessionId targetSessionId;
-    if(!responseSessionId.empty()) {
-        const auto sessionIt = _p->sessionsIdx.find(responseSessionId);
-        if(_p->sessionsIdx.end() == sessionIt)
+    BackSession* mediaSessionTarget = nullptr;
+    if(!responseMediaSession.empty()) {
+        const auto mediaSessionIt = _p->mediaSessions.find(responseMediaSession);
+        if(_p->mediaSessions.end() == mediaSessionIt)
             return false;
 
-        const BackSession2SessionId& back2backId = sessionIt->second;
-        targetSession = back2backId.first;
-        targetSessionId = back2backId.second;
+        const BackMediaSession& targetMediaSession = mediaSessionIt->second;
+        mediaSessionTarget = targetMediaSession.first;
 
-        rtsp::SetResponseSession(responsePtr.get(), targetSessionId);
+        rtsp::SetResponseSession(responsePtr.get(), targetMediaSession.second);
     }
 
     const auto requestIt = _p->forwardRequests.find(responsePtr->cseq);
@@ -108,16 +103,13 @@ bool FrontSession::handleResponse(
 
     const RequestSource& requestSource = requestIt->second;
 
-    if(requestSource.session != targetSessionId)
-        return false;
-
     responsePtr->cseq = requestSource.sourceCSeq;
 
-    BackSession* targetSession2 = requestSource.source;
-    if(targetSession && targetSession != targetSession2)
+    BackSession* targetSession = requestSource.source;
+    if(mediaSessionTarget && mediaSessionTarget != targetSession)
         return false;
 
-    return _p->forwardContext->forwardToBackSession(targetSession2, *responsePtr);
+    return _p->forwardContext->forwardToBackSession(targetSession, *responsePtr);
 }
 
 bool FrontSession::forward(
@@ -126,7 +118,6 @@ bool FrontSession::forward(
 {
     rtsp::Request& sourceRequest = *sourceRequestPtr;
     const rtsp::CSeq sourceCSeq = sourceRequest.cseq;
-    const rtsp::SessionId sourceSessionId = rtsp::RequestSession(sourceRequest);
 
     rtsp::Request* request =
         createRequest(sourceRequest.method, sourceRequest.uri);
@@ -135,23 +126,12 @@ bool FrontSession::forward(
     const bool inserted =
         _p->forwardRequests.emplace(
             requestCSeq,
-            RequestSource { source, sourceCSeq, sourceSessionId }).second;
+            RequestSource { source, sourceCSeq }).second;
     assert(inserted);
 
     request->headerFields.swap(sourceRequest.headerFields);
     request->body.swap(sourceRequest.body);
     sourceRequestPtr.reset();
-
-    auto it = _p->backSessionsIdx.find(source);
-    if(it != _p->backSessionsIdx.end() && !sourceSessionId.empty()) {
-        BackSessionId2FrontSessionId& backId2FrontId = it->second;
-
-        auto sessionIdIt = backId2FrontId.find(sourceSessionId);
-        if(sessionIdIt != backId2FrontId.end()) {
-            rtsp::SessionId localSessionId = sessionIdIt->second;
-            rtsp::SetRequestSession(request, localSessionId);
-        }
-    }
 
     sendRequest(*request);
 
@@ -163,48 +143,38 @@ bool FrontSession::forward(
     const rtsp::Request& request,
     std::unique_ptr<rtsp::Response>& responsePtr)
 {
-    const rtsp::SessionId sourceSessionId = rtsp::ResponseSession(*responsePtr);
+    const rtsp::SessionId responseMediaSession = rtsp::ResponseSession(*responsePtr);
 
     if(rtsp::Method::DESCRIBE == request.method &&
        rtsp::StatusCode::OK == responsePtr->statusCode)
     {
-        BackSessionId2FrontSessionId& back2front = _p->backSessionsIdx[source];
+        const rtsp::SessionId frontMediaSession = _p->nextMediaSession();
 
-        const rtsp::SessionId localSessionId = _p->nextSessionId();
-        back2front.emplace(sourceSessionId, localSessionId);
+        _p->forwardContext->registerMediaSession(
+            this, frontMediaSession,
+            source, responseMediaSession);
 
-        BackSession2SessionId& back2backId = _p->sessionsIdx[localSessionId];
-        back2backId.first = source;
-        back2backId.second = sourceSessionId;
-    }
-
-    rtsp::SessionId localSessionId;
-
-    auto it = _p->backSessionsIdx.find(source);
-    if(it != _p->backSessionsIdx.end() && !sourceSessionId.empty()) {
-        BackSessionId2FrontSessionId& back2front = it->second;
-
-        auto sessionIdIt = back2front.find(sourceSessionId);
-        if(sessionIdIt != back2front.end()) {
-            localSessionId = sessionIdIt->second;
-            rtsp::SetResponseSession(responsePtr.get(), localSessionId);
-        }
+        _p->mediaSessions.emplace(
+            frontMediaSession,
+            BackMediaSession { source, responseMediaSession });
     }
 
     sendResponse(*responsePtr);
     responsePtr.reset();
 
     if(rtsp::Method::TEARDOWN == request.method) {
-        if(it != _p->backSessionsIdx.end()) {
-            BackSessionId2FrontSessionId& back2front = it->second;
+        const auto it = _p->mediaSessions.find(responseMediaSession);
+        if(it != _p->mediaSessions.end()) {
+            const BackMediaSession& mediaSession = it->second;
 
-            back2front.erase(sourceSessionId);
+            assert(source == mediaSession.first);
 
-            if(back2front.empty())
-                _p->backSessionsIdx.erase(it);
+            _p->forwardContext->unregisterMediaSession(
+                this, responseMediaSession,
+                source, mediaSession.second);
+
+            _p->mediaSessions.erase(it);
         }
-
-        _p->sessionsIdx.erase(localSessionId);
     }
 
     return true;

@@ -29,6 +29,17 @@ public:
     bool registerBackSession(const std::string& name, BackSession*);
     void removeBackSession(const std::string& name, BackSession*);
 
+    void registerMediaSession(
+        FrontSession*,
+        const rtsp::SessionId& frontMediaSession,
+        BackSession*,
+        const rtsp::SessionId& backMediaSession);
+    void unregisterMediaSession(
+        FrontSession*,
+        const rtsp::SessionId& frontMediaSession,
+        BackSession*,
+        const rtsp::SessionId& backMediaSession);
+
     bool forwardToBackSession(
         FrontSession* source,
         BackSession* target,

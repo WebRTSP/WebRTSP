@@ -63,6 +63,24 @@ void ForwardContext::removeBackSession(
     _p->backSessions.erase(name);
 }
 
+void ForwardContext::registerMediaSession(
+    FrontSession* frontSession,
+    const rtsp::SessionId& frontMediaSession,
+    BackSession* backSession,
+    const rtsp::SessionId& backMediaSession)
+{
+    backSession->registerMediaSession(frontSession, frontMediaSession, backMediaSession);
+}
+
+void ForwardContext::unregisterMediaSession(
+    FrontSession* frontSession,
+    const rtsp::SessionId& frontMediaSession,
+    BackSession* backSession,
+    const rtsp::SessionId& backMediaSession)
+{
+    backSession->unregisterMediaSession(frontSession, frontMediaSession, backMediaSession);
+}
+
 bool ForwardContext::forwardToBackSession(
     FrontSession* source,
     BackSession* target,

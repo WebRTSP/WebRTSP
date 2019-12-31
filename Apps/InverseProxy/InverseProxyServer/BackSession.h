@@ -14,6 +14,15 @@ public:
         const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept;
     ~BackSession();
 
+    void registerMediaSession(
+        FrontSession* target,
+        const rtsp::SessionId& targetMediaSession,
+        const rtsp::SessionId& mediaSession);
+    void unregisterMediaSession(
+        FrontSession* target,
+        const rtsp::SessionId& targetMediaSession,
+        const rtsp::SessionId& mediaSession);
+
     bool forward(
         FrontSession* source,
         std::unique_ptr<rtsp::Request>& sourceRequestPtr);
@@ -28,10 +37,6 @@ private:
     bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool handleSetParameterRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-
-    bool manageMediaSessions(
-        const rtsp::Request&,
-        const rtsp::Response&) noexcept;
 
 private:
     struct Private;
