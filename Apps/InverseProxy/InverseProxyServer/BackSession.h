@@ -2,14 +2,14 @@
 
 #include "RtspSession/Session.h"
 
-#include "ForwardContext.h"
+#include "Forwarder.h"
 
 
 class BackSession : public rtsp::Session
 {
 public:
     BackSession(
-        ForwardContext*,
+        Forwarder*,
         const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
         const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept;
     ~BackSession();

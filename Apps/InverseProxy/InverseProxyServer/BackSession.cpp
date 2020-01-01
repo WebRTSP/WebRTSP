@@ -20,10 +20,10 @@ typedef std::pair<FrontSession*, rtsp::SessionId> FrontMediaSession;
 
 struct BackSession::Private
 {
-    Private(BackSession* owner, ForwardContext*);
+    Private(BackSession* owner, Forwarder*);
 
     BackSession *const owner;
-    ForwardContext *const forwardContext;
+    Forwarder *const forwarder;
 
     std::string clientName;
 
@@ -33,35 +33,35 @@ struct BackSession::Private
 };
 
 BackSession::Private::Private(
-    BackSession* owner, ForwardContext* forwardContext) :
-    owner(owner), forwardContext(forwardContext)
+    BackSession* owner, Forwarder* forwarder) :
+    owner(owner), forwarder(forwarder)
 {
 }
 
 
 BackSession::BackSession(
-    ForwardContext* forwardContext,
+    Forwarder* forwarder,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
     rtsp::Session(sendRequest, sendResponse),
-    _p(new Private(this, forwardContext))
+    _p(new Private(this, forwarder))
 {
 }
 
 BackSession::~BackSession()
 {
-    _p->forwardContext->removeBackSession(_p->clientName, this);
+    _p->forwarder->removeBackSession(_p->clientName, this);
 
     for(const auto pair: _p->forwardRequests) {
         const RequestSource& source = pair.second;
-        _p->forwardContext->cancelRequest(
+        _p->forwarder->cancelRequest(
             source.source, source.sourceCSeq);
     }
 
     for(const auto pair: _p->mediaSessions) {
         const rtsp::SessionId mediaSessionId = pair.first;
         const FrontMediaSession& mediaSession = pair.second;
-        _p->forwardContext->dropSession(mediaSession.first);
+        _p->forwarder->dropSession(mediaSession.first);
     }
 }
 
@@ -117,7 +117,7 @@ bool BackSession::handleSetParameterRequest(std::unique_ptr<rtsp::Request>& requ
     if(!_p->clientName.empty())
         return false;
 
-    if(!_p->forwardContext->registerBackSession(value, this))
+    if(!_p->forwarder->registerBackSession(value, this))
         return false;
 
     _p->clientName = value;
@@ -141,7 +141,7 @@ bool BackSession::handleSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr)
     rtsp::SetRequestSession(&request, targetMediaSession.second);
 
     return
-        _p->forwardContext->forwardToFrontSession(
+        _p->forwarder->forwardToFrontSession(
             this, target, requestPtr);
 }
 
@@ -202,7 +202,7 @@ bool BackSession::handleResponse(
     tmpResponsePtr->cseq = requestSource.sourceCSeq;
 
     return
-        _p->forwardContext->forwardToFrontSession(
+        _p->forwarder->forwardToFrontSession(
             this, targetSession, request, tmpResponsePtr);
 }
 

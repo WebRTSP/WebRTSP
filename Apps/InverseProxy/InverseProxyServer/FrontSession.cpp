@@ -21,10 +21,10 @@ typedef std::pair<BackSession*, rtsp::SessionId> BackMediaSession;
 
 struct FrontSession::Private
 {
-    Private(FrontSession* owner, ForwardContext*);
+    Private(FrontSession* owner, Forwarder*);
 
     FrontSession *const owner;
-    ForwardContext *const forwardContext;
+    Forwarder *const forwarder;
 
     std::map<rtsp::CSeq, RequestSource> forwardRequests;
 
@@ -38,18 +38,18 @@ private:
 };
 
 FrontSession::Private::Private(
-    FrontSession* owner, ForwardContext* forwardContext) :
-    owner(owner), forwardContext(forwardContext)
+    FrontSession* owner, Forwarder* forwarder) :
+    owner(owner), forwarder(forwarder)
 {
 }
 
 
 FrontSession::FrontSession(
-    ForwardContext* forwardContext,
+    Forwarder* forwarder,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
     rtsp::Session(sendRequest, sendResponse),
-    _p(new Private(this, forwardContext))
+    _p(new Private(this, forwarder))
 {
 }
 
@@ -57,14 +57,14 @@ FrontSession::~FrontSession()
 {
     for(const auto pair: _p->forwardRequests) {
         const RequestSource& source = pair.second;
-        _p->forwardContext->cancelRequest(
+        _p->forwarder->cancelRequest(
             source.source, source.sourceCSeq);
     }
 
     for(const auto pair: _p->mediaSessions) {
         const rtsp::SessionId mediaSession = pair.first;
         const BackMediaSession& backMediaSession = pair.second;
-        _p->forwardContext->forceTeardown(
+        _p->forwarder->forceTeardown(
             backMediaSession.first, backMediaSession.second);
     }
 }
@@ -85,7 +85,7 @@ bool FrontSession::handleRequest(
         rtsp::SetRequestSession(requestPtr.get(), targetSession.second);
     }
 
-    return _p->forwardContext->forwardToBackSession(this, target, requestPtr);
+    return _p->forwarder->forwardToBackSession(this, target, requestPtr);
 }
 
 bool FrontSession::handleResponse(
@@ -121,7 +121,7 @@ bool FrontSession::handleResponse(
     if(mediaSessionTarget && mediaSessionTarget != targetSession)
         return false;
 
-    return _p->forwardContext->forwardToBackSession(targetSession, *responsePtr);
+    return _p->forwarder->forwardToBackSession(targetSession, *responsePtr);
 }
 
 bool FrontSession::forward(
@@ -162,7 +162,7 @@ bool FrontSession::forward(
     {
         const rtsp::SessionId frontMediaSession = _p->nextMediaSession();
 
-        _p->forwardContext->registerMediaSession(
+        _p->forwarder->registerMediaSession(
             this, frontMediaSession,
             source, responseMediaSession);
 
@@ -181,7 +181,7 @@ bool FrontSession::forward(
 
             assert(source == mediaSession.first);
 
-            _p->forwardContext->unregisterMediaSession(
+            _p->forwarder->unregisterMediaSession(
                 this, responseMediaSession,
                 source, mediaSession.second);
 

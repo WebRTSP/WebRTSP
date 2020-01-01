@@ -24,7 +24,7 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
     LwsContextPtr contextPtr(lws_create_context(&wsInfo));
     lws_context* context = contextPtr.get();
 
-    ForwardContext forwardContext;
+    Forwarder forwarder;
 
     signalling::Config frontConfig {
         .serverName = config.serverName,
@@ -37,7 +37,7 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
     signalling::WsServer frontServer(
         frontConfig, loop,
         std::bind(
-            &ForwardContext::createFrontSession, &forwardContext,
+            &Forwarder::createFrontSession, &forwarder,
             std::placeholders::_1, std::placeholders::_2));
 
     signalling::Config backConfig {
@@ -50,7 +50,7 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
     signalling::WsServer backServer(
         backConfig, loop,
         std::bind(
-            &ForwardContext::createBackSession, &forwardContext,
+            &Forwarder::createBackSession, &forwarder,
             std::placeholders::_1, std::placeholders::_2));
 
     if(frontServer.init(context) && backServer.init(context))

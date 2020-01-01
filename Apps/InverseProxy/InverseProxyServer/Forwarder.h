@@ -11,11 +11,11 @@ class FrontSession;
 class BackSession;
 
 
-class ForwardContext
+class Forwarder
 {
 public:
-    ForwardContext();
-    ~ForwardContext();
+    Forwarder();
+    ~Forwarder();
 
     std::unique_ptr<FrontSession>
         createFrontSession(

@@ -1,4 +1,4 @@
-#include "ForwardContext.h"
+#include "Forwarder.h"
 
 #include <cassert>
 #include <map>
@@ -10,23 +10,23 @@
 
 
 // FIXME! need some protection from different session on the same address
-struct ForwardContext::Private
+struct Forwarder::Private
 {
     std::map<std::string, BackSession*> backSessions;
 };
 
 
-ForwardContext::ForwardContext() :
+Forwarder::Forwarder() :
     _p(std::make_unique<Private>())
 {
 }
 
-ForwardContext::~ForwardContext()
+Forwarder::~Forwarder()
 {
 }
 
 std::unique_ptr<FrontSession>
-ForwardContext::createFrontSession(
+Forwarder::createFrontSession(
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
@@ -36,7 +36,7 @@ ForwardContext::createFrontSession(
 }
 
 std::unique_ptr<BackSession>
-ForwardContext::createBackSession(
+Forwarder::createBackSession(
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
@@ -45,7 +45,7 @@ ForwardContext::createBackSession(
             this, sendRequest, sendResponse);
 }
 
-bool ForwardContext::registerBackSession(
+bool Forwarder::registerBackSession(
     const std::string& name,
     BackSession* session)
 {
@@ -56,14 +56,14 @@ bool ForwardContext::registerBackSession(
     return true;
 }
 
-void ForwardContext::removeBackSession(
+void Forwarder::removeBackSession(
     const std::string& name,
     BackSession* session)
 {
     _p->backSessions.erase(name);
 }
 
-void ForwardContext::registerMediaSession(
+void Forwarder::registerMediaSession(
     FrontSession* frontSession,
     const rtsp::SessionId& frontMediaSession,
     BackSession* backSession,
@@ -72,7 +72,7 @@ void ForwardContext::registerMediaSession(
     backSession->registerMediaSession(frontSession, frontMediaSession, backMediaSession);
 }
 
-void ForwardContext::unregisterMediaSession(
+void Forwarder::unregisterMediaSession(
     FrontSession* frontSession,
     const rtsp::SessionId& frontMediaSession,
     BackSession* backSession,
@@ -81,7 +81,7 @@ void ForwardContext::unregisterMediaSession(
     backSession->unregisterMediaSession(frontSession, frontMediaSession, backMediaSession);
 }
 
-bool ForwardContext::forwardToBackSession(
+bool Forwarder::forwardToBackSession(
     FrontSession* source,
     BackSession* target,
     std::unique_ptr<rtsp::Request>& requestPtr)
@@ -98,14 +98,14 @@ bool ForwardContext::forwardToBackSession(
     return target2->forward(source, requestPtr);
 }
 
-bool ForwardContext::forwardToBackSession(
+bool Forwarder::forwardToBackSession(
     BackSession* target,
     const rtsp::Response& response)
 {
     return target->forward(response);
 }
 
-bool ForwardContext::forwardToFrontSession(
+bool Forwarder::forwardToFrontSession(
     BackSession* source,
     FrontSession* target,
     std::unique_ptr<rtsp::Request>& requestPtr)
@@ -113,7 +113,7 @@ bool ForwardContext::forwardToFrontSession(
     return target->forward(source, requestPtr);
 }
 
-bool ForwardContext::forwardToFrontSession(
+bool Forwarder::forwardToFrontSession(
     BackSession* source,
     FrontSession* target,
     const rtsp::Request& request,
@@ -122,28 +122,28 @@ bool ForwardContext::forwardToFrontSession(
     return target->forward(source, request, response);
 }
 
-void ForwardContext::cancelRequest(
+void Forwarder::cancelRequest(
     BackSession* session,
     const rtsp::CSeq& cseq)
 {
     session->cancelRequest(cseq);
 }
 
-void ForwardContext::forceTeardown(
+void Forwarder::forceTeardown(
     BackSession* session,
     const rtsp::SessionId& mediaSession)
 {
     session->forceTeardown(mediaSession);
 }
 
-void ForwardContext::cancelRequest(
+void Forwarder::cancelRequest(
     FrontSession* session,
     const rtsp::CSeq& cseq)
 {
     session->cancelRequest(cseq);
 }
 
-void ForwardContext::dropSession(FrontSession* session)
+void Forwarder::dropSession(FrontSession* session)
 {
     session->disconnect();
 }
