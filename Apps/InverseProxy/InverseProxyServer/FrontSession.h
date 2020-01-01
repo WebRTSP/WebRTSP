@@ -6,7 +6,6 @@
 #include "ForwardContext.h"
 
 
-// FIXME! force teardown opened media sessions on disconnect
 class FrontSession: public rtsp::Session
 {
 public:
@@ -25,6 +24,10 @@ public:
         BackSession* source,
         const rtsp::Request&,
         std::unique_ptr<rtsp::Response>&);
+
+    void cancelRequest(const rtsp::CSeq&);
+
+    using rtsp::Session::disconnect;
 
 protected:
     bool handleResponse(

@@ -121,3 +121,29 @@ bool ForwardContext::forwardToFrontSession(
 {
     return target->forward(source, request, response);
 }
+
+void ForwardContext::cancelRequest(
+    BackSession* session,
+    const rtsp::CSeq& cseq)
+{
+    session->cancelRequest(cseq);
+}
+
+void ForwardContext::forceTeardown(
+    BackSession* session,
+    const rtsp::SessionId& mediaSession)
+{
+    session->forceTeardown(mediaSession);
+}
+
+void ForwardContext::cancelRequest(
+    FrontSession* session,
+    const rtsp::CSeq& cseq)
+{
+    session->cancelRequest(cseq);
+}
+
+void ForwardContext::dropSession(FrontSession* session)
+{
+    session->disconnect();
+}

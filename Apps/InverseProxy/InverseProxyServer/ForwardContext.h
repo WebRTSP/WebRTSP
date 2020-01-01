@@ -57,6 +57,12 @@ public:
         const rtsp::Request&,
         std::unique_ptr<rtsp::Response>&);
 
+    void cancelRequest(BackSession*, const rtsp::CSeq&);
+    void forceTeardown(BackSession*, const rtsp::SessionId&);
+
+    void cancelRequest(FrontSession*, const rtsp::CSeq&);
+    void dropSession(FrontSession*);
+
 private:
     struct Private;
     std::unique_ptr<Private> _p;

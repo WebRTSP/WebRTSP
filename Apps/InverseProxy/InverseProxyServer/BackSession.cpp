@@ -51,6 +51,18 @@ BackSession::BackSession(
 BackSession::~BackSession()
 {
     _p->forwardContext->removeBackSession(_p->clientName, this);
+
+    for(const auto pair: _p->forwardRequests) {
+        const RequestSource& source = pair.second;
+        _p->forwardContext->cancelRequest(
+            source.source, source.sourceCSeq);
+    }
+
+    for(const auto pair: _p->mediaSessions) {
+        const rtsp::SessionId mediaSessionId = pair.first;
+        const FrontMediaSession& mediaSession = pair.second;
+        _p->forwardContext->dropSession(mediaSession.first);
+    }
 }
 
 void BackSession::registerMediaSession(
@@ -192,4 +204,20 @@ bool BackSession::handleResponse(
     return
         _p->forwardContext->forwardToFrontSession(
             this, targetSession, request, tmpResponsePtr);
+}
+
+void BackSession::cancelRequest(const rtsp::CSeq& cseq)
+{
+    rtsp::Response response;
+    prepareResponse(
+        rtsp::StatusCode::BAD_GATEWAY, "Bad gateway",
+        cseq, rtsp::SessionId(), &response);
+    sendResponse(response);
+}
+
+void BackSession::forceTeardown(const rtsp::SessionId& mediaSession)
+{
+    const rtsp::Request* request =
+        createRequest(rtsp::Method::TEARDOWN, "*", mediaSession);
+    sendRequest(*request);
 }

@@ -55,6 +55,18 @@ FrontSession::FrontSession(
 
 FrontSession::~FrontSession()
 {
+    for(const auto pair: _p->forwardRequests) {
+        const RequestSource& source = pair.second;
+        _p->forwardContext->cancelRequest(
+            source.source, source.sourceCSeq);
+    }
+
+    for(const auto pair: _p->mediaSessions) {
+        const rtsp::SessionId mediaSession = pair.first;
+        const BackMediaSession& backMediaSession = pair.second;
+        _p->forwardContext->forceTeardown(
+            backMediaSession.first, backMediaSession.second);
+    }
 }
 
 bool FrontSession::handleRequest(
@@ -178,4 +190,13 @@ bool FrontSession::forward(
     }
 
     return true;
+}
+
+void FrontSession::cancelRequest(const rtsp::CSeq& cseq)
+{
+    rtsp::Response response;
+    prepareResponse(
+        rtsp::StatusCode::BAD_GATEWAY, "Bad gateway",
+        cseq, rtsp::SessionId(), &response);
+    sendResponse(response);
 }

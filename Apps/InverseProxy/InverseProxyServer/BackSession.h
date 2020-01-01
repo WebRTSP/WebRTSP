@@ -28,6 +28,9 @@ public:
         std::unique_ptr<rtsp::Request>& sourceRequestPtr);
     bool forward(const rtsp::Response&);
 
+    void cancelRequest(const rtsp::CSeq&);
+    void forceTeardown(const rtsp::SessionId&);
+
 protected:
     bool handleResponse(
         const rtsp::Request&,
