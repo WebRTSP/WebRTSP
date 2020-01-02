@@ -496,4 +496,63 @@ bool IsRequest(const char* request, size_t size) noexcept
     return true;
 }
 
+static bool ParseParameter(
+    const char* buf, size_t* pos, size_t size,
+    Parameters* parameters)
+{
+    const Token name = GetToken(buf, pos, size);
+    if(IsEmptyToken(name))
+        return false;
+
+    if(!Skip(buf, pos, size, ':'))
+        return false;
+
+    SkipLWS(buf, pos, size);
+
+    size_t valuePos = *pos;
+
+    while(*pos < size) {
+        size_t tmpPos = *pos;
+        if(SkipEOL(buf, pos, size)) {
+            std::string lowerName(name.token, name.size);
+            std::transform(
+                lowerName.begin(), lowerName.end(),
+                lowerName.begin(),
+                [] (std::string::value_type c) {
+                    return std::tolower(static_cast<unsigned char>(c));
+                });
+
+            const Token value { buf + valuePos, tmpPos - valuePos };
+
+            parameters->emplace(
+                lowerName,
+                std::string(value.token, value.size));
+
+            return true;
+        } else if(!IsCtl(buf[*pos]))
+            ++(*pos);
+        else
+            return false;
+    }
+
+    return false;
+}
+
+bool ParseParameters(
+    const std::string& body,
+    Parameters* parameters) noexcept
+{
+    const char* buf = body.data();
+    size_t size = body.size();
+    size_t position = 0;
+
+
+    while(!IsEOS(position, size)) {
+        if(!ParseParameter(buf, &position, size, parameters))
+            return false;
+    }
+
+    return true;
+}
+
 }

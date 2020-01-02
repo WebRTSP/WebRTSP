@@ -14,4 +14,9 @@ bool ParseResponse(const char*, size_t, Response*) noexcept;
 
 bool IsRequest(const char*, size_t) noexcept;
 
+typedef std::map<std::string, std::string> Parameters;
+bool ParseParameters(
+    const std::string& body,
+    Parameters*) noexcept;
+
 }
