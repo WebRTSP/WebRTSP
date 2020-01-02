@@ -3,6 +3,7 @@
 #include <cassert>
 #include <map>
 
+#include "RtspParser/RtspParser.h"
 #include "RtspSession/StatusCode.h"
 
 
@@ -96,31 +97,22 @@ bool BackSession::handleSetParameterRequest(std::unique_ptr<rtsp::Request>& requ
     if(RequestContentType(*requestPtr) != "text/parameters")
         return false;
 
-    const std::string& parameters = requestPtr->body;
-
-    const std::string::size_type delimiterPos = parameters.find(":");
-    if(delimiterPos == std::string::npos || 0 == delimiterPos)
-        return false;
-
-    const std::string::size_type lineEndPos = parameters.find("\r\n", delimiterPos + 1);
-    if(lineEndPos == std::string::npos)
-        return false;
-
-    const std::string name = parameters.substr(0, delimiterPos - 0);
-
-    const std::string value =
-        parameters.substr(delimiterPos + 1, lineEndPos - (delimiterPos + 1));
-
-    if(name != "name")
-        return false;
-
     if(!_p->clientName.empty())
         return false;
 
-    if(!_p->forwarder->registerBackSession(value, this))
+    rtsp::Parameters parameters;
+    if(!rtsp::ParseParameters(requestPtr->body, &parameters))
         return false;
 
-    _p->clientName = value;
+    auto nameIt = parameters.find("name");
+    if(parameters.end() == nameIt) {
+        return false;
+    }
+
+    if(!_p->forwarder->registerBackSession(nameIt->second, this))
+        return false;
+
+    _p->clientName = nameIt->second;
 
     return true;
 }
