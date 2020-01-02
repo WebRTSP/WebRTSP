@@ -2,11 +2,6 @@
 
 #include <string>
 
-enum {
-    FRONT_SERVER_PORT = 8080,
-    BACK_SERVER_PORT = 8081,
-};
-
 
 struct InverseProxyServerConfig
 {

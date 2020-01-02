@@ -33,7 +33,6 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
         .port = config.frontPort,
         .securePort = config.secureFrontPort,
     };
-    frontConfig.port = FRONT_SERVER_PORT;
     signalling::WsServer frontServer(
         frontConfig, loop,
         std::bind(
