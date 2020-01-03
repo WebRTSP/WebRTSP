@@ -5,7 +5,11 @@
 #include "Client/Config.h"
 
 
-int InverseProxyClientMain(
-    const client::Config&,
-    const std::string& clientName,
-    const std::string& authToken);
+struct InverseProxyClientConfig
+{
+    client::Config clientConfig;
+    std::string name;
+    std::string authToken;
+};
+
+int InverseProxyClientMain(const InverseProxyClientConfig&);

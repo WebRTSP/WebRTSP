@@ -70,11 +70,13 @@ int main(int argc, char *argv[])
 
     std::thread streamSourceClientThread(
         [&sourceName, &sourceAuthToken] () {
-            client::Config config {};
-            config.server = "localhost";
-            config.serverPort = BACK_SERVER_PORT;
+            InverseProxyClientConfig config {};
+            config.clientConfig.server = "localhost";
+            config.clientConfig.serverPort = BACK_SERVER_PORT;
+            config.name = sourceName;
+            config.authToken = sourceAuthToken;
 
-            InverseProxyClientMain(config, sourceName, sourceAuthToken);
+            InverseProxyClientMain(config);
         });
 
     std::thread clientThread(

@@ -20,20 +20,21 @@ static std::unique_ptr<WebRTCPeer> CreateInverseProxyClientPeer(const std::strin
 }
 
 static std::unique_ptr<rtsp::ServerSession> CreateInverseProxyClientSession (
-    const std::string& clientName,
-    const std::string& authToken,
+    const InverseProxyClientConfig* config,
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
     return
         std::make_unique<InverseProxyClientSession>(
-            clientName,
-            authToken,
+            config->name,
+            config->authToken,
             CreateInverseProxyClientPeer,
             sendRequest, sendResponse);
 }
 
-static void ClientDisconnected(client::WsClient* client) noexcept
+static void ClientDisconnected(
+    const InverseProxyClientConfig* config,
+    client::WsClient* client) noexcept
 {
     GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(RECONNECT_TIMEOUT));
     GSource* timeoutSource = timeoutSourcePtr.get();
@@ -45,10 +46,7 @@ static void ClientDisconnected(client::WsClient* client) noexcept
     g_source_attach(timeoutSource, g_main_context_get_thread_default());
 }
 
-int InverseProxyClientMain(
-    const client::Config& config,
-    const std::string& clientName,
-    const std::string& authToken)
+int InverseProxyClientMain(const InverseProxyClientConfig& config)
 {
     GMainContextPtr clientContextPtr(g_main_context_new());
     GMainContext* clientContext = clientContextPtr.get();
@@ -57,15 +55,14 @@ int InverseProxyClientMain(
     GMainLoop* loop = loopPtr.get();
 
     client::WsClient client(
-        config,
+        config.clientConfig,
         loop,
         std::bind(
             CreateInverseProxyClientSession,
-            clientName,
-            authToken,
+            &config,
             std::placeholders::_1,
             std::placeholders::_2),
-        std::bind(ClientDisconnected, &client));
+        std::bind(ClientDisconnected, &config, &client));
 
     if(client.init()) {
         client.connect();
