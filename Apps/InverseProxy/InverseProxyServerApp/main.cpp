@@ -66,6 +66,35 @@ static bool LoadConfig(InverseProxyServerConfig* config)
                 // loadedConfig.authKey = FullPath(configDir, authKey);
             }
         }
+
+        config_setting_t* sourcesConfig = config_lookup(&config, "sources");
+        if(sourcesConfig && CONFIG_TRUE == config_setting_is_list(sourcesConfig)) {
+            const int sourcesCount = config_setting_length(sourcesConfig);
+            for(int sourceIdx = 0; sourceIdx < sourcesCount; ++sourceIdx) {
+                config_setting_t* sourceConfig =
+                    config_setting_get_elem(sourcesConfig, sourceIdx);
+                if(!sourceConfig || CONFIG_FALSE == config_setting_is_group(sourceConfig)) {
+                    Log()->warn("Wrong source config format. Source skipped.");
+                    break;
+                }
+
+                const char* name;
+                if(CONFIG_FALSE == config_setting_lookup_string(sourceConfig, "name", &name)) {
+                    Log()->warn("Missing source name. Source skipped.");
+                    break;
+                }
+
+                const char* token;
+                if(CONFIG_FALSE == config_setting_lookup_string(sourceConfig, "token", &token)) {
+                    Log()->warn(
+                        "Missing auth token for source \"{}\". Source skipped.",
+                        name);
+                    break;
+                }
+
+                loadedConfig.backAuthTokens.emplace(name, token);
+            }
+        }
     }
 
     if(!someConfigFound)
