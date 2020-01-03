@@ -24,7 +24,7 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
     LwsContextPtr contextPtr(lws_create_context(&wsInfo));
     lws_context* context = contextPtr.get();
 
-    Forwarder forwarder;
+    Forwarder forwarder(config.backAuthTokens);
 
     signalling::Config frontConfig {
         .serverName = config.serverName,

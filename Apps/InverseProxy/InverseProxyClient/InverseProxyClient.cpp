@@ -21,12 +21,14 @@ static std::unique_ptr<WebRTCPeer> CreateInverseProxyClientPeer(const std::strin
 
 static std::unique_ptr<rtsp::ServerSession> CreateInverseProxyClientSession (
     const std::string& clientName,
+    const std::string& authToken,
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
     return
         std::make_unique<InverseProxyClientSession>(
             clientName,
+            authToken,
             CreateInverseProxyClientPeer,
             sendRequest, sendResponse);
 }
@@ -45,7 +47,8 @@ static void ClientDisconnected(client::WsClient* client) noexcept
 
 int InverseProxyClientMain(
     const client::Config& config,
-    const std::string& clientName)
+    const std::string& clientName,
+    const std::string& authToken)
 {
     GMainContextPtr clientContextPtr(g_main_context_new());
     GMainContext* clientContext = clientContextPtr.get();
@@ -59,6 +62,7 @@ int InverseProxyClientMain(
         std::bind(
             CreateInverseProxyClientSession,
             clientName,
+            authToken,
             std::placeholders::_1,
             std::placeholders::_2),
         std::bind(ClientDisconnected, &client));

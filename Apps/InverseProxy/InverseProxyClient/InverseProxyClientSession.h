@@ -8,6 +8,7 @@ class InverseProxyClientSession : public ServerSession
 public:
     InverseProxyClientSession(
         const std::string& clientName,
+        const std::string& authToken,
         const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
         const std::function<void (const rtsp::Request*)>& sendRequest,
         const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
@@ -16,4 +17,5 @@ public:
 
 private:
     const std::string _clientName;
+    const std::string _authToken;
 };

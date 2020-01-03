@@ -56,23 +56,25 @@ int main(int argc, char *argv[])
     };
 
     const std::string sourceName = "source1";
+    const std::string sourceAuthToken = "dummyToken";
 
     std::thread serverThread(
-        [] () {
+        [&sourceName, &sourceAuthToken] () {
             InverseProxyServerConfig config {
                 .frontPort = FRONT_SERVER_PORT,
                 .backPort = BACK_SERVER_PORT,
+                .backAuthTokens = { {sourceName, sourceAuthToken} }
             };
             InverseProxyServerMain(config);
         });
 
     std::thread streamSourceClientThread(
-        [&sourceName] () {
+        [&sourceName, &sourceAuthToken] () {
             client::Config config {};
             config.server = "localhost";
             config.serverPort = BACK_SERVER_PORT;
 
-            InverseProxyClientMain(config, sourceName);
+            InverseProxyClientMain(config, sourceName, sourceAuthToken);
         });
 
     std::thread clientThread(

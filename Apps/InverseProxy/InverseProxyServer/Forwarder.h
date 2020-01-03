@@ -14,7 +14,8 @@ class BackSession;
 class Forwarder
 {
 public:
-    Forwarder();
+    typedef std::map<const std::string, const std::string> AuthTokens;
+    Forwarder(const AuthTokens& backAuthTokens);
     ~Forwarder();
 
     std::unique_ptr<FrontSession>
@@ -26,7 +27,10 @@ public:
             const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
             const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept;
 
-    bool registerBackSession(const std::string& name, BackSession*);
+    bool registerBackSession(
+        const std::string& name,
+        const std::string& token,
+        BackSession*);
     void removeBackSession(const std::string& name, BackSession*);
 
     void registerMediaSession(

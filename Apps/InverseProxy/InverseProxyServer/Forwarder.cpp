@@ -12,12 +12,20 @@
 // FIXME! need some protection from different session on the same address
 struct Forwarder::Private
 {
+    Private(const AuthTokens& backAuthTokens);
+
+    const AuthTokens backAuthTokens;
     std::map<std::string, BackSession*> backSessions;
 };
 
+Forwarder::Private::Private(const AuthTokens& backAuthTokens) :
+    backAuthTokens(backAuthTokens)
+{
+}
 
-Forwarder::Forwarder() :
-    _p(std::make_unique<Private>())
+
+Forwarder::Forwarder(const AuthTokens& backAuthTokens) :
+    _p(std::make_unique<Private>(backAuthTokens))
 {
 }
 
@@ -47,8 +55,13 @@ Forwarder::createBackSession(
 
 bool Forwarder::registerBackSession(
     const std::string& name,
+    const std::string& token,
     BackSession* session)
 {
+    const auto it = _p->backAuthTokens.find(name);
+    if(_p->backAuthTokens.end() == it || it->second != token)
+        return false;
+
     const auto pair = _p->backSessions.emplace(name, session);
     if(!pair.second)
         return false;

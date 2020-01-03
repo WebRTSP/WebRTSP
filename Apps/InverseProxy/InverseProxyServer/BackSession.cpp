@@ -108,8 +108,12 @@ bool BackSession::handleSetParameterRequest(std::unique_ptr<rtsp::Request>& requ
     if(parameters.end() == nameIt) {
         return false;
     }
+    auto tokenIt = parameters.find("token");
+    if(parameters.end() == tokenIt) {
+        return false;
+    }
 
-    if(!_p->forwarder->registerBackSession(nameIt->second, this))
+    if(!_p->forwarder->registerBackSession(nameIt->second, tokenIt->second, this))
         return false;
 
     _p->clientName = nameIt->second;
