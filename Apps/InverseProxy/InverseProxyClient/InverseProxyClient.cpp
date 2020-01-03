@@ -10,9 +10,8 @@
 
 
 enum {
-    RECONNECT_TIMEOUT = 5,
+    DEFAULT_RECONNECT_TIMEOUT = 5,
 };
-
 
 static std::unique_ptr<WebRTCPeer> CreateInverseProxyClientPeer(const std::string& /*uri*/)
 {
@@ -36,7 +35,11 @@ static void ClientDisconnected(
     const InverseProxyClientConfig* config,
     client::WsClient* client) noexcept
 {
-    GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(RECONNECT_TIMEOUT));
+    const unsigned reconnectTimeout =
+        config->reconnectTimeout > 0 ?
+            config->reconnectTimeout :
+            DEFAULT_RECONNECT_TIMEOUT;
+    GSourcePtr timeoutSourcePtr(g_timeout_source_new_seconds(reconnectTimeout));
     GSource* timeoutSource = timeoutSourcePtr.get();
     g_source_set_callback(timeoutSource,
         [] (gpointer userData) -> gboolean {

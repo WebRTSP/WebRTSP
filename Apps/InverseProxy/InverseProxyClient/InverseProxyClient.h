@@ -8,6 +8,7 @@
 struct InverseProxyClientConfig
 {
     client::Config clientConfig;
+    unsigned reconnectTimeout;
     std::string name;
     std::string authToken;
 };
