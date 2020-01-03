@@ -99,7 +99,13 @@ bool Forwarder::forwardToBackSession(
     BackSession* target,
     std::unique_ptr<rtsp::Request>& requestPtr)
 {
-    const auto backSessionIt = _p->backSessions.find(requestPtr->uri);
+    std::string sourceName = requestPtr->uri;
+
+    const std::string::size_type spliterPos = sourceName.find('/');
+    if(spliterPos != std::string::npos)
+        sourceName.resize(spliterPos);
+
+    const auto backSessionIt = _p->backSessions.find(sourceName);
     if(backSessionIt == _p->backSessions.end())
         return false;
 

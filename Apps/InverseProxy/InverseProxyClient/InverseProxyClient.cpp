@@ -13,8 +13,19 @@ enum {
     DEFAULT_RECONNECT_TIMEOUT = 5,
 };
 
-static std::unique_ptr<WebRTCPeer> CreateInverseProxyClientPeer(const std::string& /*uri*/)
+static std::unique_ptr<WebRTCPeer>
+CreateInverseProxyClientPeer(
+    const InverseProxyClientConfig* config,
+    const std::string& uri)
 {
+    if(uri.size() > config->name.size() + 1 &&
+       0 == uri.compare(0, config->name.size(), config->name) &&
+       uri[config->name.size()] == '/')
+    {
+        const std::string streamerName = uri.substr(config->name.size() + 1);
+        return std::make_unique<GstTestStreamer>(streamerName);
+    }
+
     return std::make_unique<GstTestStreamer>();
 }
 
@@ -27,7 +38,7 @@ static std::unique_ptr<rtsp::ServerSession> CreateInverseProxyClientSession (
         std::make_unique<InverseProxyClientSession>(
             config->name,
             config->authToken,
-            CreateInverseProxyClientPeer,
+            std::bind(CreateInverseProxyClientPeer, config, std::placeholders::_1),
             sendRequest, sendResponse);
 }
 

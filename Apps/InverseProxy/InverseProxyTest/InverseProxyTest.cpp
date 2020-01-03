@@ -56,6 +56,7 @@ int main(int argc, char *argv[])
     };
 
     const std::string sourceName = "source1";
+    const std::string streamerName = "bars";
     const std::string sourceAuthToken = "dummyToken";
 
     std::thread serverThread(
@@ -80,7 +81,7 @@ int main(int argc, char *argv[])
         });
 
     std::thread clientThread(
-        [&sourceName] () {
+        [&sourceName, &streamerName] () {
             client::Config config {};
             config.server = "localhost";
             config.serverPort = FRONT_SERVER_PORT;
@@ -96,7 +97,7 @@ int main(int argc, char *argv[])
                 loop,
                 std::bind(
                     CreateClientSession,
-                    sourceName,
+                    sourceName + '/' + streamerName,
                     std::placeholders::_1,
                     std::placeholders::_2),
                 std::bind(ClientDisconnected, &client));
