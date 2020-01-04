@@ -176,6 +176,7 @@ bool ServerSession::handleDescribeRequest(
         _p->requests.emplace(
             requestPtr->cseq,
             RequestInfo {
+                .requestPtr = nullptr,
                 .session = session,
             });
     if(!requestPair.second)

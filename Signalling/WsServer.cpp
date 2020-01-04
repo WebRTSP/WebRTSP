@@ -116,6 +116,7 @@ int WsServer::Private::wsCallback(
 
             scd->data =
                 new SessionData {
+                    .terminateSession = false,
                     .incomingMessage ={},
                     .sendMessages = {},
                     .rtspSession = std::move(session)};

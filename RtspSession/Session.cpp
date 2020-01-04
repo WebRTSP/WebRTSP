@@ -18,8 +18,9 @@ Request* Session::createRequest(
         const auto& pair =
             _sentRequests.emplace(
                 _nextCSeq,
-                Request{
+                Request {
                     .method = method,
+                    .uri = {},
                     .protocol = Protocol::WEBRTSP_0_1,
                     .cseq = _nextCSeq
                 });
