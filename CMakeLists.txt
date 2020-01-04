@@ -2,9 +2,8 @@ cmake_minimum_required(VERSION 3.0)
 
 project(WebRTSP)
 
-option(BUILD_TEST "Build test application" ON)
+option(BUILD_TEST_APPS "Build test applications" ON)
 option(BUILD_BASIC_SERVER "Build basic server application" ON)
-option(BUILD_INVERSE_PROXY_TEST "Build inverse proxy test application" ON)
 option(BUILD_INVERSE_PROXY_SERVER "Build inverse proxy server application" ON)
 option(BUILD_INVERSE_PROXY_CLIENT "Build inverse proxy client application" ON)
 
@@ -31,7 +30,7 @@ add_subdirectory(GstStreaming)
 add_subdirectory(Signalling)
 add_subdirectory(Client)
 
-if(BUILD_TEST)
+if(BUILD_TEST_APPS)
     add_subdirectory(Apps/Test)
 endif()
 
