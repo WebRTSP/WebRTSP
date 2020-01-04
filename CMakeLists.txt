@@ -4,7 +4,9 @@ project(WebRTSP)
 
 option(BUILD_TEST "Build test application" ON)
 option(BUILD_BASIC_SERVER "Build basic server application" ON)
-option(BUILD_INVERSE_PROXY "Build inverse proxy application" ON)
+option(BUILD_INVERSE_PROXY_TEST "Build inverse proxy test application" ON)
+option(BUILD_INVERSE_PROXY_SERVER "Build inverse proxy server application" ON)
+option(BUILD_INVERSE_PROXY_CLIENT "Build inverse proxy client application" ON)
 
 if(CMAKE_COMPILER_IS_GNUCC)
     set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -O0")
@@ -37,7 +39,7 @@ if(BUILD_BASIC_SERVER)
     add_subdirectory(Apps/BasicServer)
 endif()
 
-if(BUILD_INVERSE_PROXY)
+if(BUILD_INVERSE_PROXY_TEST OR BUILD_INVERSE_PROXY_SERVER OR BUILD_INVERSE_PROXY_CLIENT)
     add_subdirectory(Apps/InverseProxy)
 endif()
 

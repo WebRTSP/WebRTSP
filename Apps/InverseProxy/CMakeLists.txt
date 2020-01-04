@@ -2,6 +2,15 @@ cmake_minimum_required(VERSION 3.0)
 
 add_subdirectory(InverseProxyServer)
 add_subdirectory(InverseProxyClient)
-add_subdirectory(InverseProxyTest)
-add_subdirectory(InverseProxyServerApp)
-add_subdirectory(InverseProxyClientApp)
+
+if(BUILD_INVERSE_PROXY_TEST)
+    add_subdirectory(InverseProxyTest)
+endif()
+
+if(BUILD_INVERSE_PROXY_SERVER)
+    add_subdirectory(InverseProxyServerApp)
+endif()
+
+if(BUILD_INVERSE_PROXY_CLIENT)
+    add_subdirectory(InverseProxyClientApp)
+endif()
