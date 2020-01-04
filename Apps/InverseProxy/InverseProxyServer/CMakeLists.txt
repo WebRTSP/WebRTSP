@@ -19,6 +19,8 @@ target_link_libraries(${PROJECT_NAME}
     Signalling
     GstStreaming)
 
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})
 #    message(STATUS "${_variableName}=${${_variableName}}")
