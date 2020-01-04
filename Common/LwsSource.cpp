@@ -6,6 +6,10 @@
 
 #include <sys/eventfd.h>
 
+#ifndef G_SOURCE_FUNC
+#define G_SOURCE_FUNC(f) ((GSourceFunc) (void (*)(void)) (f))
+#endif
+
 
 namespace {
 
