@@ -7,6 +7,11 @@ option(BUILD_BASIC_SERVER "Build basic server application" ON)
 option(BUILD_INVERSE_PROXY_SERVER "Build inverse proxy server application" ON)
 option(BUILD_INVERSE_PROXY_CLIENT "Build inverse proxy client application" ON)
 
+if(DEFINED ENV{SNAPCRAFT_BUILD_ENVIRONMENT})
+    add_definitions(-DSNAPCRAFT_BUILD=1)
+    set(SNAPCRAFT_BUILD YES)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCC)
     set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -O0")
 endif()
