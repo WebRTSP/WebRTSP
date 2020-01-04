@@ -2,6 +2,8 @@
 
 #include <glib.h>
 
+#include <libwebsockets.h>
+
 #include "CxxPtr/libconfigDestroy.h"
 
 #include "Common/ConfigHelpers.h"
@@ -93,6 +95,14 @@ static bool LoadConfig(InverseProxyServerConfig* config)
                 }
 
                 loadedConfig.backAuthTokens.emplace(name, token);
+            }
+        }
+        config_setting_t* debugConfig = config_lookup(&config, "debug");
+        if(debugConfig && CONFIG_TRUE == config_setting_is_group(debugConfig)) {
+            int lwsLogLevel = 0;
+            if(CONFIG_TRUE == config_setting_lookup_int(debugConfig, "lws-log-level", &lwsLogLevel)) {
+                if(lwsLogLevel > 0)
+                    lws_set_log_level(lwsLogLevel, nullptr);
             }
         }
     }
