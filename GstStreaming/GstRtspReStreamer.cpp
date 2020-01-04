@@ -329,10 +329,12 @@ void GstRtspReStreamer::setRemoteSdp(const std::string& sdp) noexcept
     GstElement* rtcbin = _p->rtcbinPtr.get();
 
     GstSDPMessage* sdpMessage;
-    gst_sdp_message_new_from_text(
-        sdp.data(),
-        &sdpMessage);
+    gst_sdp_message_new(&sdpMessage);
     GstSDPMessagePtr sdpMessagePtr(sdpMessage);
+    gst_sdp_message_parse_buffer(
+        reinterpret_cast<const guint8*>(sdp.data()),
+        sdp.size(),
+        sdpMessage);
 
     GstWebRTCSessionDescriptionPtr sessionDescriptionPtr(
         gst_webrtc_session_description_new(
