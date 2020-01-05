@@ -2,6 +2,7 @@
 
 #include <libwebsockets.h>
 
+#include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_sinks.h>
 
 
