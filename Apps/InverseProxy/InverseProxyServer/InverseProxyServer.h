@@ -3,11 +3,15 @@
 #include <string>
 #include <map>
 
+#include <spdlog/common.h>
+
 
 typedef std::map<const std::string, const std::string> AuthTokens;
 
 struct InverseProxyServerConfig
 {
+    spdlog::level::level_enum logLevel = spdlog::level::info;
+
     std::string serverName;
     std::string certificate;
     std::string key;

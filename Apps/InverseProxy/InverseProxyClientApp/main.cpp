@@ -7,6 +7,8 @@
 #include "CxxPtr/libconfigDestroy.h"
 
 #include "Common/ConfigHelpers.h"
+#include "Common/LwsLog.h"
+
 #include "../InverseProxyClient/Log.h"
 #include "../InverseProxyClient/InverseProxyClient.h"
 
@@ -73,10 +75,13 @@ static bool LoadConfig(InverseProxyClientConfig* config)
         }
         config_setting_t* debugConfig = config_lookup(&config, "debug");
         if(debugConfig && CONFIG_TRUE == config_setting_is_group(debugConfig)) {
-            int lwsLogLevel = 0;
-            if(CONFIG_TRUE == config_setting_lookup_int(debugConfig, "lws-log-level", &lwsLogLevel)) {
-                if(lwsLogLevel > 0)
-                    lws_set_log_level(lwsLogLevel, nullptr);
+            int logLevel = 0;
+            if(CONFIG_TRUE == config_setting_lookup_int(debugConfig, "log-level", &logLevel)) {
+                if(logLevel > 0) {
+                    loadedConfig.logLevel =
+                        static_cast<spdlog::level::level_enum>(
+                            spdlog::level::critical - std::min<int>(logLevel, spdlog::level::critical));
+                }
             }
         }
     }
@@ -114,6 +119,8 @@ int main(int argc, char *argv[])
     InverseProxyClientConfig config;
     if(!LoadConfig(&config))
         return -1;
+
+    InitLwsLogger(config.logLevel);
 
     return InverseProxyClientMain(config);
 }
