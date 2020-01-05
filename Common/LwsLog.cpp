@@ -13,7 +13,7 @@ static void LwsLog(int level, const char* line);
 
 void InitLwsLogger(spdlog::level::level_enum level)
 {
-    spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stderr_sink_st>();
+    spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
 
     Logger = std::make_shared<spdlog::logger>("libwebsockets", sink);
 

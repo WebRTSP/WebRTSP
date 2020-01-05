@@ -7,7 +7,7 @@ static std::shared_ptr<spdlog::logger> Logger;
 
 void InitLogger()
 {
-    spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stderr_sink_st>();
+    spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
 
     Logger = std::make_shared<spdlog::logger>("InverseProxyClient", sink);
 
