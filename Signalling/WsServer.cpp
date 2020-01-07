@@ -10,6 +10,8 @@
 #include <RtspParser/RtspParser.h>
 #include <RtspParser/RtspSerialize.h>
 
+#include "Log.h"
+
 
 namespace signalling {
 
@@ -41,6 +43,8 @@ struct SessionContextData
     lws* wsi;
     SessionData* data;
 };
+
+const auto Log = WsServerLog();
 
 }
 
@@ -129,8 +133,8 @@ int WsServer::Private::wsCallback(
         }
         case LWS_CALLBACK_RECEIVE: {
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
-                lwsl_notice(
-                    "-> Signalling: %.*s\n",
+                Log->trace(
+                    "-> Signalling: %.*s.",
                     static_cast<int>(scd->data->incomingMessage.size()),
                     scd->data->incomingMessage.data());
 
@@ -149,7 +153,7 @@ int WsServer::Private::wsCallback(
             if(!scd->data->sendMessages.empty()) {
                 MessageBuffer& buffer = scd->data->sendMessages.front();
                 if(!buffer.writeAsText(wsi)) {
-                    lwsl_err("write failed\n");
+                    Log->error("write failed.");
                     return -1;
                 }
 

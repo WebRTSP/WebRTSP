@@ -9,6 +9,8 @@
 #include "RtspParser/RtspSerialize.h"
 #include "RtspParser/RtspParser.h"
 
+#include "Log.h"
+
 
 namespace client {
 
@@ -43,6 +45,8 @@ struct SessionContextData
     lws* wsi;
     SessionData* data;
 };
+
+const auto Log = WsClientLog();
 
 }
 
@@ -105,7 +109,7 @@ int WsClient::Private::wsCallback(
         case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
             return LwsSourceCallback(lwsSourcePtr, wsi, reason, in, len);
         case LWS_CALLBACK_CLIENT_ESTABLISHED: {
-            lwsl_notice("Connection to server established\n");
+            Log->info("Connection to server established.");
 
             std::unique_ptr<rtsp::Session> session =
                 createSession(
@@ -131,7 +135,7 @@ int WsClient::Private::wsCallback(
         }
         case LWS_CALLBACK_CLIENT_RECEIVE:
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
-                lwsl_notice("-> Client: %.*s\n", static_cast<int>(scd->data->incomingMessage.size()), scd->data->incomingMessage.data());
+                Log->trace("-> WsClient: %.*s.", static_cast<int>(scd->data->incomingMessage.size()), scd->data->incomingMessage.data());
 
                 if(!onMessage(scd, scd->data->incomingMessage))
                     return -1;
@@ -147,7 +151,7 @@ int WsClient::Private::wsCallback(
             if(!scd->data->sendMessages.empty()) {
                 MessageBuffer& buffer = scd->data->sendMessages.front();
                 if(!buffer.writeAsText(wsi)) {
-                    lwsl_err("Write failed\n");
+                    Log->error("Write failed.");
                     return -1;
                 }
 
@@ -159,7 +163,7 @@ int WsClient::Private::wsCallback(
 
             break;
         case LWS_CALLBACK_CLIENT_CLOSED:
-            lwsl_notice("Connection to server is closed\n");
+            Log->info("Connection to server is closed.");
 
             delete scd->data;
             scd = nullptr;
@@ -172,7 +176,7 @@ int WsClient::Private::wsCallback(
 
             break;
         case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-            lwsl_err("Can not connect to server\n");
+            Log->error("Can not connect to server.");
 
             delete scd->data;
             scd = nullptr;
@@ -239,7 +243,7 @@ void WsClient::Private::connect()
         return;
 
     if(config.server.empty() || !config.serverPort) {
-        lwsl_err("Missing required connect parameter.\n");
+        Log->error("Missing required connect parameter.");
         return;
     }
 
@@ -247,7 +251,7 @@ void WsClient::Private::connect()
     snprintf(hostAndPort, sizeof(hostAndPort), "%s:%u",
         config.server.c_str(), config.serverPort);
 
-    lwsl_notice("Connecting to %s... \n", hostAndPort);
+    Log->info("Connecting to %s...", &hostAndPort[0]);
 
     struct lws_client_connect_info connectInfo = {};
     connectInfo.context = contextPtr.get();

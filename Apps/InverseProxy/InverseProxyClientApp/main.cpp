@@ -9,6 +9,8 @@
 #include "Common/ConfigHelpers.h"
 #include "Common/LwsLog.h"
 
+#include "Client/Log.h"
+
 #include "../InverseProxyClient/Log.h"
 #include "../InverseProxyClient/InverseProxyClient.h"
 
@@ -121,6 +123,7 @@ int main(int argc, char *argv[])
         return -1;
 
     InitLwsLogger(config.logLevel);
+    InitWsClientLogger(config.logLevel);
 
     return InverseProxyClientMain(config);
 }
