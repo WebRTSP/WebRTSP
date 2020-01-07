@@ -65,11 +65,12 @@ static void LwsLog(int level, const char* line)
         return;
 
     size_t len = strlen(line);
+
+    while(len > 0 && ('\n' == line[len - 1] || '\r' == line[len - 1]))
+        --len;
+
     if(0 == len)
         return;
-
-    if('\n' == line[len - 1])
-        --len;
 
     switch(level) {
         case LLL_ERR:
