@@ -64,27 +64,44 @@ static void LwsLog(int level, const char* line)
     if(nullptr == line)
         return;
 
-    size_t len = strlen(line);
+    std::string logLines;
+    size_t blockPos = 0;
+    size_t pos = 0;
+    for(; line[pos] != 0; ++pos) {
+        if('\r' == line[pos]) {
+            logLines.reserve(logLines.size() + pos - blockPos);
+            logLines.append(line + blockPos, pos - blockPos);
+            blockPos = pos + 1;
+        }
+    }
 
-    while(len > 0 && ('\n' == line[len - 1] || '\r' == line[len - 1]))
-        --len;
+    if(blockPos < pos - 1) {
+        logLines.reserve(logLines.size() + pos - blockPos);
+        logLines.append(line + blockPos, pos - blockPos);
+    }
 
-    if(0 == len)
+    const std::string::size_type lastChar = logLines.find_last_not_of('\n');
+    if(std::string::npos == lastChar)
+        return;
+
+    logLines.resize(lastChar + 1);
+
+    if(logLines.empty())
         return;
 
     switch(level) {
         case LLL_ERR:
-            Logger->error("{:.{}}", line, len);
+            Logger->error(logLines);
             break;
         case LLL_WARN:
-            Logger->warn("{:.{}}", line, len);
+            Logger->warn(logLines);
             break;
         case LLL_NOTICE:
         case LLL_INFO:
-            Logger->info("{:.{}}", line, len);
+            Logger->info(logLines);
             break;
         case LLL_DEBUG:
-            Logger->debug("{:.{}}", line, len);
+            Logger->debug(logLines);
             break;
         case LLL_PARSER:
         case LLL_HEADER:
@@ -94,7 +111,7 @@ static void LwsLog(int level, const char* line)
         case LLL_USER:
         case LLL_THREAD:
         default:
-            Logger->trace("{:.{}}", line, len);
+            Logger->trace(logLines);
             break;
     }
 }
