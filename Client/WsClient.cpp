@@ -135,7 +135,10 @@ int WsClient::Private::wsCallback(
         }
         case LWS_CALLBACK_CLIENT_RECEIVE:
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
-                Log->trace("-> WsClient: %.*s.", static_cast<int>(scd->data->incomingMessage.size()), scd->data->incomingMessage.data());
+                Log->trace(
+                    "-> WsClient: {:.{}}",
+                    scd->data->incomingMessage.data(),
+                    static_cast<int>(scd->data->incomingMessage.size()));
 
                 if(!onMessage(scd, scd->data->incomingMessage))
                     return -1;
@@ -251,7 +254,7 @@ void WsClient::Private::connect()
     snprintf(hostAndPort, sizeof(hostAndPort), "%s:%u",
         config.server.c_str(), config.serverPort);
 
-    Log->info("Connecting to %s...", &hostAndPort[0]);
+    Log->info("Connecting to {}...", &hostAndPort[0]);
 
     struct lws_client_connect_info connectInfo = {};
     connectInfo.context = contextPtr.get();

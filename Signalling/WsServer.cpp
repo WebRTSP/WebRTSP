@@ -134,9 +134,9 @@ int WsServer::Private::wsCallback(
         case LWS_CALLBACK_RECEIVE: {
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
                 Log->trace(
-                    "-> Signalling: %.*s.",
-                    static_cast<int>(scd->data->incomingMessage.size()),
-                    scd->data->incomingMessage.data());
+                    "-> WsServer: {:.{}}",
+                    scd->data->incomingMessage.data(),
+                    static_cast<int>(scd->data->incomingMessage.size()));
 
                 if(!onMessage(scd, scd->data->incomingMessage))
                     return -1;
