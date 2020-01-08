@@ -44,7 +44,7 @@ struct SessionContextData
     SessionData* data;
 };
 
-const auto Log = WsServerLog();
+const auto Log = WsServerLog;
 
 }
 
@@ -133,7 +133,7 @@ int WsServer::Private::wsCallback(
         }
         case LWS_CALLBACK_RECEIVE: {
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
-                Log->trace(
+                Log()->trace(
                     "-> WsServer: {:.{}}",
                     scd->data->incomingMessage.data(),
                     static_cast<int>(scd->data->incomingMessage.size()));
@@ -153,7 +153,7 @@ int WsServer::Private::wsCallback(
             if(!scd->data->sendMessages.empty()) {
                 MessageBuffer& buffer = scd->data->sendMessages.front();
                 if(!buffer.writeAsText(wsi)) {
-                    Log->error("write failed.");
+                    Log()->error("write failed.");
                     return -1;
                 }
 
