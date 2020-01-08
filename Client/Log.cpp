@@ -10,7 +10,7 @@ void InitWsClientLogger(spdlog::level::level_enum level)
 {
     spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
 
-    Logger = std::make_shared<spdlog::logger>("WsServer", sink);
+    Logger = std::make_shared<spdlog::logger>("WsClient", sink);
 
     Logger->set_level(level);
 }
