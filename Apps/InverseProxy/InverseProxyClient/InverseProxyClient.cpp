@@ -5,6 +5,7 @@
 #include "Client/WsClient.h"
 
 #include "GstStreaming/GstTestStreamer.h"
+#include "GstStreaming/GstReStreamer.h"
 
 #include "InverseProxyClientSession.h"
 
@@ -18,15 +19,31 @@ CreateInverseProxyClientPeer(
     const InverseProxyClientConfig* config,
     const std::string& uri)
 {
-    if(uri.size() > config->name.size() + 1 &&
+    auto streamerIt = config->streamers.end();
+
+    if(uri == config->name) {
+        streamerIt = config->streamers.find(std::string());
+    } if(uri.size() > config->name.size() + 1 &&
        0 == uri.compare(0, config->name.size(), config->name) &&
        uri[config->name.size()] == '/')
     {
         const std::string streamerName = uri.substr(config->name.size() + 1);
-        return std::make_unique<GstTestStreamer>(streamerName);
+        streamerIt = config->streamers.find(streamerName);
     }
 
-    return std::make_unique<GstTestStreamer>();
+    if(config->streamers.end() == streamerIt)
+        return std::unique_ptr<WebRTCPeer>();
+
+    const StreamerConfig& streamer = streamerIt->second;
+
+    switch(streamer.type) {
+    case StreamerConfig::Type::Test:
+        return std::make_unique<GstTestStreamer>(streamer.uri);
+    case StreamerConfig::Type::ReStreamer:
+        return std::make_unique<GstReStreamer>(streamer.uri);
+    default:
+        return std::unique_ptr<WebRTCPeer>();
+    }
 }
 
 static std::unique_ptr<rtsp::ServerSession> CreateInverseProxyClientSession (

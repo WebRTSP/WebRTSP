@@ -75,6 +75,46 @@ static bool LoadConfig(InverseProxyClientConfig* config)
                 loadedConfig.authToken = authToken;
             }
         }
+        config_setting_t* streamersConfig = config_lookup(&config, "streamers");
+        if(streamersConfig && CONFIG_TRUE == config_setting_is_list(streamersConfig)) {
+            const int streamersCount = config_setting_length(streamersConfig);
+            for(int streamerIdx = 0; streamerIdx < streamersCount; ++streamerIdx) {
+                config_setting_t* streamerConfig =
+                    config_setting_get_elem(streamersConfig, streamerIdx);
+                if(!streamerConfig || CONFIG_FALSE == config_setting_is_group(streamerConfig)) {
+                    Log()->warn("Wrong streamer config format. Streamer skipped.");
+                    break;
+                }
+                const char* name;
+                if(CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "name", &name)) {
+                    Log()->warn("Missing streamer name. Streamer skipped.");
+                    break;
+                }
+                const char* type;
+                if(CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "type", &type)) {
+                    Log()->warn("Missing streamer type. Streamer skipped.");
+                    break;
+                }
+                const char* uri;
+                if(CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "uri", &uri)) {
+                    Log()->warn("Missing streamer uri. Streamer skipped.");
+                    break;
+                }
+                StreamerConfig::Type streamerType;
+                if(0 == strcmp(type, "test"))
+                    streamerType = StreamerConfig::Type::Test;
+                else if(0 == strcmp(type, "restreamer"))
+                    streamerType = StreamerConfig::Type::ReStreamer;
+                else {
+                    Log()->warn("Unknown streamer type. Streamer skipped.");
+                    break;
+                }
+
+                loadedConfig.streamers.emplace(
+                    name,
+                    StreamerConfig { streamerType, uri });
+            }
+        }
         config_setting_t* debugConfig = config_lookup(&config, "debug");
         if(debugConfig && CONFIG_TRUE == config_setting_is_group(debugConfig)) {
             int logLevel = 0;
