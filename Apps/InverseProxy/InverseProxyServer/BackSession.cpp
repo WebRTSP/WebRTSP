@@ -14,6 +14,7 @@ struct RequestSource {
     rtsp::CSeq sourceCSeq;
     rtsp::SessionId session;
 };
+typedef std::map<rtsp::CSeq, RequestSource> ForwardRequests;
 
 typedef std::pair<FrontSession*, rtsp::SessionId> FrontMediaSession;
 
@@ -28,7 +29,8 @@ struct BackSession::Private
 
     std::string clientName;
 
-    std::map<rtsp::CSeq, RequestSource> forwardRequests;
+    ForwardRequests forwardRequests;
+    struct AutoEraseForwardRequest;
 
     std::map<rtsp::SessionId, FrontMediaSession> mediaSessions;
 };
@@ -38,6 +40,23 @@ BackSession::Private::Private(
     owner(owner), forwarder(forwarder)
 {
 }
+
+
+struct BackSession::Private::AutoEraseForwardRequest
+{
+    AutoEraseForwardRequest(
+        Private* owner,
+        ForwardRequests::const_iterator it) :
+        _owner(owner), _it(it) {}
+    ~AutoEraseForwardRequest()
+        { if(_owner) _owner->forwardRequests.erase(_it); }
+    void discard()
+        { _owner = nullptr; }
+
+private:
+    Private* _owner;
+    ForwardRequests::const_iterator _it;
+};
 
 
 BackSession::BackSession(
@@ -182,6 +201,8 @@ bool BackSession::handleResponse(
     const auto requestIt = _p->forwardRequests.find(responsePtr->cseq);
     if(requestIt == _p->forwardRequests.end())
         return false;
+
+    Private::AutoEraseForwardRequest autoEraseRequest(_p.get(), requestIt);
 
     const RequestSource& requestSource = requestIt->second;
 
