@@ -234,6 +234,8 @@ void BackSession::cancelRequest(const rtsp::CSeq& cseq)
 
 void BackSession::forceTeardown(const rtsp::SessionId& mediaSession)
 {
+    _p->mediaSessions.erase(mediaSession);
+
     const rtsp::Request* request =
         createRequest(rtsp::Method::TEARDOWN, "*", mediaSession);
     sendRequest(*request);
