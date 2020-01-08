@@ -70,12 +70,15 @@ int main(int argc, char *argv[])
         });
 
     std::thread streamSourceClientThread(
-        [&sourceName, &sourceAuthToken] () {
+        [&sourceName, &streamerName, &sourceAuthToken] () {
             InverseProxyClientConfig config {};
             config.clientConfig.server = "localhost";
             config.clientConfig.serverPort = BACK_SERVER_PORT;
             config.name = sourceName;
             config.authToken = sourceAuthToken;
+            config.streamers.emplace(
+                streamerName,
+                StreamerConfig { StreamerConfig::Type::Test, streamerName });
 
             InverseProxyClientMain(config);
         });
