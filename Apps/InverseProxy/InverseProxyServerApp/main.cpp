@@ -143,6 +143,7 @@ int main(int argc, char *argv[])
 
     InitLwsLogger(config.logLevel);
     InitWsServerLogger(config.logLevel);
+    InitInverseProxyServerLogger(config.logLevel);
 
     return InverseProxyServerMain(config);
 }
