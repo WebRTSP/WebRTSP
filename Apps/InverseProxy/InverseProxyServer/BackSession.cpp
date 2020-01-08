@@ -6,6 +6,8 @@
 #include "RtspParser/RtspParser.h"
 #include "RtspSession/StatusCode.h"
 
+#include "Log.h"
+
 
 namespace {
 
@@ -17,6 +19,8 @@ struct RequestSource {
 typedef std::map<rtsp::CSeq, RequestSource> ForwardRequests;
 
 typedef std::pair<FrontSession*, rtsp::SessionId> FrontMediaSession;
+
+const auto Log = InverseProxyServerLog;
 
 }
 
@@ -199,8 +203,12 @@ bool BackSession::handleResponse(
     std::unique_ptr<rtsp::Response>& responsePtr) noexcept
 {
     const auto requestIt = _p->forwardRequests.find(responsePtr->cseq);
-    if(requestIt == _p->forwardRequests.end())
+    if(requestIt == _p->forwardRequests.end()) {
+        Log()->error(
+            "BackSession: can't find forwarded request by CSeq({}).",
+            responsePtr->cseq);
         return false;
+    }
 
     Private::AutoEraseForwardRequest autoEraseRequest(_p.get(), requestIt);
 
@@ -208,10 +216,23 @@ bool BackSession::handleResponse(
 
     const rtsp::SessionId responseSessionId = ResponseSession(*responsePtr);
     if(rtsp::Method::DESCRIBE == request.method) {
-        if(!requestSource.session.empty() || responseSessionId.empty())
+        if(!requestSource.session.empty()) {
+            Log()->error(
+                "BackSession: forwarded DESCRIBE request has media session({}).",
+                requestSource.session);
             return false;
-    } else if(requestSource.session != responseSessionId)
+        }
+
+        if(responseSessionId.empty()) {
+            Log()->error(
+                "BackSession: response to forwarded DESCRIBE doesn't have media session.");
+            return false;
+        }
+    } else if(requestSource.session != responseSessionId) {
+        Log()->error(
+            "BackSession: request and response have different media sessions.");
         return false;
+    }
 
     FrontSession* targetSession = requestSource.source;
 

@@ -7,6 +7,9 @@
 
 #include "GstStreaming/GstTestStreamer.h"
 
+#include "Log.h"
+
+
 namespace {
 
 struct RequestSource
@@ -17,6 +20,8 @@ struct RequestSource
 typedef std::map<rtsp::CSeq, RequestSource> ForwardRequests;
 
 typedef std::pair<BackSession*, rtsp::SessionId> BackMediaSession;
+
+const auto Log = InverseProxyServerLog;
 
 }
 
@@ -113,14 +118,21 @@ bool FrontSession::handleResponse(
 {
     const rtsp::SessionId requestMediaSession = rtsp::RequestSession(request);
     const rtsp::SessionId responseMediaSession = rtsp::ResponseSession(*responsePtr);
-    if(requestMediaSession != responseMediaSession)
+    if(requestMediaSession != responseMediaSession) {
+        Log()->error(
+            "FrontSession: request and response have different media sessions.");
         return false;
+    }
 
     BackSession* mediaSessionTarget = nullptr;
     if(!responseMediaSession.empty()) {
         const auto mediaSessionIt = _p->mediaSessions.find(responseMediaSession);
-        if(_p->mediaSessions.end() == mediaSessionIt)
+        if(_p->mediaSessions.end() == mediaSessionIt) {
+            Log()->error(
+                "FrontSession: unknown media session({}).",
+                responseMediaSession);
             return false;
+        }
 
         const BackMediaSession& targetMediaSession = mediaSessionIt->second;
         mediaSessionTarget = targetMediaSession.first;
@@ -129,8 +141,12 @@ bool FrontSession::handleResponse(
     }
 
     const auto requestIt = _p->forwardRequests.find(responsePtr->cseq);
-    if(requestIt == _p->forwardRequests.end())
+    if(requestIt == _p->forwardRequests.end()) {
+        Log()->error(
+            "FrontSession: Fail find forwarded request by CSeq({}).",
+            responsePtr->cseq);
         return false;
+    }
 
     Private::AutoEraseForwardRequest autoEraseRequest(_p.get(), requestIt);
 
@@ -139,8 +155,12 @@ bool FrontSession::handleResponse(
     responsePtr->cseq = requestSource.sourceCSeq;
 
     BackSession* targetSession = requestSource.source;
-    if(mediaSessionTarget && mediaSessionTarget != targetSession)
+    if(mediaSessionTarget && mediaSessionTarget != targetSession) {
+        Log()->error(
+            "FrontSession: media session target differs from target.",
+            responsePtr->cseq);
         return false;
+    }
 
     return _p->forwarder->forwardToBackSession(targetSession, *responsePtr);
 }

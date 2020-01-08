@@ -280,19 +280,27 @@ bool WsClient::Private::onMessage(
     if(rtsp::IsRequest(message.data(), message.size())) {
         std::unique_ptr<rtsp::Request> requestPtr =
             std::make_unique<rtsp::Request>();
-        if(!rtsp::ParseRequest(message.data(), message.size(), requestPtr.get()))
+        if(!rtsp::ParseRequest(message.data(), message.size(), requestPtr.get())) {
+            Log()->error("Fail parse request. Forcing session disconnect...");
             return false;
+        }
 
-        if(!scd->data->rtspSession->handleRequest(requestPtr))
+        if(!scd->data->rtspSession->handleRequest(requestPtr)) {
+            Log()->debug("Fail handle request. Forcing session disconnect...");
             return false;
+        }
     } else {
         std::unique_ptr<rtsp::Response > responsePtr =
             std::make_unique<rtsp::Response>();
-        if(!rtsp::ParseResponse(message.data(), message.size(), responsePtr.get()))
+        if(!rtsp::ParseResponse(message.data(), message.size(), responsePtr.get())) {
+            Log()->error("Fail parse response. Forcing session disconnect...");
             return false;
+        }
 
-        if(!scd->data->rtspSession->handleResponse(responsePtr))
+        if(!scd->data->rtspSession->handleResponse(responsePtr)) {
+            Log()->error("Fail handle response. Forcing session disconnect...");
             return false;
+        }
     }
 
     return true;
