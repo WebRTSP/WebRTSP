@@ -52,6 +52,8 @@ bool Session::handleRequest(std::unique_ptr<Request>& requestPtr) noexcept
     switch(requestPtr->method) {
     case Method::SETUP:
         return handleSetupRequest(requestPtr);
+    case Method::GET_PARAMETER:
+        return handleSetParameterRequest(requestPtr);
     case Method::SET_PARAMETER:
         return handleSetParameterRequest(requestPtr);
     default:

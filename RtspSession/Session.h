@@ -67,6 +67,8 @@ protected:
 
     virtual bool handleSetupRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
+    virtual bool handleGetParameterRequest(std::unique_ptr<Request>&) noexcept
+        { return false; }
     virtual bool handleSetParameterRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
 
