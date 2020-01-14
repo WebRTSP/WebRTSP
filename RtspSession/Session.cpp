@@ -117,6 +117,23 @@ CSeq Session::requestSetup(
     return request.cseq;
 }
 
+CSeq Session::requestGetParameter(
+    const std::string& uri,
+    const std::string& contentType,
+    const std::string& body) noexcept
+{
+    Request& request =
+        *createRequest(Method::GET_PARAMETER, uri);
+
+    request.headerFields.emplace("content-type", contentType);
+
+    request.body = body;
+
+    sendRequest(request);
+
+    return request.cseq;
+}
+
 CSeq Session::requestSetParameter(
     const std::string& uri,
     const std::string& contentType,
@@ -161,6 +178,8 @@ bool Session::handleResponse(
     switch(request.method) {
     case Method::SETUP:
         return onSetupResponse(request, *responsePtr);
+    case Method::GET_PARAMETER:
+        return onGetParameterResponse(request, *responsePtr);
     case Method::SET_PARAMETER:
         return onSetParameterResponse(request, *responsePtr);
     default:
@@ -169,6 +188,16 @@ bool Session::handleResponse(
 }
 
 bool Session::onSetupResponse(
+    const Request& request,
+    const Response& response) noexcept
+{
+    if(StatusCode::OK == response.statusCode)
+        return true;
+
+    return false;
+}
+
+bool Session::onGetParameterResponse(
     const Request& request,
     const Response& response) noexcept
 {

@@ -56,6 +56,10 @@ protected:
         const std::string& contentType,
         const SessionId& session,
         const std::string& body) noexcept;
+    CSeq requestGetParameter(
+        const std::string& uri,
+        const std::string& contentType,
+        const std::string& body) noexcept;
     CSeq requestSetParameter(
         const std::string& uri,
         const std::string& contentType,
@@ -70,6 +74,9 @@ protected:
         const Request&,
         std::unique_ptr<Response>&) noexcept;
     virtual bool onSetupResponse(
+        const Request&,
+        const Response&) noexcept;
+    virtual bool onGetParameterResponse(
         const Request&,
         const Response&) noexcept;
     virtual bool onSetParameterResponse(
