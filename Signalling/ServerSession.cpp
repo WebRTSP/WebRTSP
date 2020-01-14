@@ -151,7 +151,7 @@ ServerSession::~ServerSession()
 {
 }
 
-bool ServerSession::handleOptionsRequest(
+bool ServerSession::onOptionsRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     rtsp::Response response;
@@ -164,7 +164,7 @@ bool ServerSession::handleOptionsRequest(
     return true;
 }
 
-bool ServerSession::handleDescribeRequest(
+bool ServerSession::onDescribeRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(requestPtr->uri);
@@ -216,7 +216,7 @@ bool ServerSession::handleDescribeRequest(
     return true;
 }
 
-bool ServerSession::handleSetupRequest(
+bool ServerSession::onSetupRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     const rtsp::SessionId session = RequestSession(*requestPtr);
@@ -272,7 +272,7 @@ bool ServerSession::handleSetupRequest(
     }
 }
 
-bool ServerSession::handlePlayRequest(
+bool ServerSession::onPlayRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     const rtsp::SessionId session = RequestSession(*requestPtr);
@@ -290,7 +290,7 @@ bool ServerSession::handlePlayRequest(
     return true;
 }
 
-bool ServerSession::handleTeardownRequest(
+bool ServerSession::onTeardownRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     const rtsp::SessionId session = RequestSession(*requestPtr);

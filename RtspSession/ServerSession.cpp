@@ -3,25 +3,25 @@
 
 namespace rtsp {
 
-bool ServerSession::handleOptionsRequest(
+bool ServerSession::onOptionsRequest(
     std::unique_ptr<Request>&) noexcept
 {
     return false;
 }
 
-bool ServerSession::handleDescribeRequest(
+bool ServerSession::onDescribeRequest(
     std::unique_ptr<Request>&) noexcept
 {
     return false;
 }
 
-bool ServerSession::handlePlayRequest(
+bool ServerSession::onPlayRequest(
     std::unique_ptr<Request>&) noexcept
 {
     return false;
 }
 
-bool ServerSession::handleTeardownRequest(
+bool ServerSession::onTeardownRequest(
     std::unique_ptr<Request>&) noexcept
 {
     return false;
@@ -32,15 +32,15 @@ bool ServerSession::handleRequest(
 {
     switch(requestPtr->method) {
     case Method::OPTIONS:
-        return handleOptionsRequest(requestPtr);
+        return onOptionsRequest(requestPtr);
     case Method::DESCRIBE:
-        return handleDescribeRequest(requestPtr);
+        return onDescribeRequest(requestPtr);
     case Method::SETUP:
-        return handleSetupRequest(requestPtr);
+        return onSetupRequest(requestPtr);
     case Method::PLAY:
-        return handlePlayRequest(requestPtr);
+        return onPlayRequest(requestPtr);
     case Method::TEARDOWN:
-        return handleTeardownRequest(requestPtr);
+        return onTeardownRequest(requestPtr);
     default:
         return Session::handleRequest(requestPtr);
     }

@@ -14,11 +14,11 @@ public:
     ~ServerSession();
 
 private:
-    bool handleOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool handleDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool handlePlayRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool handleTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onPlayRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 private:
     struct Private;

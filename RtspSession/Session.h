@@ -65,11 +65,11 @@ protected:
         const std::string& contentType,
         const std::string& body) noexcept;
 
-    virtual bool handleGetParameterRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onGetParameterRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
-    virtual bool handleSetParameterRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onSetParameterRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
-    virtual bool handleSetupRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onSetupRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
 
     virtual bool handleResponse(

@@ -18,10 +18,10 @@ struct ServerSession : public Session
 protected:
     using Session::Session;
 
-    virtual bool handleOptionsRequest(std::unique_ptr<Request>&) noexcept;
-    virtual bool handleDescribeRequest(std::unique_ptr<Request>&) noexcept;
-    virtual bool handlePlayRequest(std::unique_ptr<Request>&) noexcept;
-    virtual bool handleTeardownRequest(std::unique_ptr<Request>&) noexcept;
+    virtual bool onOptionsRequest(std::unique_ptr<Request>&) noexcept;
+    virtual bool onDescribeRequest(std::unique_ptr<Request>&) noexcept;
+    virtual bool onPlayRequest(std::unique_ptr<Request>&) noexcept;
+    virtual bool onTeardownRequest(std::unique_ptr<Request>&) noexcept;
 };
 
 }
