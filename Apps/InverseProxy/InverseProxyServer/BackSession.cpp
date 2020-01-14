@@ -115,7 +115,8 @@ bool BackSession::handleRequest(std::unique_ptr<rtsp::Request>& requestPtr) noex
     return rtsp::Session::handleRequest(requestPtr);
 }
 
-bool BackSession::onSetParameterRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+bool BackSession::onSetParameterRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     if(RequestContentType(*requestPtr) != "text/parameters")
         return false;
