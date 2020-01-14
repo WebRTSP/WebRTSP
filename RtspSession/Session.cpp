@@ -161,12 +161,24 @@ bool Session::handleResponse(
     switch(request.method) {
     case Method::SETUP:
         return onSetupResponse(request, *responsePtr);
+    case Method::SET_PARAMETER:
+        return onSetParameterResponse(request, *responsePtr);
     default:
         return false;
     }
 }
 
 bool Session::onSetupResponse(
+    const Request& request,
+    const Response& response) noexcept
+{
+    if(StatusCode::OK == response.statusCode)
+        return true;
+
+    return false;
+}
+
+bool Session::onSetParameterResponse(
     const Request& request,
     const Response& response) noexcept
 {
