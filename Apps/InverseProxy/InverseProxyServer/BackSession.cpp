@@ -141,6 +141,8 @@ bool BackSession::handleSetParameterRequest(std::unique_ptr<rtsp::Request>& requ
 
     _p->clientName = nameIt->second;
 
+    sendOkResponse(requestPtr->cseq, rtsp::SessionId());
+
     return true;
 }
 
