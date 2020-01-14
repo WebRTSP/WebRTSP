@@ -73,6 +73,18 @@ static bool LoadConfig(InverseProxyServerConfig* config)
             }
         }
 
+        config_setting_t* turnServerConfig = config_lookup(&config, "turn-server");
+        if(turnServerConfig && CONFIG_TRUE == config_setting_is_list(turnServerConfig)) {
+            const char* turnServer = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(proxyConfig, "host", &turnServer)) {
+                loadedConfig.turnServer = turnServer;
+            }
+            const char* secret = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(proxyConfig, "static-auth-secret", &secret)) {
+                loadedConfig.turnAuthSecret = secret;
+            }
+        }
+
         config_setting_t* sourcesConfig = config_lookup(&config, "sources");
         if(sourcesConfig && CONFIG_TRUE == config_setting_is_list(sourcesConfig)) {
             const int sourcesCount = config_setting_length(sourcesConfig);
