@@ -32,14 +32,14 @@ public:
     void forceTeardown(const rtsp::SessionId&);
 
 protected:
+    bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+
+    bool handleSetParameterRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+
     bool handleResponse(
         const rtsp::Request&,
         std::unique_ptr<rtsp::Response>&) noexcept override;
-
-private:
-    bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool handleSetParameterRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool handleSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 private:
     struct Private;
