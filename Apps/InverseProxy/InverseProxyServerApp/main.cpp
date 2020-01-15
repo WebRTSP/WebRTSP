@@ -76,7 +76,7 @@ static bool LoadConfig(InverseProxyServerConfig* config)
         config_setting_t* turnServerConfig = config_lookup(&config, "turn-server");
         if(turnServerConfig && CONFIG_TRUE == config_setting_is_list(turnServerConfig)) {
             const char* turnServer = nullptr;
-            if(CONFIG_TRUE == config_setting_lookup_string(proxyConfig, "host", &turnServer)) {
+            if(CONFIG_TRUE == config_setting_lookup_string(proxyConfig, "url", &turnServer)) {
                 loadedConfig.turnServer = turnServer;
             }
             const char* secret = nullptr;
