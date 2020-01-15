@@ -5,6 +5,7 @@
 
 #include "RtspParser/Common.h"
 
+#include "InverseProxyServerConfig.h"
 #include "FrontSession.h"
 #include "BackSession.h"
 
@@ -12,25 +13,31 @@
 // FIXME! need some protection from different session on the same address
 struct Forwarder::Private
 {
-    Private(const AuthTokens& backAuthTokens);
+    Private(const InverseProxyServerConfig&);
 
-    const AuthTokens backAuthTokens;
+    const InverseProxyServerConfig& config;
+
     std::map<std::string, BackSession*> backSessions;
 };
 
-Forwarder::Private::Private(const AuthTokens& backAuthTokens) :
-    backAuthTokens(backAuthTokens)
+Forwarder::Private::Private(const InverseProxyServerConfig& config) :
+    config(config)
 {
 }
 
 
-Forwarder::Forwarder(const AuthTokens& backAuthTokens) :
-    _p(std::make_unique<Private>(backAuthTokens))
+Forwarder::Forwarder(const InverseProxyServerConfig& config) :
+    _p(std::make_unique<Private>(config))
 {
 }
 
 Forwarder::~Forwarder()
 {
+}
+
+const InverseProxyServerConfig& Forwarder::config() const
+{
+    return _p->config;
 }
 
 std::unique_ptr<FrontSession>
@@ -58,8 +65,10 @@ bool Forwarder::registerBackSession(
     const std::string& token,
     BackSession* session)
 {
-    const auto it = _p->backAuthTokens.find(name);
-    if(_p->backAuthTokens.end() == it || it->second != token)
+    const AuthTokens& backAuthTokens = config().backAuthTokens;
+
+    const auto it = backAuthTokens.find(name);
+    if(backAuthTokens.end() == it || it->second != token)
         return false;
 
     const auto pair = _p->backSessions.emplace(name, session);

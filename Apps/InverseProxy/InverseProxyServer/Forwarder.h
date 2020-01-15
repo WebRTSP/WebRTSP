@@ -7,6 +7,7 @@
 #include <RtspParser/Request.h>
 #include <RtspParser/Response.h>
 
+class InverseProxyServerConfig;
 class FrontSession;
 class BackSession;
 
@@ -15,8 +16,10 @@ class Forwarder
 {
 public:
     typedef std::map<const std::string, const std::string> AuthTokens;
-    Forwarder(const AuthTokens& backAuthTokens);
+    Forwarder(const InverseProxyServerConfig&);
     ~Forwarder();
+
+    const InverseProxyServerConfig& config() const;
 
     std::unique_ptr<FrontSession>
         createFrontSession(
