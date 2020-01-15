@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <map>
 
 #include "Common.h"
 #include "Request.h"
