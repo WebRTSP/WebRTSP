@@ -507,7 +507,7 @@ static bool ParseParameter(
     if(!Skip(buf, pos, size, ':'))
         return false;
 
-    SkipLWS(buf, pos, size);
+    SkipWSP(buf, pos, size);
 
     size_t valuePos = *pos;
 
