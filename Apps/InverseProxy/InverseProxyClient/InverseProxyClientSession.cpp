@@ -1,5 +1,7 @@
 #include "InverseProxyClientSession.h"
 
+#include "RtspParser/RtspParser.h"
+
 
 InverseProxyClientSession::InverseProxyClientSession(
     const std::string& clientName,
@@ -18,7 +20,52 @@ bool InverseProxyClientSession::onConnected() noexcept
         "name: " + _clientName + "\r\n"
         "token: " + _authToken + "\r\n";
 
-    requestSetParameter("*", "text/parameters", parameters);
+    _authCSeq = requestSetParameter("*", "text/parameters", parameters);
+
+    return true;
+}
+
+bool InverseProxyClientSession::onGetParameterResponse(
+    const rtsp::Request& request,
+    const rtsp::Response& response) noexcept
+{
+    if(!ServerSession::onGetParameterResponse(request, response))
+        return false;
+
+    if(_turnServerCSeq && response.cseq != _turnServerCSeq)
+        return false;
+
+    _turnServerCSeq = 0;
+
+    rtsp::Parameters parameters;
+    if(!rtsp::ParseParameters(response.body, &parameters))
+        return false;
+
+    auto turnServerIt = parameters.find("turn-server");
+    if(parameters.end() != turnServerIt)
+        _turnServer = turnServerIt->second;
+    else
+        _turnServer.clear();
+
+    return true;
+}
+
+bool InverseProxyClientSession::onSetParameterResponse(
+    const rtsp::Request& request,
+    const rtsp::Response& response) noexcept
+{
+    if(!ServerSession::onSetParameterResponse(request, response))
+        return false;
+
+    if(_authCSeq && response.cseq != _authCSeq)
+        return false;
+
+    _authCSeq = 0;
+
+    const std::string parameters =
+        "turn-server\r\n";
+
+    _turnServerCSeq = requestGetParameter("*", "text/parameters", parameters);
 
     return true;
 }

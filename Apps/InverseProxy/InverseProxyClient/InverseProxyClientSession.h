@@ -15,7 +15,20 @@ public:
 
     bool onConnected() noexcept override ;
 
+protected:
+    bool onGetParameterResponse(
+        const rtsp::Request&,
+        const rtsp::Response&) noexcept override;
+    bool onSetParameterResponse(
+        const rtsp::Request&,
+        const rtsp::Response&) noexcept override;
+
 private:
     const std::string _clientName;
     const std::string _authToken;
+
+    rtsp::CSeq _authCSeq = 0;
+    rtsp::CSeq _turnServerCSeq = 0;
+
+    std::string _turnServer;
 };

@@ -7,6 +7,7 @@
 #include "RtspSession/StatusCode.h"
 
 #include "Log.h"
+#include "InverseProxyServerConfig.h"
 
 
 namespace {
@@ -113,6 +114,32 @@ bool BackSession::handleRequest(std::unique_ptr<rtsp::Request>& requestPtr) noex
         return false;
 
     return rtsp::Session::handleRequest(requestPtr);
+}
+
+bool BackSession::onGetParameterRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    const rtsp::Request& request = *requestPtr;
+
+    if(RequestContentType(request) != "text/parameters")
+        return false;
+
+    rtsp::ParametersNames names;
+    if(!rtsp::ParseParametersNames(requestPtr->body, &names))
+        return false;
+
+    auto nameIt = names.find("turn-server");
+    if(names.end() == nameIt) {
+        return false;
+    }
+
+    const InverseProxyServerConfig& config = _p->forwarder->config();
+    const std::string body =
+        "turn-server: " + config.turnServer + "\r\n";
+
+    sendOkResponse(request.cseq, rtsp::SessionId(), "text/parameters", body);
+
+    return true;
 }
 
 bool BackSession::onSetParameterRequest(

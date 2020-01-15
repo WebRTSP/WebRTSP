@@ -51,8 +51,8 @@ static void ClientDisconnected(client::WsClient* client) noexcept
 int main(int argc, char *argv[])
 {
     enum {
-        FRONT_SERVER_PORT = 8080,
-        BACK_SERVER_PORT = 8081,
+        FRONT_SERVER_PORT = 4001,
+        BACK_SERVER_PORT = 4002,
     };
 
     const std::string sourceName = "source1";
@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
             InverseProxyServerConfig config {
                 .frontPort = FRONT_SERVER_PORT,
                 .backPort = BACK_SERVER_PORT,
+                .turnServer = "turn:localhost:3478",
                 .backAuthTokens = { {sourceName, sourceAuthToken} }
             };
             InverseProxyServerMain(config);

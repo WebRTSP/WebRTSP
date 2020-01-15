@@ -34,6 +34,7 @@ public:
 protected:
     bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
+    bool onGetParameterRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onSetParameterRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
