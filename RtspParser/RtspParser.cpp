@@ -555,4 +555,27 @@ bool ParseParameters(
     return true;
 }
 
+bool ParseParametersNames(
+    const std::string& body,
+    ParametersNames* names) noexcept
+{
+    const char* buf = body.data();
+    size_t size = body.size();
+    size_t pos = 0;
+
+    while(!IsEOS(pos, size)) {
+        const Token name = GetToken(buf, &pos, size);
+        if(IsEmptyToken(name))
+            return false;
+
+        names->emplace(name.token, name.size);
+
+        if(!SkipEOL(buf, &pos, size))
+            return false;
+    }
+
+    return true;
+
+}
+
 }
