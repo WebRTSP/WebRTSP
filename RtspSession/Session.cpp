@@ -95,6 +95,22 @@ void Session::sendOkResponse(
     sendResponse(*prepareOkResponse(cseq, session, &response));
 }
 
+void Session::sendOkResponse(
+    CSeq cseq,
+    const SessionId& session,
+    const std::string& contentType,
+    const std::string& body)
+{
+    Response response;
+    prepareOkResponse(cseq, session, &response);
+
+    response.headerFields.emplace("content-type", contentType);
+
+    response.body = body;
+
+    sendResponse(response);
+}
+
 void Session::sendRequest(const Request& request) noexcept
 {
     _sendRequest(&request);

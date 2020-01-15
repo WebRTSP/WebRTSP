@@ -46,6 +46,11 @@ protected:
         const SessionId& session,
         Response* out);
     void sendOkResponse(CSeq, const SessionId&);
+    void sendOkResponse(
+        CSeq,
+        const SessionId&,
+        const std::string& contentType,
+        const std::string& body);
 
     void sendRequest(const Request&) noexcept;
     void sendResponse(const Response&) noexcept;
