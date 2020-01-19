@@ -128,7 +128,7 @@ bool BackSession::onGetParameterRequest(
     if(!rtsp::ParseParametersNames(requestPtr->body, &names))
         return false;
 
-    auto nameIt = names.find("turn-server");
+    auto nameIt = names.find("ice-servers");
     if(names.end() == nameIt) {
         return false;
     }

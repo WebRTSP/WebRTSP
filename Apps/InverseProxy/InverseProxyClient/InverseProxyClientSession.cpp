@@ -32,10 +32,10 @@ bool InverseProxyClientSession::onGetParameterResponse(
     if(!ServerSession::onGetParameterResponse(request, response))
         return false;
 
-    if(_turnServerCSeq && response.cseq != _turnServerCSeq)
+    if(_iceServerCSeq && response.cseq != _iceServerCSeq)
         return false;
 
-    _turnServerCSeq = 0;
+    _iceServerCSeq = 0;
 
     rtsp::Parameters parameters;
     if(!rtsp::ParseParameters(response.body, &parameters))
@@ -63,9 +63,9 @@ bool InverseProxyClientSession::onSetParameterResponse(
     _authCSeq = 0;
 
     const std::string parameters =
-        "turn-server\r\n";
+        "ice-servers\r\n";
 
-    _turnServerCSeq = requestGetParameter("*", "text/parameters", parameters);
+    _iceServerCSeq = requestGetParameter("*", "text/parameters", parameters);
 
     return true;
 }
