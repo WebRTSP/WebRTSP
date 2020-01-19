@@ -3,6 +3,8 @@
 #include <cassert>
 #include <map>
 
+#include "Common/TurnRestApi.h"
+
 #include "RtspParser/RtspParser.h"
 #include "RtspSession/StatusCode.h"
 
@@ -134,8 +136,20 @@ bool BackSession::onGetParameterRequest(
     }
 
     const InverseProxyServerConfig& config = _p->forwarder->config();
+
+    const bool useTemporaryCredentials = !config.turnStaticAuthSecret.empty();
+
+    const std::string turnServer =
+        useTemporaryCredentials ?
+            IceServer(
+                _p->clientName,
+                config.turnPasswordTTL,
+                config.turnStaticAuthSecret,
+                config.turnServer) :
+            config.turnUsername + ":" + config.turnCredential + "@" +config.turnServer;
+
     const std::string body =
-        "turn-server: " + config.turnServer + "\r\n";
+        "turn-server: " + turnServer + "\r\n";
 
     sendOkResponse(request.cseq, rtsp::SessionId(), "text/parameters", body);
 

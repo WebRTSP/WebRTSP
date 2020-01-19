@@ -67,6 +67,7 @@ int main(int argc, char *argv[])
                 .turnServer = "localhost:3478",
                 .turnUsername = "anonymous",
                 .turnCredential = "guest",
+                .turnStaticAuthSecret = "dummySecret",
                 .backAuthTokens = { {sourceName, sourceAuthToken} }
             };
             InverseProxyServerMain(config);

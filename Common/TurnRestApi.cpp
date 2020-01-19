@@ -66,5 +66,13 @@ std::string IceServer(
     const std::string password =
         TurnTemporaryPassword(userName, staticAuthSecret);
 
-    return userName + ":" + password + "@" + iceEndpoint;
+    char* escapedUserName = g_uri_escape_string(userName.c_str(), nullptr, false);
+    std::string escapedUserName2 = escapedUserName;
+    g_free(escapedUserName);
+
+    char* escapedPassword = g_uri_escape_string(password.c_str(), nullptr, false);
+    std::string escapedPassword2 = escapedPassword;
+    g_free(escapedPassword);
+
+    return escapedUserName2 + ":" + escapedPassword2 + "@" + iceEndpoint;
 }
