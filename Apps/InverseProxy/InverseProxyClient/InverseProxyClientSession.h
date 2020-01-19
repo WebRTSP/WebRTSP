@@ -29,6 +29,4 @@ private:
 
     rtsp::CSeq _authCSeq = 0;
     rtsp::CSeq _iceServerCSeq = 0;
-
-    std::string _turnServer;
 };

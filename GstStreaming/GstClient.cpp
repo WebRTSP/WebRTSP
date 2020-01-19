@@ -32,7 +32,7 @@ struct GstClient::Private
     gulong iceGatheringStateChangedHandlerId = 0;
     std::string sdp;
 
-    void prepare();
+    void prepare(const IceServers&);
     gboolean onBusMessage(GstBus*, GstMessage*);
     void onIceGatheringStateChanged(GstElement* rtcbin);
     void onAnswerCreated(GstPromise*);
@@ -49,7 +49,7 @@ GstClient::Private::Private(GstClient* owner) :
 {
 }
 
-void GstClient::Private::prepare()
+void GstClient::Private::prepare(const IceServers&)
 {
     pipelinePtr.reset(gst_pipeline_new("Client Pipeline"));
     GstElement* pipeline = pipelinePtr.get();
@@ -229,13 +229,14 @@ GstClient::~GstClient()
 }
 
 void GstClient::prepare(
+    const IceServers& iceServers,
     const PreparedCallback& prepared,
     const IceCandidateCallback& iceCandidate) noexcept
 {
     _p->prepared = prepared;
     _p->iceCandidate = iceCandidate;
 
-    _p->prepare();
+    _p->prepare(iceServers);
 }
 
 bool GstClient::sdp(std::string* sdp) noexcept

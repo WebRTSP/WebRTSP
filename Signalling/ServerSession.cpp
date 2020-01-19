@@ -40,6 +40,8 @@ struct ServerSession::Private
     ServerSession* owner;
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer;
 
+    std::deque<std::string> iceServers;
+
     Requests requests;
     Streamers streamers;
 
@@ -151,6 +153,11 @@ ServerSession::~ServerSession()
 {
 }
 
+void ServerSession::setIceServers(const WebRTCPeer::IceServers& iceServers)
+{
+    _p->iceServers = iceServers;
+}
+
 bool ServerSession::onOptionsRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
@@ -200,6 +207,7 @@ bool ServerSession::onDescribeRequest(
     streamerInfo.streamer = std::move(peerPtr);
 
     streamerInfo.streamer->prepare(
+        _p->iceServers,
         std::bind(
             &ServerSession::Private::streamerPrepared,
             _p.get(),

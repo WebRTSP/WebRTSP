@@ -6,6 +6,7 @@
 #include <CxxPtr/GstPtr.h>
 
 #include "LibGst.h"
+#include "Helpers.h"
 
 
 static std::unique_ptr<LibGst> libGst;
@@ -32,7 +33,7 @@ struct GstTestStreamer::Private
     gulong iceGatheringStateChangedHandlerId = 0;
     std::string sdp;
 
-    void prepare();
+    void prepare(const IceServers&);
     gboolean onBusMessage(GstBus*, GstMessage*);
     void onNegotiationNeeded(GstElement* rtcbin);
     void onIceGatheringStateChanged(GstElement* rtcbin);
@@ -52,7 +53,7 @@ GstTestStreamer::Private::Private(
 {
 }
 
-void GstTestStreamer::Private::prepare()
+void GstTestStreamer::Private::prepare(const IceServers& iceServers)
 {
     std::string usePattern = "smpte";
     if(pattern == "bars")
@@ -107,6 +108,8 @@ void GstTestStreamer::Private::prepare()
     rtcbinPtr.reset(
         gst_bin_get_by_name(GST_BIN(pipeline), "srcrtcbin"));
     GstElement* rtcbin = rtcbinPtr.get();
+
+    GstStreaming::SetIceServers(rtcbin, iceServers);
 
     auto onNegotiationNeededCallback =
         (void (*) (GstElement*, gpointer))
@@ -285,13 +288,14 @@ GstTestStreamer::~GstTestStreamer()
 }
 
 void GstTestStreamer::prepare(
+    const IceServers& iceServers,
     const PreparedCallback& prepared,
     const IceCandidateCallback& iceCandidate) noexcept
 {
     _p->prepared = prepared;
     _p->iceCandidate = iceCandidate;
 
-    _p->prepare();
+    _p->prepare(iceServers);
 }
 
 bool GstTestStreamer::sdp(std::string* sdp) noexcept

@@ -2,16 +2,19 @@
 
 #include <string>
 #include <functional>
+#include <deque>
 
 
 struct WebRTCPeer
 {
     virtual ~WebRTCPeer() {}
 
+    typedef std::deque<std::string> IceServers;
     typedef std::function<void ()> PreparedCallback;
     typedef std::function<
         void (unsigned mlineIndex, const std::string& candidate)> IceCandidateCallback;
     virtual void prepare(
+        const IceServers&,
         const PreparedCallback&,
         const IceCandidateCallback&) noexcept = 0;
 

@@ -6,6 +6,7 @@
 #include <CxxPtr/GstPtr.h>
 
 #include "LibGst.h"
+#include "Helpers.h"
 
 
 static std::unique_ptr<LibGst> libGst;
@@ -28,12 +29,13 @@ struct GstRtspReStreamer::Private
     GstBusPtr busPtr;
     guint busWatchId = 0;
 
+    IceServers iceServers;
     GstElementPtr rtcbinPtr;
 
     gulong iceGatheringStateChangedHandlerId = 0;
     std::string sdp;
 
-    void prepare();
+    void prepare(const IceServers&);
     gboolean onBusMessage(GstBus*, GstMessage*);
     void rtspSrcPadAdded(GstElement* rtspsrc, GstPad*);
     void rtspNoMorePads(GstElement* rtspsrc);
@@ -91,6 +93,9 @@ void GstRtspReStreamer::Private::rtspSrcPadAdded(
         gst_bin_get_by_name(GST_BIN(pipeline), "srcrtcbin"));
     GstElement* rtcbin = rtcbinPtr.get();
 
+    GstStreaming::SetIceServers(rtcbin, iceServers);
+    iceServers.clear();
+
     auto onNegotiationNeededCallback =
         (void (*) (GstElement*, gpointer))
         [] (GstElement* rtcbin, gpointer userData)
@@ -117,8 +122,10 @@ void GstRtspReStreamer::Private::rtspNoMorePads(GstElement* /*rtspsrc*/)
     setState(GST_STATE_PAUSED);
 }
 
-void GstRtspReStreamer::Private::prepare()
+void GstRtspReStreamer::Private::prepare(const IceServers&)
 {
+    this->iceServers = iceServers;
+
     pipelinePtr.reset(gst_pipeline_new(nullptr));
     GstElement* pipeline = pipelinePtr.get();
 
@@ -302,13 +309,14 @@ GstRtspReStreamer::~GstRtspReStreamer()
 }
 
 void GstRtspReStreamer::prepare(
+    const IceServers& iceServers,
     const PreparedCallback& prepared,
     const IceCandidateCallback& iceCandidate) noexcept
 {
     _p->prepared = prepared;
     _p->iceCandidate = iceCandidate;
 
-    _p->prepare();
+    _p->prepare(iceServers);
 }
 
 bool GstRtspReStreamer::sdp(std::string* sdp) noexcept

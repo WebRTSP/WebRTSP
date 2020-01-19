@@ -102,6 +102,7 @@ bool ClientSession::onDescribeResponse(
         return false;
 
     _p->client->prepare(
+        WebRTCPeer::IceServers(),
         std::bind(
             &ClientSession::Private::streamerPrepared,
             _p.get()),

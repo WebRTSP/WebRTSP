@@ -43,9 +43,9 @@ bool InverseProxyClientSession::onGetParameterResponse(
 
     auto turnServerIt = parameters.find("turn-server");
     if(parameters.end() != turnServerIt)
-        _turnServer = turnServerIt->second;
+        setIceServers({"turn://" + turnServerIt->second});
     else
-        _turnServer.clear();
+        setIceServers({});
 
     return true;
 }

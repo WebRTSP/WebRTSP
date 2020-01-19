@@ -16,6 +16,7 @@ public:
     typedef std::function<
         void (unsigned mlineIndex, const std::string& candidate)> IceCandidateCallback;
     void prepare(
+        const IceServers&,
         const PreparedCallback&,
         const IceCandidateCallback&) noexcept override;
     bool sdp(std::string* sdp) noexcept override;

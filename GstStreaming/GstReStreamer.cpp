@@ -8,6 +8,7 @@
 #include <CxxPtr/GstPtr.h>
 
 #include "LibGst.h"
+#include "Helpers.h"
 
 
 static std::unique_ptr<LibGst> libGst;
@@ -32,12 +33,13 @@ struct GstReStreamer::Private
     GstBusPtr busPtr;
     guint busWatchId = 0;
 
+    IceServers iceServers;
     GstElementPtr rtcbinPtr;
 
     gulong iceGatheringStateChangedHandlerId = 0;
     std::string sdp;
 
-    void prepare();
+    void prepare(const IceServers&);
     gboolean onBusMessage(GstBus*, GstMessage*);
     void srcPadAdded(GstElement* decodebin, GstPad*);
     void noMorePads(GstElement* decodebin);
@@ -90,6 +92,9 @@ void GstReStreamer::Private::srcPadAdded(
         gst_bin_get_by_name(GST_BIN(pipeline), "srcrtcbin"));
     GstElement* rtcbin = rtcbinPtr.get();
 
+    GstStreaming::SetIceServers(rtcbin, iceServers);
+    iceServers.clear();
+
     auto onNegotiationNeededCallback =
         (void (*) (GstElement*, gpointer))
         [] (GstElement* rtcbin, gpointer userData)
@@ -116,8 +121,10 @@ void GstReStreamer::Private::noMorePads(GstElement* /*decodebin*/)
     setState(GST_STATE_PAUSED);
 }
 
-void GstReStreamer::Private::prepare()
+void GstReStreamer::Private::prepare(const IceServers& iceServers)
 {
+    this->iceServers = iceServers;
+
     supportedCapsPtr.reset(gst_caps_from_string("video/x-h264"));
     GstCaps* supportedCaps = supportedCapsPtr.get();
 
@@ -306,13 +313,14 @@ GstReStreamer::~GstReStreamer()
 }
 
 void GstReStreamer::prepare(
+    const IceServers& iceServers,
     const PreparedCallback& prepared,
     const IceCandidateCallback& iceCandidate) noexcept
 {
     _p->prepared = prepared;
     _p->iceCandidate = iceCandidate;
 
-    _p->prepare();
+    _p->prepare(iceServers);
 }
 
 bool GstReStreamer::sdp(std::string* sdp) noexcept

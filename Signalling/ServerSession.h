@@ -13,6 +13,8 @@ public:
         const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
     ~ServerSession();
 
+    void setIceServers(const WebRTCPeer::IceServers&);
+
 private:
     bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
