@@ -145,7 +145,6 @@ void GstReStreamer::Private::prepare(const IceServers& iceServers)
     busWatchId =
         gst_bus_add_watch(bus, onBusMessageCallback, this);
 
-
     GstElementPtr srcPtr(gst_element_factory_make("uridecodebin", nullptr));
     decodebin = srcPtr.get();
     if(!decodebin)

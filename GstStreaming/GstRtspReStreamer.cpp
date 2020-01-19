@@ -143,7 +143,6 @@ void GstRtspReStreamer::Private::prepare(const IceServers&)
     busWatchId =
         gst_bus_add_watch(bus, onBusMessageCallback, this);
 
-
     GstElementPtr rtspsrcPtr(gst_element_factory_make("rtspsrc", nullptr));
     rtspsrc = rtspsrcPtr.get();
     if(!rtspsrc)
