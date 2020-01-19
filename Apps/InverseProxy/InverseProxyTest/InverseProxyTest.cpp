@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
             InverseProxyServerConfig config {
                 .frontPort = FRONT_SERVER_PORT,
                 .backPort = BACK_SERVER_PORT,
-                .turnServer = "turn:localhost:3478",
+                .turnServer = "localhost:3478",
                 .backAuthTokens = { {sourceName, sourceAuthToken} }
             };
             InverseProxyServerMain(config);
