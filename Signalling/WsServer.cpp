@@ -1,6 +1,7 @@
 #include "WsServer.h"
 
 #include <deque>
+#include <algorithm>
 
 #include <CxxPtr/libwebsocketsPtr.h>
 
@@ -133,10 +134,16 @@ int WsServer::Private::wsCallback(
         }
         case LWS_CALLBACK_RECEIVE: {
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
-                Log()->trace(
-                    "-> WsServer: {:.{}}",
-                    scd->data->incomingMessage.data(),
-                    static_cast<int>(scd->data->incomingMessage.size()));
+                if(Log()->level() <= spdlog::level::debug) {
+                    std::string logMessage;
+                    logMessage.reserve(scd->data->incomingMessage.size());
+                    std::remove_copy(
+                        scd->data->incomingMessage.data(),
+                        scd->data->incomingMessage.data() + scd->data->incomingMessage.size(),
+                        std::back_inserter(logMessage), '\r');
+
+                    Log()->trace("-> WsServer: {}", logMessage);
+                }
 
                 if(!onMessage(scd, scd->data->incomingMessage))
                     return -1;
