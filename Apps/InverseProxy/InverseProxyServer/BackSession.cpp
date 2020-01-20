@@ -139,14 +139,21 @@ bool BackSession::onGetParameterRequest(
 
     const bool useTemporaryCredentials = !config.turnStaticAuthSecret.empty();
 
-    const std::string turnServer =
-        useTemporaryCredentials ?
+    std::string turnServer;
+    if(useTemporaryCredentials) {
+        turnServer =
             IceServer(
                 _p->clientName,
                 config.turnPasswordTTL,
                 config.turnStaticAuthSecret,
-                config.turnServer) :
-            config.turnUsername + ":" + config.turnCredential + "@" +config.turnServer;
+                config.turnServer);
+    } else if(!config.turnServer.empty()) {
+        if(!config.turnUsername.empty() && !config.turnCredential.empty()) {
+            turnServer = config.turnUsername + ":" + config.turnCredential;
+            turnServer+= "@" + config.turnServer;
+        } else
+            turnServer = config.turnServer;
+    }
 
     const std::string body =
         "turn-server: " + turnServer + "\r\n";
