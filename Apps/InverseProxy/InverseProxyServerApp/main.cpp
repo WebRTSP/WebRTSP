@@ -74,25 +74,25 @@ static bool LoadConfig(InverseProxyServerConfig* config)
         }
 
         config_setting_t* turnServerConfig = config_lookup(&config, "turn");
-        if(turnServerConfig && CONFIG_TRUE == config_setting_is_list(turnServerConfig)) {
+        if(turnServerConfig && CONFIG_TRUE == config_setting_is_group(turnServerConfig)) {
             const char* server = nullptr;
-            if(CONFIG_TRUE == config_setting_lookup_string(proxyConfig, "server", &server)) {
+            if(CONFIG_TRUE == config_setting_lookup_string(turnServerConfig, "server", &server)) {
                 loadedConfig.turnServer = server;
             }
             const char* username = nullptr;
-            if(CONFIG_TRUE == config_setting_lookup_string(proxyConfig, "username", &username)) {
+            if(CONFIG_TRUE == config_setting_lookup_string(turnServerConfig, "username", &username)) {
                 loadedConfig.turnUsername = username;
             }
             const char* credential = nullptr;
-            if(CONFIG_TRUE == config_setting_lookup_string(proxyConfig, "credential", &credential)) {
+            if(CONFIG_TRUE == config_setting_lookup_string(turnServerConfig, "credential", &credential)) {
                 loadedConfig.turnCredential = credential;
             }
             const char* secret = nullptr;
-            if(CONFIG_TRUE == config_setting_lookup_string(proxyConfig, "static-auth-secret", &secret)) {
+            if(CONFIG_TRUE == config_setting_lookup_string(turnServerConfig, "static-auth-secret", &secret)) {
                 loadedConfig.turnStaticAuthSecret = secret;
             }
             int passwordTTL = 0;
-            if(CONFIG_TRUE == config_setting_lookup_int(proxyConfig, "password-ttl", &passwordTTL)) {
+            if(CONFIG_TRUE == config_setting_lookup_int(turnServerConfig, "password-ttl", &passwordTTL)) {
                 if(passwordTTL > 0)
                     loadedConfig.turnPasswordTTL = passwordTTL;
             }
