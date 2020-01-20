@@ -9,6 +9,11 @@
 #include "FrontSession.h"
 #include "BackSession.h"
 
+#include "Log.h"
+
+
+static const auto Log = InverseProxyServerLog;
+
 
 // FIXME! need some protection from different session on the same address
 struct Forwarder::Private
@@ -68,12 +73,22 @@ bool Forwarder::registerBackSession(
     const AuthTokens& backAuthTokens = config().backAuthTokens;
 
     const auto it = backAuthTokens.find(name);
-    if(backAuthTokens.end() == it || it->second != token)
+    if(backAuthTokens.end() == it) {
+        Log()->error("[Forwarder] Unknown streaming source \"{}\".", name);
         return false;
+    }
+    if(it->second != token) {
+        Log()->error("[Forwarder] Invalid token for streaming source \"{}\".", name);
+        return false;
+    }
 
     const auto pair = _p->backSessions.emplace(name, session);
-    if(!pair.second)
+    if(!pair.second) {
+        Log()->error("[Forwarder] Streaming source \"{}\" already registered.", name);
         return false;
+    }
+
+    Log()->info("[Forwarder] Streaming source \"{}\" registered.", name);
 
     return true;
 }

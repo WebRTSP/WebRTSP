@@ -171,10 +171,12 @@ bool BackSession::onSetParameterRequest(
 
     auto nameIt = parameters.find("name");
     if(parameters.end() == nameIt) {
+        Log()->error("[BackSession] Missing \"name\" parameter.");
         return false;
     }
     auto tokenIt = parameters.find("token");
     if(parameters.end() == tokenIt) {
+        Log()->error("[BackSession] Missing \"token\" parameter.");
         return false;
     }
 
