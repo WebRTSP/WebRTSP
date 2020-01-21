@@ -13,6 +13,10 @@
 #include "../InverseProxyServer/InverseProxyServer.h"
 #include "../InverseProxyClient/InverseProxyClient.h"
 
+#define ENABLE_STREAMER 1
+#define ENABLE_SERVER 1
+#define ENABLE_VIEWER 1
+
 enum {
     RECONNECT_TIMEOUT = 5,
 };
@@ -59,6 +63,7 @@ int main(int argc, char *argv[])
     const std::string streamerName = "bars";
     const std::string sourceAuthToken = "dummyToken";
 
+#if ENABLE_SERVER
     std::thread serverThread(
         [&sourceName, &sourceAuthToken] () {
             InverseProxyServerConfig config {
@@ -72,7 +77,9 @@ int main(int argc, char *argv[])
             };
             InverseProxyServerMain(config);
         });
+#endif
 
+#if ENABLE_STREAMER
     std::thread streamSourceClientThread(
         [&sourceName, &streamerName, &sourceAuthToken] () {
             InverseProxyClientConfig config {};
@@ -86,7 +93,9 @@ int main(int argc, char *argv[])
 
             InverseProxyClientMain(config);
         });
+#endif
 
+#if ENABLE_VIEWER
     std::thread clientThread(
         [&sourceName, &streamerName] () {
             client::Config config {};
@@ -114,15 +123,22 @@ int main(int argc, char *argv[])
                 g_main_loop_run(loop);
             }
         });
+#endif
 
+#if ENABLE_SERVER
     if(serverThread.joinable())
         serverThread.join();
+#endif
 
+#if ENABLE_STREAMER
     if(streamSourceClientThread.joinable())
         streamSourceClientThread.join();
+#endif
 
+#if ENABLE_VIEWER
     if(clientThread.joinable())
         clientThread.join();
+#endif
 
     return 0;
 }
