@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
         BACK_SERVER_PORT = 4002,
     };
 
+    const std::string server = "localhost";
     const std::string sourceName = "source1";
     const std::string streamerName = "bars";
     const std::string sourceAuthToken = "dummyToken";
@@ -97,9 +98,9 @@ int main(int argc, char *argv[])
 
 #if ENABLE_VIEWER
     std::thread clientThread(
-        [&sourceName, &streamerName] () {
+        [&server, &sourceName, &streamerName] () {
             client::Config config {};
-            config.server = "localhost";
+            config.server = server;
             config.serverPort = FRONT_SERVER_PORT;
 
             GMainContextPtr clientContextPtr(g_main_context_new());
