@@ -251,6 +251,8 @@ bool WsServer::Private::init(lws_context* context)
         vhostInfo.port = config.port;
         vhostInfo.protocols = protocols;
         vhostInfo.user = this;
+        if(config.bindToLoopbackOnly)
+            vhostInfo.iface = "lo";
 
         lws_vhost* vhost = lws_create_vhost(context, &vhostInfo);
         if(!vhost)
@@ -268,6 +270,8 @@ bool WsServer::Private::init(lws_context* context)
         secureVhostInfo.vhost_name = config.serverName.c_str();
         secureVhostInfo.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
         secureVhostInfo.user = this;
+        if(config.secureBindToLoopbackOnly)
+            secureVhostInfo.iface = "lo";
 
         lws_vhost* secureVhost = lws_create_vhost(context, &secureVhostInfo);
         if(!secureVhost)

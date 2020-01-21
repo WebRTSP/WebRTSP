@@ -11,7 +11,9 @@ struct Config
     std::string certificate;
     std::string key;
 
+    bool bindToLoopbackOnly = true;
     unsigned short port;
+    bool secureBindToLoopbackOnly = false;
     unsigned short securePort;
 };
 
