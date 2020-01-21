@@ -30,7 +30,9 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
         .serverName = config.serverName,
         .certificate = config.certificate,
         .key = config.key,
+        .bindToLoopbackOnly = true,
         .port = config.frontPort,
+        .secureBindToLoopbackOnly = false,
         .securePort = config.secureFrontPort,
     };
     signalling::WsServer frontServer(
@@ -43,7 +45,9 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
         .serverName = config.serverName,
         .certificate = config.certificate,
         .key = config.key,
+        .bindToLoopbackOnly = true,
         .port = config.backPort,
+        .secureBindToLoopbackOnly = false,
         .securePort = config.secureBackPort,
     };
     signalling::WsServer backServer(
