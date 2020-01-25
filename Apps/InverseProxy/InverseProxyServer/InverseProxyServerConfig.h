@@ -30,5 +30,11 @@ struct InverseProxyServerConfig
     std::string turnStaticAuthSecret;
     unsigned turnPasswordTTL = 24 * 60 * 60;
 
+    std::string turnsServer;
+    std::string turnsUsername;
+    std::string turnsCredential;
+    std::string turnsStaticAuthSecret;
+    unsigned turnsPasswordTTL = 24 * 60 * 60;
+
     AuthTokens backAuthTokens;
 };

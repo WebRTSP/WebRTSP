@@ -13,6 +13,7 @@ enum class IceServerType {
     Unknown,
     Stun,
     Turn,
+    Turns,
 };
 
 IceServerType ParseIceServerType(const std::string& iceServer);

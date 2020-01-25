@@ -141,10 +141,11 @@ bool BackSession::onGetParameterRequest(
     if(!config.stunServer.empty())
         body += "stun-server: " + config.stunServer + "\r\n";
 
-    const bool useTemporaryCredentials = !config.turnStaticAuthSecret.empty();
+    const bool useTurnTemporaryCredentials =
+        !config.turnStaticAuthSecret.empty();
 
     std::string turnServer;
-    if(useTemporaryCredentials) {
+    if(useTurnTemporaryCredentials) {
         turnServer =
             IceServer(
                 _p->clientName,
@@ -161,6 +162,29 @@ bool BackSession::onGetParameterRequest(
 
     if(!turnServer.empty())
         body += "turn-server: " + turnServer + "\r\n";
+
+    const bool useTurnsTemporaryCredentials =
+        !config.turnsStaticAuthSecret.empty();
+
+    std::string turnsServer;
+    if(useTurnsTemporaryCredentials) {
+        turnsServer =
+            IceServer(
+                _p->clientName,
+                config.turnsPasswordTTL,
+                config.turnsStaticAuthSecret,
+                config.turnsServer);
+    } else if(!config.turnsServer.empty()) {
+        if(!config.turnsUsername.empty() && !config.turnsCredential.empty()) {
+            turnsServer = config.turnsUsername + ":" + config.turnsCredential;
+            turnsServer+= "@" + config.turnsServer;
+        } else
+            turnsServer = config.turnsServer;
+    }
+
+    if(!turnsServer.empty())
+        body += "turns-server: " + turnsServer + "\r\n";
+
 
     sendOkResponse(request.cseq, rtsp::SessionId(), "text/parameters", body);
 

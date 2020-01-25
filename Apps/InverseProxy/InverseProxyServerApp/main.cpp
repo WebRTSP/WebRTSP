@@ -106,6 +106,31 @@ static bool LoadConfig(InverseProxyServerConfig* config)
             }
         }
 
+        config_setting_t* turnsServerConfig = config_lookup(&config, "turns");
+        if(turnsServerConfig && CONFIG_TRUE == config_setting_is_group(turnsServerConfig)) {
+            const char* server = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(turnsServerConfig, "server", &server)) {
+                loadedConfig.turnsServer = server;
+            }
+            const char* username = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(turnsServerConfig, "username", &username)) {
+                loadedConfig.turnsUsername = username;
+            }
+            const char* credential = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(turnsServerConfig, "credential", &credential)) {
+                loadedConfig.turnsCredential = credential;
+            }
+            const char* secret = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(turnsServerConfig, "static-auth-secret", &secret)) {
+                loadedConfig.turnsStaticAuthSecret = secret;
+            }
+            int passwordTTL = 0;
+            if(CONFIG_TRUE == config_setting_lookup_int(turnsServerConfig, "password-ttl", &passwordTTL)) {
+                if(passwordTTL > 0)
+                    loadedConfig.turnsPasswordTTL = passwordTTL;
+            }
+        }
+
         config_setting_t* sourcesConfig = config_lookup(&config, "sources");
         if(sourcesConfig && CONFIG_TRUE == config_setting_is_list(sourcesConfig)) {
             const int sourcesCount = config_setting_length(sourcesConfig);

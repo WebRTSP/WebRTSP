@@ -10,6 +10,8 @@ IceServerType ParseIceServerType(const std::string& iceServer)
 {
     if(0 == iceServer.compare(0, 5, "turn:"))
         return IceServerType::Turn;
+    else if(0 == iceServer.compare(0, 6, "turns:"))
+        return IceServerType::Turns;
     else if(0 == iceServer.compare(0, 5, "stun:"))
         return IceServerType::Stun;
     else
@@ -29,7 +31,8 @@ void SetIceServers(
                     "stun-server", iceServer.c_str(),
                     nullptr);
                 break;
-            case IceServerType::Turn: {
+            case IceServerType::Turn:
+            case IceServerType::Turns: {
                 gboolean ret;
                 g_signal_emit_by_name(
                     rtcbin,
