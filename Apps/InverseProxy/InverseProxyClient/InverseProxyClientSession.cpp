@@ -41,11 +41,17 @@ bool InverseProxyClientSession::onGetParameterResponse(
     if(!rtsp::ParseParameters(response.body, &parameters))
         return false;
 
+    WebRTCPeer::IceServers iceServers;
+
+    auto stunServerIt = parameters.find("stun-server");
+    if(parameters.end() != stunServerIt && !stunServerIt->second.empty())
+        iceServers.push_back({"stun://" + stunServerIt->second});
+
     auto turnServerIt = parameters.find("turn-server");
-    if(parameters.end() != turnServerIt)
-        setIceServers({"turn://" + turnServerIt->second});
-    else
-        setIceServers({});
+    if(parameters.end() != turnServerIt && !turnServerIt->second.empty())
+        iceServers.push_back({"turn://" + turnServerIt->second});
+
+    setIceServers(iceServers);
 
     return true;
 }

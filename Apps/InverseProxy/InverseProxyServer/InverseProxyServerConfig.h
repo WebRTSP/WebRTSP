@@ -22,6 +22,8 @@ struct InverseProxyServerConfig
     unsigned short backPort;
     unsigned short secureBackPort;
 
+    std::string stunServer;
+
     std::string turnServer;
     std::string turnUsername;
     std::string turnCredential;

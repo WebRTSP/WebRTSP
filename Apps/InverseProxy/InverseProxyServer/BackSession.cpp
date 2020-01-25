@@ -137,6 +137,10 @@ bool BackSession::onGetParameterRequest(
 
     const InverseProxyServerConfig& config = _p->forwarder->config();
 
+    std::string body;
+    if(!config.stunServer.empty())
+        body += "stun-server: " + config.stunServer + "\r\n";
+
     const bool useTemporaryCredentials = !config.turnStaticAuthSecret.empty();
 
     std::string turnServer;
@@ -155,8 +159,8 @@ bool BackSession::onGetParameterRequest(
             turnServer = config.turnServer;
     }
 
-    const std::string body =
-        "turn-server: " + turnServer + "\r\n";
+    if(!turnServer.empty())
+        body += "turn-server: " + turnServer + "\r\n";
 
     sendOkResponse(request.cseq, rtsp::SessionId(), "text/parameters", body);
 

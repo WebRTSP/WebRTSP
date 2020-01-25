@@ -73,6 +73,14 @@ static bool LoadConfig(InverseProxyServerConfig* config)
             }
         }
 
+        config_setting_t* stunServerConfig = config_lookup(&config, "stun");
+        if(stunServerConfig && CONFIG_TRUE == config_setting_is_group(stunServerConfig)) {
+            const char* server = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(stunServerConfig, "server", &server)) {
+                loadedConfig.stunServer = server;
+            }
+        }
+
         config_setting_t* turnServerConfig = config_lookup(&config, "turn");
         if(turnServerConfig && CONFIG_TRUE == config_setting_is_group(turnServerConfig)) {
             const char* server = nullptr;
