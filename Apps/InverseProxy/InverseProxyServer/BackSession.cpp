@@ -295,6 +295,9 @@ bool BackSession::handleResponse(
 
     const RequestSource& requestSource = requestIt->second;
 
+    if(!requestSource.source)
+        return true; // not forwarded request
+
     const rtsp::SessionId responseSessionId = ResponseSession(*responsePtr);
     if(rtsp::Method::DESCRIBE == request.method) {
         if(!requestSource.session.empty()) {
@@ -340,5 +343,14 @@ void BackSession::forceTeardown(const rtsp::SessionId& mediaSession)
 
     const rtsp::Request* request =
         createRequest(rtsp::Method::TEARDOWN, "*", mediaSession);
+    const rtsp::CSeq requestCSeq = request->cseq;
+
+    // mark request as not forwarded
+    const bool inserted =
+        _p->forwardRequests.emplace(
+            requestCSeq,
+            RequestSource { .source = nullptr }).second;
+    assert(inserted);
+
     sendRequest(*request);
 }
