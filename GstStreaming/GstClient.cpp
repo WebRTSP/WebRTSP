@@ -1,5 +1,6 @@
 #include "GstClient.h"
 
+#include <cassert>
 #include <deque>
 
 #include <gst/gst.h>
@@ -48,6 +49,10 @@ GstClient::Private::Private(GstClient* owner) :
 
 void GstClient::Private::prepare(const IceServers&)
 {
+    assert(!pipelinePtr);
+    if(pipelinePtr)
+        return;
+
     pipelinePtr.reset(gst_pipeline_new("Client Pipeline"));
     GstElement* pipeline = pipelinePtr.get();
 

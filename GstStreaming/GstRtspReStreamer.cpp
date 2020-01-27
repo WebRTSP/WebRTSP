@@ -1,5 +1,7 @@
 #include "GstRtspReStreamer.h"
 
+#include <cassert>
+
 #include <gst/gst.h>
 
 #include <CxxPtr/GlibPtr.h>
@@ -121,6 +123,10 @@ void GstRtspReStreamer::Private::rtspNoMorePads(GstElement* /*rtspsrc*/)
 
 void GstRtspReStreamer::Private::prepare(const IceServers&)
 {
+    assert(!pipelinePtr);
+    if(pipelinePtr)
+        return;
+
     this->iceServers = iceServers;
 
     pipelinePtr.reset(gst_pipeline_new(nullptr));

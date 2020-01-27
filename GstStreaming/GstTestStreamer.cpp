@@ -1,5 +1,7 @@
 #include "GstTestStreamer.h"
 
+#include <cassert>
+
 #include <gst/gst.h>
 
 #include <CxxPtr/GlibPtr.h>
@@ -52,6 +54,10 @@ GstTestStreamer::Private::Private(
 
 void GstTestStreamer::Private::prepare(const IceServers& iceServers)
 {
+    assert(!pipelinePtr);
+    if(pipelinePtr)
+        return;
+
     std::string usePattern = "smpte";
     if(pattern == "bars")
         usePattern = "smpte100";

@@ -120,6 +120,10 @@ void GstReStreamer::Private::noMorePads(GstElement* /*decodebin*/)
 
 void GstReStreamer::Private::prepare(const IceServers& iceServers)
 {
+    assert(!pipelinePtr);
+    if(pipelinePtr)
+        return;
+
     this->iceServers = iceServers;
 
     supportedCapsPtr.reset(gst_caps_from_string("video/x-h264"));
