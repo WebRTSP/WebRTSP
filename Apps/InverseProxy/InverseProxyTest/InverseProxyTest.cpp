@@ -3,8 +3,11 @@
 
 #include <CxxPtr/GlibPtr.h>
 
+#include "Common/LwsLog.h"
+#include "Signalling/Log.h"
 #include "Signalling/WsServer.h"
 #include "Signalling/ServerSession.h"
+#include "Client/Log.h"
 #include "Client/WsClient.h"
 #include "Client/ClientSession.h"
 
@@ -12,7 +15,9 @@
 #include "GstStreaming/GstRtspReStreamer.h"
 #include "GstStreaming/GstClient.h"
 
+#include "../InverseProxyServer/Log.h"
 #include "../InverseProxyServer/InverseProxyServer.h"
+#include "../InverseProxyClient/Log.h"
 #include "../InverseProxyClient/InverseProxyClient.h"
 
 #define ENABLE_STREAMER 1
@@ -62,6 +67,13 @@ int main(int argc, char *argv[])
     };
 
     LibGst libGst;
+
+    const spdlog::level::level_enum logLevel = spdlog::level::trace;
+    InitLwsLogger(logLevel);
+    InitWsClientLogger(logLevel);
+    InitWsServerLogger(logLevel);
+    InitInverseProxyClientLogger(logLevel);
+    InitInverseProxyServerLogger(logLevel);
 
     const std::string server = "localhost";
     const std::string sourceName = "source1";
