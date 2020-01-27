@@ -118,6 +118,8 @@ int main(int argc, char *argv[])
 #endif
 
 #if ENABLE_VIEWER
+    g_usleep(2 * G_USEC_PER_SEC);
+
     std::thread clientThread(
         [&server, &sourceName, &streamerName] () {
             client::Config config {};
