@@ -198,18 +198,20 @@ bool FrontSession::forward(
 {
     const rtsp::SessionId responseMediaSession = rtsp::ResponseSession(*responsePtr);
 
-    if(rtsp::Method::DESCRIBE == request.method &&
-       rtsp::StatusCode::OK == responsePtr->statusCode)
-    {
-        const rtsp::SessionId frontMediaSession = _p->nextMediaSession();
+    if(rtsp::Method::DESCRIBE == request.method) {
+        if(rtsp::StatusCode::OK == responsePtr->statusCode) {
+            const rtsp::SessionId frontMediaSession = _p->nextMediaSession();
 
-        _p->forwarder->registerMediaSession(
-            this, frontMediaSession,
-            source, responseMediaSession);
+            _p->forwarder->registerMediaSession(
+                this, frontMediaSession,
+                source, responseMediaSession);
 
-        _p->mediaSessions.emplace(
-            frontMediaSession,
-            BackMediaSession { source, responseMediaSession });
+            _p->mediaSessions.emplace(
+                frontMediaSession,
+                BackMediaSession { source, responseMediaSession });
+
+            rtsp::SetResponseSession(responsePtr.get(), frontMediaSession);
+        }
     }
 
     sendResponse(*responsePtr);

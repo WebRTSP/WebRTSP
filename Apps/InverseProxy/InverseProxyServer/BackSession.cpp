@@ -17,7 +17,6 @@ namespace {
 struct RequestSource {
     FrontSession* source;
     rtsp::CSeq sourceCSeq;
-    rtsp::SessionId session;
 };
 typedef std::map<rtsp::CSeq, RequestSource> ForwardRequests;
 
@@ -251,16 +250,25 @@ bool BackSession::forward(
 {
     rtsp::Request& sourceRequest = *sourceRequestPtr;
     const rtsp::CSeq sourceCSeq = sourceRequest.cseq;
-    const rtsp::SessionId sourceSession = rtsp::RequestSession(sourceRequest);
 
     rtsp::Request* request =
         createRequest(sourceRequest.method, sourceRequest.uri);
     const rtsp::CSeq requestCSeq = request->cseq;
 
+    if(rtsp::Method::DESCRIBE == request->method) {
+        const rtsp::SessionId sourceSession = rtsp::RequestSession(sourceRequest);
+        if(!sourceSession.empty()) {
+            Log()->error(
+                "BackSession: forwarding DESCRIBE request has media session({}).",
+                sourceSession);
+            return false;
+        }
+    }
+
     const bool inserted =
         _p->forwardRequests.emplace(
             requestCSeq,
-            RequestSource { source, sourceCSeq, sourceSession }).second;
+            RequestSource { source, sourceCSeq }).second;
     assert(inserted);
 
     request->headerFields.swap(sourceRequest.headerFields);
@@ -298,30 +306,47 @@ bool BackSession::handleResponse(
     if(!requestSource.source)
         return true; // not forwarded request
 
-    const rtsp::SessionId responseSessionId = ResponseSession(*responsePtr);
-    if(rtsp::Method::DESCRIBE == request.method) {
-        if(!requestSource.session.empty()) {
-            Log()->error(
-                "BackSession: forwarded DESCRIBE request has media session({}).",
-                requestSource.session);
-            return false;
-        }
+    FrontSession* targetSession = requestSource.source;
 
+    const rtsp::SessionId requestSessionId = RequestSession(request);
+    const rtsp::SessionId responseSessionId = ResponseSession(*responsePtr);
+    rtsp::SessionId targetSessionId;
+    if(rtsp::Method::DESCRIBE == request.method) {
         if(responseSessionId.empty()) {
             Log()->error(
                 "BackSession: response to forwarded DESCRIBE doesn't have media session.");
             return false;
         }
-    } else if(requestSource.session != responseSessionId) {
-        Log()->error(
-            "BackSession: request and response have different media sessions.");
-        return false;
-    }
+    } else {
+        if(requestSessionId != responseSessionId) {
+            Log()->error(
+                "BackSession: request and response have different media sessions.");
+            return false;
+        }
 
-    FrontSession* targetSession = requestSource.source;
+        if(!responseSessionId.empty()) {
+            auto it = _p->mediaSessions.find(responseSessionId);
+            if(_p->mediaSessions.end() == it) {
+                Log()->error(
+                    "BackSession: media session \"{}\" is not registered.", responseSessionId);
+                return false;
+            }
+
+            if(targetSession != it->second.first) {
+                Log()->error(
+                    "BackSession: CSeq based target differs from media session \"{}\" based target.", responseSessionId);
+                return false;
+            }
+
+            targetSessionId = it->second.second;
+        }
+    }
 
     std::unique_ptr<rtsp::Response> tmpResponsePtr = std::move(responsePtr);
     tmpResponsePtr->cseq = requestSource.sourceCSeq;
+
+    if(!targetSessionId.empty())
+        rtsp::SetResponseSession(tmpResponsePtr.get(), targetSessionId);
 
     return
         _p->forwarder->forwardToFrontSession(
