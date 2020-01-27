@@ -11,6 +11,8 @@
 
 #include "Client/Log.h"
 
+#include "GstStreaming/LibGst.h"
+
 #include "../InverseProxyClient/Log.h"
 #include "../InverseProxyClient/InverseProxyClient.h"
 
@@ -158,6 +160,8 @@ static bool LoadConfig(InverseProxyClientConfig* config)
 
 int main(int argc, char *argv[])
 {
+    LibGst libGst;
+
     InverseProxyClientConfig config;
     if(!LoadConfig(&config))
         return -1;

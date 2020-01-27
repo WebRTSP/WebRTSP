@@ -11,9 +11,6 @@
 #include "Helpers.h"
 
 
-static std::unique_ptr<LibGst> libGst;
-
-
 struct GstReStreamer::Private
 {
     Private(GstReStreamer* owner, const std::string& sourceUri);
@@ -301,8 +298,6 @@ void GstReStreamer::Private::setState(GstState state)
 GstReStreamer::GstReStreamer(const std::string& sourceUri) :
     _p(new Private(this, sourceUri))
 {
-    if(!libGst)
-        libGst = std::make_unique<LibGst>();
 }
 
 GstReStreamer::~GstReStreamer()

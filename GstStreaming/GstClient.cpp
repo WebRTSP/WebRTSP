@@ -10,9 +10,6 @@
 #include "LibGst.h"
 
 
-static std::unique_ptr<LibGst> libGst;
-
-
 struct GstClient::Private
 {
     Private(GstClient* owner);
@@ -218,8 +215,6 @@ void GstClient::Private::setState(GstState state)
 GstClient::GstClient() :
     _p(new Private(this))
 {
-    if(!libGst)
-        libGst = std::make_unique<LibGst>();
 }
 
 GstClient::~GstClient()

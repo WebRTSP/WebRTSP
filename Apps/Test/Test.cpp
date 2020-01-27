@@ -7,6 +7,7 @@
 #include "Signalling/ServerSession.h"
 #include "Client/WsClient.h"
 #include "Client/ClientSession.h"
+#include "GstStreaming/LibGst.h"
 #include "GstStreaming/GstTestStreamer.h"
 #include "GstStreaming/GstRtspReStreamer.h"
 #include "GstStreaming/GstReStreamer.h"
@@ -89,6 +90,8 @@ int main(int argc, char *argv[])
     enum {
         SERVER_PORT = 8081,
     };
+
+    LibGst libGst;
 
     TestParse();
     TestSerialize();

@@ -9,9 +9,6 @@
 #include "Helpers.h"
 
 
-static std::unique_ptr<LibGst> libGst;
-
-
 struct GstTestStreamer::Private
 {
     Private(GstTestStreamer* owner, const std::string& pattern);
@@ -277,8 +274,6 @@ void GstTestStreamer::Private::setState(GstState state)
 GstTestStreamer::GstTestStreamer(const std::string& pattern) :
     _p(new Private(this, pattern))
 {
-    if(!libGst)
-        libGst = std::make_unique<LibGst>();
 }
 
 GstTestStreamer::~GstTestStreamer()

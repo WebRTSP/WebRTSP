@@ -9,9 +9,6 @@
 #include "Helpers.h"
 
 
-static std::unique_ptr<LibGst> libGst;
-
-
 struct GstRtspReStreamer::Private
 {
     Private(GstRtspReStreamer* owner, const std::string& rtspSourceUrl);
@@ -297,8 +294,6 @@ void GstRtspReStreamer::Private::setState(GstState state)
 GstRtspReStreamer::GstRtspReStreamer(const std::string& rtspSource) :
     _p(new Private(this, rtspSource))
 {
-    if(!libGst)
-        libGst = std::make_unique<LibGst>();
 }
 
 GstRtspReStreamer::~GstRtspReStreamer()

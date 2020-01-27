@@ -7,6 +7,8 @@
 #include "Signalling/ServerSession.h"
 #include "Client/WsClient.h"
 #include "Client/ClientSession.h"
+
+#include "GstStreaming/LibGst.h"
 #include "GstStreaming/GstRtspReStreamer.h"
 #include "GstStreaming/GstClient.h"
 
@@ -58,6 +60,8 @@ int main(int argc, char *argv[])
         FRONT_SERVER_PORT = 4001,
         BACK_SERVER_PORT = 4002,
     };
+
+    LibGst libGst;
 
     const std::string server = "localhost";
     const std::string sourceName = "source1";
