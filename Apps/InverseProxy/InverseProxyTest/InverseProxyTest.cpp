@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
     const std::string server = "localhost";
     const std::string sourceName = "source1";
     const std::string streamerName = "bars";
+    const std::string streamer2Name = "green";
     const std::string sourceAuthToken = "dummyToken";
 
 #if ENABLE_SERVER
@@ -99,7 +100,7 @@ int main(int argc, char *argv[])
 
 #if ENABLE_STREAMER
     std::thread streamSourceClientThread(
-        [&sourceName, &streamerName, &sourceAuthToken] () {
+        [&sourceName, &streamerName, &streamer2Name, &sourceAuthToken] () {
             InverseProxyClientConfig config {};
             config.clientConfig.server = "localhost";
             config.clientConfig.serverPort = BACK_SERVER_PORT;
@@ -108,6 +109,9 @@ int main(int argc, char *argv[])
             config.streamers.emplace(
                 streamerName,
                 StreamerConfig { StreamerConfig::Type::Test, streamerName });
+            config.streamers.emplace(
+                streamer2Name,
+                StreamerConfig { StreamerConfig::Type::Test, streamer2Name });
 
             InverseProxyClientMain(config);
         });
