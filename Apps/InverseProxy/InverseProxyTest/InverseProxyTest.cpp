@@ -62,8 +62,8 @@ static void ClientDisconnected(client::WsClient* client) noexcept
 int main(int argc, char *argv[])
 {
     enum {
-        FRONT_SERVER_PORT = 4001,
-        BACK_SERVER_PORT = 4002,
+        FRONT_SERVER_PORT = 8010,
+        BACK_SERVER_PORT = 8011,
     };
 
     LibGst libGst;
@@ -118,10 +118,8 @@ int main(int argc, char *argv[])
 #endif
 
 #if ENABLE_VIEWER
-    g_usleep(2 * G_USEC_PER_SEC);
-
-    std::thread clientThread(
-        [&server, &sourceName, &streamerName] () {
+    auto clientThreadMain =
+        [&server, &sourceName] (const std::string& streamerName) {
             client::Config config {};
             config.server = server;
             config.serverPort = FRONT_SERVER_PORT;
@@ -146,7 +144,15 @@ int main(int argc, char *argv[])
                 client.connect();
                 g_main_loop_run(loop);
             }
-        });
+        };
+
+    g_usleep(2 * G_USEC_PER_SEC);
+
+    std::thread clientThread(std::bind(clientThreadMain, streamerName));
+
+    g_usleep(4 * G_USEC_PER_SEC);
+
+    std::thread client2Thread(std::bind(clientThreadMain, streamer2Name));
 #endif
 
 #if ENABLE_SERVER
@@ -162,6 +168,9 @@ int main(int argc, char *argv[])
 #if ENABLE_VIEWER
     if(clientThread.joinable())
         clientThread.join();
+
+    if(client2Thread.joinable())
+        client2Thread.join();
 #endif
 
     return 0;
