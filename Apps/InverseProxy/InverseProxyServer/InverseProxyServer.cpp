@@ -10,6 +10,9 @@
 #include "FrontSession.h"
 #include "BackSession.h"
 
+enum {
+    PING_INTERVAL = 30,
+};
 
 int InverseProxyServerMain(const InverseProxyServerConfig& config)
 {
@@ -19,6 +22,7 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
     lws_context_creation_info wsInfo {};
     wsInfo.gid = -1;
     wsInfo.uid = -1;
+    wsInfo.ws_ping_pong_interval = PING_INTERVAL;
     wsInfo.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
 
     LwsContextPtr contextPtr(lws_create_context(&wsInfo));

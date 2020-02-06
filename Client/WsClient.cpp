@@ -19,6 +19,7 @@ namespace {
 
 enum {
     RX_BUFFER_SIZE = 512,
+    PING_INTERVAL = 20,
 };
 
 enum {
@@ -134,6 +135,9 @@ int WsClient::Private::wsCallback(
 
             break;
         }
+        case LWS_CALLBACK_CLIENT_RECEIVE_PONG:
+            Log()->trace("PONG");
+            break;
         case LWS_CALLBACK_CLIENT_RECEIVE:
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
                 if(Log()->level() <= spdlog::level::debug) {
@@ -233,6 +237,7 @@ bool WsClient::Private::init()
     wsInfo.port = CONTEXT_PORT_NO_LISTEN;
     wsInfo.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
     wsInfo.protocols = protocols;
+    wsInfo.ws_ping_pong_interval = PING_INTERVAL;
     wsInfo.user = this;
 
     contextPtr.reset(lws_create_context(&wsInfo));

@@ -20,6 +20,7 @@ namespace {
 
 enum {
     RX_BUFFER_SIZE = 512,
+    PING_INTERVAL = 30,
 };
 
 enum {
@@ -132,6 +133,9 @@ int WsServer::Private::wsCallback(
 
             break;
         }
+        case LWS_CALLBACK_RECEIVE_PONG:
+            Log()->trace("PONG");
+            break;
         case LWS_CALLBACK_RECEIVE: {
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
                 if(Log()->level() <= spdlog::level::debug) {
@@ -234,6 +238,7 @@ bool WsServer::Private::init(lws_context* context)
         lws_context_creation_info wsInfo {};
         wsInfo.gid = -1;
         wsInfo.uid = -1;
+        wsInfo.ws_ping_pong_interval = PING_INTERVAL;
         wsInfo.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
 
         contextPtr.reset(lws_create_context(&wsInfo));
