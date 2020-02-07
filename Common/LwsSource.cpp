@@ -40,6 +40,7 @@ struct LwsSource
     GSource base;
     lws_context* context;
     CXX* cxx;
+    guint idle;
 };
 
 
@@ -137,13 +138,47 @@ static void lwsSourceFinalize(GSource* source)
     lwsSource->cxx = nullptr;
 }
 
+static gboolean LwsIdle(LwsSource* lwsSource)
+{
+    lws_context *const lwsContext = lwsSource->context;
+
+    const int tsi = 0;
+    while(0 == lws_service_adjust_timeout(lwsContext, 1, tsi))
+        lws_service_tsi(lwsContext, -1, tsi);
+
+    lwsSource->idle = 0;
+
+    return G_SOURCE_REMOVE;
+}
+
 static gboolean lwsSourceDispatch(
     GSource* source,
     GSourceFunc,
     gpointer userData)
 {
+    LwsSource* lwsSource = reinterpret_cast<LwsSource*>(source);
+
+    if(!lwsSource->idle) {
+        GSource* idleSource = g_idle_source_new();
+        g_source_set_callback(
+            idleSource,
+            G_SOURCE_FUNC(LwsIdle),
+            lwsSource, nullptr);
+        lwsSource->idle = g_source_attach(idleSource, g_source_get_context(source));
+        g_source_unref(idleSource);
+    }
+
     return G_SOURCE_CONTINUE;
 }
+
+#if LWS_LIBRARY_VERSION_NUMBER < 3002000
+static gboolean LwsTimeout(lws_context* lwsContext)
+{
+    lws_service_fd(lwsContext, NULL);
+
+    return G_SOURCE_CONTINUE;
+}
+#endif
 
 LwsSourcePtr LwsSourceNew(lws_context* lwsContext, GMainContext* gMainContext)
 {
@@ -158,8 +193,18 @@ LwsSourcePtr LwsSourceNew(lws_context* lwsContext, GMainContext* gMainContext)
     LwsSource* lwsSource = reinterpret_cast<LwsSource*>(source);
     lwsSource->context = lwsContext;
     lwsSource->cxx = new CXX;
-
     g_source_attach(source, gMainContext);
+    g_source_unref(source);
+
+#if LWS_LIBRARY_VERSION_NUMBER < 3002000
+    GSource* timeoutSource = g_timeout_source_new_seconds(1);
+    g_source_set_callback(
+        timeoutSource,
+        G_SOURCE_FUNC(LwsTimeout),
+        lwsContext, nullptr);
+    g_source_add_child_source(source, timeoutSource);
+    g_source_unref(timeoutSource);
+#endif
 
     return LwsSourcePtr(lwsSource);
 }
