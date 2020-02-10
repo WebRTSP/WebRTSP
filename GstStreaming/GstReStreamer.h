@@ -18,7 +18,8 @@ public:
     void prepare(
         const IceServers&,
         const PreparedCallback&,
-        const IceCandidateCallback&) noexcept override;
+        const IceCandidateCallback&,
+        const EosCallback&) noexcept override;
     bool sdp(std::string* sdp) noexcept override;
 
     void setRemoteSdp(const std::string& sdp) noexcept override;

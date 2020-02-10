@@ -7,6 +7,8 @@
 
 #include "GstStreaming/GstTestStreamer.h"
 
+#include "Log.h"
+
 
 namespace {
 
@@ -26,6 +28,8 @@ struct RequestInfo
 };
 
 typedef std::map<rtsp::CSeq, RequestInfo> Requests;
+
+const auto Log = ServerSessionLog;
 
 }
 
@@ -52,6 +56,7 @@ struct ServerSession::Private
     void iceCandidate(
         const rtsp::SessionId&,
         unsigned, const std::string&);
+    void eos(const rtsp::SessionId& session);
 
 private:
     unsigned _nextSession = 1;
@@ -140,6 +145,12 @@ void ServerSession::Private::iceCandidate(
         std::to_string(mlineIndex) + "/" + candidate + "\r\n");
 }
 
+void ServerSession::Private::eos(const rtsp::SessionId& session)
+{
+    Log()->trace("Eos. Session: {}", session);
+}
+
+
 ServerSession::ServerSession(
     const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
@@ -217,7 +228,11 @@ bool ServerSession::onDescribeRequest(
             _p.get(),
             session,
             std::placeholders::_1,
-            std::placeholders::_2));
+            std::placeholders::_2),
+        std::bind(
+            &ServerSession::Private::eos,
+            _p.get(),
+            session));
 
     autoEraseRequest.discard();
 

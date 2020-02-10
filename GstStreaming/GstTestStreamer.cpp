@@ -21,6 +21,7 @@ struct GstTestStreamer::Private
 
     PreparedCallback prepared;
     IceCandidateCallback iceCandidate;
+    EosCallback eos;
 
     GstElementPtr pipelinePtr;
 
@@ -291,10 +292,12 @@ GstTestStreamer::~GstTestStreamer()
 void GstTestStreamer::prepare(
     const IceServers& iceServers,
     const PreparedCallback& prepared,
-    const IceCandidateCallback& iceCandidate) noexcept
+    const IceCandidateCallback& iceCandidate,
+    const EosCallback& eos) noexcept
 {
     _p->prepared = prepared;
     _p->iceCandidate = iceCandidate;
+    _p->eos = eos;
 
     _p->prepare(iceServers);
 }
@@ -346,6 +349,8 @@ void GstTestStreamer::addIceCandidate(
 
 void GstTestStreamer::eos(bool error)
 {
+    if(_p->eos)
+        _p->eos();
 }
 
 void GstTestStreamer::play() noexcept

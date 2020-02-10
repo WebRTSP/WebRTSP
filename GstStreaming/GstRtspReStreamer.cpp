@@ -21,6 +21,7 @@ struct GstRtspReStreamer::Private
 
     PreparedCallback prepared;
     IceCandidateCallback iceCandidate;
+    EosCallback eos;
 
     GstElementPtr pipelinePtr;
     GstElement* rtspsrc = nullptr;
@@ -311,10 +312,12 @@ GstRtspReStreamer::~GstRtspReStreamer()
 void GstRtspReStreamer::prepare(
     const IceServers& iceServers,
     const PreparedCallback& prepared,
-    const IceCandidateCallback& iceCandidate) noexcept
+    const IceCandidateCallback& iceCandidate,
+    const EosCallback& eos) noexcept
 {
     _p->prepared = prepared;
     _p->iceCandidate = iceCandidate;
+    _p->eos = eos;
 
     _p->prepare(iceServers);
 }
@@ -366,6 +369,8 @@ void GstRtspReStreamer::addIceCandidate(
 
 void GstRtspReStreamer::eos(bool error)
 {
+    if(_p->eos)
+        _p->eos();
 }
 
 void GstRtspReStreamer::play() noexcept

@@ -2,6 +2,11 @@
 
 #include "RtspSession/StatusCode.h"
 
+#include "Log.h"
+
+
+static const auto Log = ClientSessionLog;
+
 
 struct ClientSession::Private
 {
@@ -20,6 +25,7 @@ struct ClientSession::Private
 
     void streamerPrepared();
     void iceCandidate(unsigned, const std::string&);
+    void eos();
 };
 
 ClientSession::Private::Private(
@@ -54,6 +60,11 @@ void ClientSession::Private::iceCandidate(
         "application/x-ice-candidate",
         session,
         std::to_string(mlineIndex) + "/" + candidate + "\r\n");
+}
+
+void ClientSession::Private::eos()
+{
+    Log()->trace("Eos");
 }
 
 
@@ -110,7 +121,10 @@ bool ClientSession::onDescribeResponse(
             &ClientSession::Private::iceCandidate,
             _p.get(),
             std::placeholders::_1,
-            std::placeholders::_2));
+            std::placeholders::_2),
+        std::bind(
+            &ClientSession::Private::eos,
+            _p.get()));
 
     _p->remoteSdp = response.body;
     if(_p->remoteSdp.empty())

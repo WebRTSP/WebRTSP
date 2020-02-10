@@ -21,6 +21,7 @@ struct GstReStreamer::Private
 
     PreparedCallback prepared;
     IceCandidateCallback iceCandidate;
+    EosCallback eos;
 
      GstCapsPtr supportedCapsPtr;
 
@@ -313,10 +314,12 @@ GstReStreamer::~GstReStreamer()
 void GstReStreamer::prepare(
     const IceServers& iceServers,
     const PreparedCallback& prepared,
-    const IceCandidateCallback& iceCandidate) noexcept
+    const IceCandidateCallback& iceCandidate,
+    const EosCallback& eos) noexcept
 {
     _p->prepared = prepared;
     _p->iceCandidate = iceCandidate;
+    _p->eos = eos;
 
     _p->prepare(iceServers);
 }
@@ -368,6 +371,8 @@ void GstReStreamer::addIceCandidate(
 
 void GstReStreamer::eos(bool error)
 {
+    if(_p->eos)
+        _p->eos();
 }
 
 void GstReStreamer::play() noexcept

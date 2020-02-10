@@ -13,10 +13,12 @@ struct WebRTCPeer
     typedef std::function<void ()> PreparedCallback;
     typedef std::function<
         void (unsigned mlineIndex, const std::string& candidate)> IceCandidateCallback;
+    typedef std::function<void ()> EosCallback;
     virtual void prepare(
         const IceServers&,
         const PreparedCallback&,
-        const IceCandidateCallback&) noexcept = 0;
+        const IceCandidateCallback&,
+        const EosCallback&) noexcept = 0;
 
     virtual bool sdp(std::string* sdp) noexcept = 0;
 
