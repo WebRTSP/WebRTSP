@@ -71,7 +71,9 @@ struct WsServer::Private
     GMainLoop* loop;
     CreateSession createSession;
 
+#if !defined(LWS_WITH_GLIB)
     LwsSourcePtr lwsSourcePtr;
+#endif
     LwsContextPtr contextPtr;
 };
 
@@ -90,10 +92,12 @@ int WsServer::Private::httpCallback(
     void* user, void* in, size_t len)
 {
     switch(reason) {
+#if !defined(LWS_WITH_GLIB)
         case LWS_CALLBACK_ADD_POLL_FD:
         case LWS_CALLBACK_DEL_POLL_FD:
         case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
             return LwsSourceCallback(lwsSourcePtr, wsi, reason, in, len);
+#endif
         default:
             return lws_callback_http_dummy(wsi, reason, user, in, len);
     }
@@ -240,6 +244,10 @@ bool WsServer::Private::init(lws_context* context)
         wsInfo.uid = -1;
         wsInfo.ws_ping_pong_interval = PING_INTERVAL;
         wsInfo.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
+#if defined(LWS_WITH_GLIB)
+        wsInfo.options |= LWS_SERVER_OPTION_GLIB;
+        wsInfo.foreign_loops = reinterpret_cast<void**>(&loop);
+#endif
 
         contextPtr.reset(lws_create_context(&wsInfo));
         context = contextPtr.get();
@@ -247,9 +255,11 @@ bool WsServer::Private::init(lws_context* context)
     if(!context)
         return false;
 
+#if !defined(LWS_WITH_GLIB)
     lwsSourcePtr = LwsSourceNew(context, g_main_context_get_thread_default());
     if(!lwsSourcePtr)
         return false;
+#endif
 
     if(config.port != 0) {
         lws_context_creation_info vhostInfo {};

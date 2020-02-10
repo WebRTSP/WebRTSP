@@ -24,6 +24,10 @@ int InverseProxyServerMain(const InverseProxyServerConfig& config)
     wsInfo.uid = -1;
     wsInfo.ws_ping_pong_interval = PING_INTERVAL;
     wsInfo.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
+#if defined(LWS_WITH_GLIB)
+    wsInfo.options |= LWS_SERVER_OPTION_GLIB;
+    wsInfo.foreign_loops = reinterpret_cast<void**>(&loop);
+#endif
 
     LwsContextPtr contextPtr(lws_create_context(&wsInfo));
     lws_context* context = contextPtr.get();
