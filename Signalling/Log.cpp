@@ -4,25 +4,48 @@
 #include <spdlog/sinks/stdout_sinks.h>
 
 
-static std::shared_ptr<spdlog::logger> Logger;
+static std::shared_ptr<spdlog::logger> WsServerLogger;
+static std::shared_ptr<spdlog::logger> ServerSessionLogger;
+
 
 void InitWsServerLogger(spdlog::level::level_enum level)
 {
     spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
 
-    Logger = std::make_shared<spdlog::logger>("WsServer", sink);
+    WsServerLogger = std::make_shared<spdlog::logger>("WsServer", sink);
 
-    Logger->set_level(level);
+    WsServerLogger->set_level(level);
 }
 
 const std::shared_ptr<spdlog::logger>& WsServerLog()
 {
-    if(!Logger)
+    if(!WsServerLogger)
 #ifndef NDEBUG
         InitWsServerLogger(spdlog::level::debug);
 #else
         InitWsServerLogger(spdlog::level::info);
 #endif
 
-    return Logger;
+    return WsServerLogger;
+}
+
+void InitServerSessionLogger(spdlog::level::level_enum level)
+{
+    spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
+
+    ServerSessionLogger = std::make_shared<spdlog::logger>("ClientSession", sink);
+
+    ServerSessionLogger->set_level(level);
+}
+
+const std::shared_ptr<spdlog::logger>& ServerSessionLog()
+{
+    if(!ServerSessionLogger)
+#ifndef NDEBUG
+        InitServerSessionLogger(spdlog::level::debug);
+#else
+        InitServerSessionLogger(spdlog::level::info);
+#endif
+
+    return ServerSessionLogger;
 }
