@@ -186,7 +186,11 @@ bool Session::handleResponse(std::unique_ptr<Response>& responsePtr) noexcept
         return false;
 
     const Request& request = it->second;
-    return handleResponse(request, responsePtr);
+    const bool success = handleResponse(request, responsePtr);
+
+    _sentRequests.erase(it);
+
+    return success;
 }
 
 bool Session::handleResponse(
