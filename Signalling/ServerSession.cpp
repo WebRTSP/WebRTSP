@@ -46,7 +46,7 @@ struct ServerSession::Private
 
     std::deque<std::string> iceServers;
 
-    Requests requests;
+    Requests describeRequests;
     Streamers streamers;
 
     std::string nextSession()
@@ -69,7 +69,7 @@ struct ServerSession::Private::AutoEraseRequest
         Requests::const_iterator it) :
         _owner(owner), _it(it) {}
     ~AutoEraseRequest()
-        { if(_owner) _owner->requests.erase(_it); }
+        { if(_owner) _owner->describeRequests.erase(_it); }
     void discard()
         { _owner = nullptr; }
 
@@ -87,8 +87,8 @@ ServerSession::Private::Private(
 
 void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
 {
-    auto requestIt = requests.find(describeRequestCSeq);
-    if(requests.end() == requestIt ||
+    auto requestIt = describeRequests.find(describeRequestCSeq);
+    if(describeRequests.end() == requestIt ||
        rtsp::Method::DESCRIBE != requestIt->second.requestPtr->method)
     {
         owner->disconnect();
@@ -191,7 +191,7 @@ bool ServerSession::onDescribeRequest(
 
     const rtsp::SessionId session = _p->nextSession();
     auto requestPair =
-        _p->requests.emplace(
+        _p->describeRequests.emplace(
             requestPtr->cseq,
             RequestInfo {
                 .requestPtr = nullptr,
