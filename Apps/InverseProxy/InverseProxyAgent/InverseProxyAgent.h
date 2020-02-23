@@ -19,7 +19,7 @@ struct StreamerConfig
     std::string uri;
 };
 
-struct InverseProxyClientConfig
+struct InverseProxyAgentConfig
 {
     spdlog::level::level_enum logLevel = spdlog::level::info;
 
@@ -31,4 +31,4 @@ struct InverseProxyClientConfig
     std::map<std::string, StreamerConfig> streamers;
 };
 
-int InverseProxyClientMain(const InverseProxyClientConfig&);
+int InverseProxyAgentMain(const InverseProxyAgentConfig&);

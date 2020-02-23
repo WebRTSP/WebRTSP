@@ -17,8 +17,8 @@
 
 #include "../InverseProxyServer/Log.h"
 #include "../InverseProxyServer/InverseProxyServer.h"
-#include "../InverseProxyClient/Log.h"
-#include "../InverseProxyClient/InverseProxyClient.h"
+#include "../InverseProxyAgent/Log.h"
+#include "../InverseProxyAgent/InverseProxyAgent.h"
 
 #define ENABLE_STREAMER 1
 #define ENABLE_SERVER 1
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     InitLwsLogger(logLevel);
     InitWsClientLogger(logLevel);
     InitWsServerLogger(logLevel);
-    InitInverseProxyClientLogger(logLevel);
+    InitInverseProxyAgentLogger(logLevel);
     InitInverseProxyServerLogger(logLevel);
 
     const std::string server = "localhost";
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 #if ENABLE_STREAMER
     std::thread streamSourceClientThread(
         [&sourceName, &streamerName, &streamer2Name, &sourceAuthToken] () {
-            InverseProxyClientConfig config {};
+            InverseProxyAgentConfig config {};
             config.clientConfig.server = "localhost";
             config.clientConfig.serverPort = BACK_SERVER_PORT;
             config.name = sourceName;
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
                 streamer2Name,
                 StreamerConfig { StreamerConfig::Type::Test, streamer2Name });
 
-            InverseProxyClientMain(config);
+            InverseProxyAgentMain(config);
         });
 #endif
 

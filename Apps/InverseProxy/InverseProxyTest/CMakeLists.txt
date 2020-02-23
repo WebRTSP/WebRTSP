@@ -14,7 +14,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 #    )
 target_link_libraries(${PROJECT_NAME}
     InverseProxyServer
-    InverseProxyClient
+    InverseProxyAgent
     Threads::Threads)
 
 #get_cmake_property(_variableNames VARIABLES)

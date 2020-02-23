@@ -13,24 +13,24 @@
 
 #include "GstStreaming/LibGst.h"
 
-#include "../InverseProxyClient/Log.h"
-#include "../InverseProxyClient/InverseProxyClient.h"
+#include "../InverseProxyAgent/Log.h"
+#include "../InverseProxyAgent/InverseProxyAgent.h"
 
 
-static const auto Log = InverseProxyClientLog;
+static const auto Log = InverseProxyAgentLog;
 
 
-static bool LoadConfig(InverseProxyClientConfig* config)
+static bool LoadConfig(InverseProxyAgentConfig* config)
 {
     const std::deque<std::string> configDirs = ::ConfigDirs();
     if(configDirs.empty())
         return false;
 
-    InverseProxyClientConfig loadedConfig {};
+    InverseProxyAgentConfig loadedConfig {};
 
     bool someConfigFound = false;
     for(const std::string& configDir: configDirs) {
-        const std::string configFile = configDir + "/webrtsp-client.conf";
+        const std::string configFile = configDir + "/webrtsp-agent.conf";
         if(!g_file_test(configFile.c_str(),  G_FILE_TEST_IS_REGULAR)) {
             Log()->info("Config \"{}\" not found", configFile);
             continue;
@@ -162,12 +162,12 @@ int main(int argc, char *argv[])
 {
     LibGst libGst;
 
-    InverseProxyClientConfig config;
+    InverseProxyAgentConfig config;
     if(!LoadConfig(&config))
         return -1;
 
     InitLwsLogger(config.logLevel);
     InitWsClientLogger(config.logLevel);
 
-    return InverseProxyClientMain(config);
+    return InverseProxyAgentMain(config);
 }

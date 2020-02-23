@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(InverseProxyClient)
+project(InverseProxyAgent)
 
 find_package(Threads REQUIRED)
 

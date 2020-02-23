@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(InverseProxyClientApp)
+project(InverseProxyAgentApp)
 
 find_package(PkgConfig REQUIRED)
 
@@ -16,7 +16,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${LIBCONFIG_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}
     ${LIBCONFIG_LIBRARIES}
-    InverseProxyClient)
+    InverseProxyAgent)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 

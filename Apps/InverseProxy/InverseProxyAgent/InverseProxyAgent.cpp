@@ -1,4 +1,4 @@
-#include "InverseProxyClient.h"
+#include "InverseProxyAgent.h"
 
 #include <CxxPtr/GlibPtr.h>
 
@@ -7,7 +7,7 @@
 #include "GstStreaming/GstTestStreamer.h"
 #include "GstStreaming/GstReStreamer.h"
 
-#include "InverseProxyClientSession.h"
+#include "InverseProxyAgentSession.h"
 
 
 enum {
@@ -15,8 +15,8 @@ enum {
 };
 
 static std::unique_ptr<WebRTCPeer>
-CreateInverseProxyClientPeer(
-    const InverseProxyClientConfig* config,
+CreateInverseProxyAgentPeer(
+    const InverseProxyAgentConfig* config,
     const std::string& uri)
 {
     auto streamerIt = config->streamers.end();
@@ -46,21 +46,21 @@ CreateInverseProxyClientPeer(
     }
 }
 
-static std::unique_ptr<rtsp::ServerSession> CreateInverseProxyClientSession (
-    const InverseProxyClientConfig* config,
+static std::unique_ptr<rtsp::ServerSession> CreateInverseProxyAgentSession (
+    const InverseProxyAgentConfig* config,
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
     return
-        std::make_unique<InverseProxyClientSession>(
+        std::make_unique<InverseProxyAgentSession>(
             config->name,
             config->authToken,
-            std::bind(CreateInverseProxyClientPeer, config, std::placeholders::_1),
+            std::bind(CreateInverseProxyAgentPeer, config, std::placeholders::_1),
             sendRequest, sendResponse);
 }
 
 static void ClientDisconnected(
-    const InverseProxyClientConfig* config,
+    const InverseProxyAgentConfig* config,
     client::WsClient* client) noexcept
 {
     const unsigned reconnectTimeout =
@@ -77,7 +77,7 @@ static void ClientDisconnected(
     g_source_attach(timeoutSource, g_main_context_get_thread_default());
 }
 
-int InverseProxyClientMain(const InverseProxyClientConfig& config)
+int InverseProxyAgentMain(const InverseProxyAgentConfig& config)
 {
     GMainContextPtr clientContextPtr(g_main_context_new());
     GMainContext* clientContext = clientContextPtr.get();
@@ -89,7 +89,7 @@ int InverseProxyClientMain(const InverseProxyClientConfig& config)
         config.clientConfig,
         loop,
         std::bind(
-            CreateInverseProxyClientSession,
+            CreateInverseProxyAgentSession,
             &config,
             std::placeholders::_1,
             std::placeholders::_2),
