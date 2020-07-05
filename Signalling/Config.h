@@ -12,9 +12,9 @@ struct Config
     std::string key;
 
     bool bindToLoopbackOnly = true;
-    unsigned short port;
+    unsigned short port = 5554;
     bool secureBindToLoopbackOnly = false;
-    unsigned short securePort;
+    unsigned short securePort = 5555;
 };
 
 }
