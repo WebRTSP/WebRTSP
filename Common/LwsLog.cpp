@@ -9,7 +9,7 @@
 static std::shared_ptr<spdlog::logger> Logger;
 
 
-static int PrepareLwsLogLevel(lws_log_levels maxLevel);
+static int PrepareLwsLogLevel(int maxLevel);
 static void LwsLog(int level, const char* line);
 
 void InitLwsLogger(spdlog::level::level_enum level)
@@ -46,7 +46,7 @@ void InitLwsLogger(spdlog::level::level_enum level)
     lws_set_log_level(lwsLogLevel, LwsLog);
 }
 
-static int PrepareLwsLogLevel(lws_log_levels maxLevel)
+static int PrepareLwsLogLevel(int maxLevel)
 {
     int level = maxLevel;
     int outLevel = level;
