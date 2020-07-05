@@ -262,6 +262,8 @@ bool WsServer::Private::init(lws_context* context)
 #endif
 
     if(config.port != 0) {
+        Log()->info("Starting WS server on port {}", config.port);
+
         lws_context_creation_info vhostInfo {};
         vhostInfo.port = config.port;
         vhostInfo.protocols = protocols;
@@ -277,6 +279,8 @@ bool WsServer::Private::init(lws_context* context)
     if(!config.serverName.empty() && config.securePort != 0 &&
         !config.certificate.empty() && !config.key.empty())
     {
+        Log()->info("Starting WSS server on port {}", config.securePort);
+
         lws_context_creation_info secureVhostInfo {};
         secureVhostInfo.port = config.securePort;
         secureVhostInfo.protocols = secureProtocols;
