@@ -35,6 +35,7 @@ add_subdirectory(RtspSession)
 add_subdirectory(GstStreaming)
 add_subdirectory(Signalling)
 add_subdirectory(Client)
+add_subdirectory(Http)
 
 if(BUILD_TEST_APPS)
     add_subdirectory(Apps/Test)
