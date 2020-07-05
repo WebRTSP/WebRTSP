@@ -49,7 +49,7 @@ if(BUILD_INVERSE_PROXY_TEST OR BUILD_INVERSE_PROXY_SERVER OR BUILD_INVERSE_PROXY
 endif()
 
 if(BUILD_PROXY)
-	add_subdirectory(Apps/Proxy)
+    add_subdirectory(Apps/Proxy)
 endif()
 
 #get_cmake_property(_variableNames VARIABLES)
