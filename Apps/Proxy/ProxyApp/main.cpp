@@ -9,6 +9,9 @@
 #include "Common/ConfigHelpers.h"
 #include "Common/LwsLog.h"
 
+#include "Http/Log.h"
+#include "Http/Config.h"
+
 #include "GstStreaming/LibGst.h"
 
 #include "Signalling/Log.h"
@@ -114,15 +117,17 @@ static bool LoadConfig(ProxyConfig* config)
 
 int main(int argc, char *argv[])
 {
+    http::Config httpConfig {};
     ProxyConfig config;
     if(!LoadConfig(&config))
         return -1;
 
+    InitHttpServerLogger(config.logLevel);
     InitLwsLogger(config.logLevel);
     InitWsServerLogger(config.logLevel);
     InitProxyLogger(config.logLevel);
 
     LibGst libGst;
 
-    return ProxyMain(config);
+    return ProxyMain(httpConfig, config);
 }
