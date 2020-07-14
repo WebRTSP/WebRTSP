@@ -311,7 +311,7 @@ void GstClient::addIceCandidate(
 {
     GstElement* rtcbin = _p->rtcbinPtr.get();
 
-    g_signal_emit_by_name(rtcbin, "add-ice-candidate", mlineIndex, candidate.data());
+    GstWebRTCPeer::addIceCandidate(rtcbin, mlineIndex, candidate);
 }
 
 void GstClient::eos(bool error)

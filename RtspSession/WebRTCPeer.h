@@ -29,4 +29,9 @@ struct WebRTCPeer
 
     virtual void play() noexcept = 0;
     virtual void stop() noexcept = 0;
+
+protected:
+    static bool ResolveIceCandidate(
+        const std::string& candidate,
+        std::string* resolvedCandidate);
 };

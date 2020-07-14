@@ -3,10 +3,10 @@
 #include <memory>
 #include <functional>
 
-#include "RtspSession/WebRTCPeer.h"
+#include "GstWebRTCPeer.h"
 
 
-class GstTestStreamer : public WebRTCPeer
+class GstTestStreamer : public GstWebRTCPeer
 {
 public:
     GstTestStreamer(const std::string& pattern = std::string());

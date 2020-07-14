@@ -3,10 +3,10 @@
 #include <memory>
 #include <functional>
 
-#include "RtspSession/WebRTCPeer.h"
+#include "GstWebRTCPeer.h"
 
 
-class GstReStreamer : public WebRTCPeer
+class GstReStreamer : public GstWebRTCPeer
 {
 public:
     GstReStreamer(const std::string& rtspSourceUrl);

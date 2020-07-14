@@ -5,8 +5,10 @@
 
 #include "RtspSession/WebRTCPeer.h"
 
+#include "GstWebRTCPeer.h"
 
-class GstClient : public WebRTCPeer
+
+class GstClient : public GstWebRTCPeer
 {
 public:
     GstClient();
