@@ -14,7 +14,7 @@ add_library(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${WS_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}
-    ${WS_LIBRARIES}
+    ${WS_LDFLAGS}
     RtspSession
     Common)
 

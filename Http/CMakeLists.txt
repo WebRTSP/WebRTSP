@@ -16,7 +16,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${WS_INCLUDE_DIRS}
     ${GLIB_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}
-    ${WS_LIBRARIES}
+    ${WS_LDFLAGS}
     ${GLIB_LIBRARIES})
 
 #get_cmake_property(_variableNames VARIABLES)
