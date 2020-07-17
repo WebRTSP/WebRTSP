@@ -31,15 +31,12 @@ static bool LoadConfig(ProxyConfig* config)
 
     ProxyConfig loadedConfig {};
 
-    bool someConfigFound = false;
     for(const std::string& configDir: configDirs) {
         const std::string configFile = configDir + "/webrtsp-proxy.conf";
         if(!g_file_test(configFile.c_str(),  G_FILE_TEST_IS_REGULAR)) {
             Log()->info("Config \"{}\" not found", configFile);
             continue;
         }
-
-        someConfigFound = true;
 
         config_t config;
         config_init(&config);
@@ -98,9 +95,6 @@ static bool LoadConfig(ProxyConfig* config)
             }
         }
     }
-
-    if(!someConfigFound)
-        return false;
 
     bool success = true;
 
