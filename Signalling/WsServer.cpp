@@ -242,7 +242,13 @@ bool WsServer::Private::init(lws_context* context)
         lws_context_creation_info wsInfo {};
         wsInfo.gid = -1;
         wsInfo.uid = -1;
+#if LWS_LIBRARY_VERSION_NUMBER < 4000000
         wsInfo.ws_ping_pong_interval = PING_INTERVAL;
+#else
+        lws_retry_bo_t retryPolicy {};
+        retryPolicy.secs_since_valid_ping = PING_INTERVAL;
+        wsInfo.retry_and_idle_policy = &retryPolicy;
+#endif
         wsInfo.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
 #if defined(LWS_WITH_GLIB)
         wsInfo.options |= LWS_SERVER_OPTION_GLIB;

@@ -245,7 +245,13 @@ bool WsClient::Private::init()
     wsInfo.foreign_loops = reinterpret_cast<void**>(&loop);
 #endif
     wsInfo.protocols = protocols;
+#if LWS_LIBRARY_VERSION_NUMBER < 4000000
     wsInfo.ws_ping_pong_interval = PING_INTERVAL;
+#else
+    lws_retry_bo_t retryPolicy {};
+    retryPolicy.secs_since_valid_ping = PING_INTERVAL;
+    wsInfo.retry_and_idle_policy = &retryPolicy;
+#endif
     wsInfo.user = this;
 
     contextPtr.reset(lws_create_context(&wsInfo));
