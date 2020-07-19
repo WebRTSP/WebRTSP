@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
     if(const gchar* snapPath = g_getenv("SNAP"))
         httpConfig.wwwRoot = std::string(snapPath) + "/www";
 #endif
-    ProxyConfig config;
+    ProxyConfig config {};
     config.bindToLoopbackOnly = false;
     if(!LoadConfig(&config))
         return -1;
