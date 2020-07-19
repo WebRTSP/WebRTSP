@@ -29,7 +29,7 @@ static bool LoadConfig(ProxyConfig* config)
     if(configDirs.empty())
         return false;
 
-    ProxyConfig loadedConfig {};
+    ProxyConfig loadedConfig = *config;
 
     for(const std::string& configDir: configDirs) {
         const std::string configFile = configDir + "/webrtsp-proxy.conf";
