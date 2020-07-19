@@ -112,11 +112,13 @@ static bool LoadConfig(ProxyConfig* config)
 int main(int argc, char *argv[])
 {
     http::Config httpConfig {};
+    httpConfig.bindToLoopbackOnly = false;
 #ifdef SNAPCRAFT_BUILD
     if(const gchar* snapPath = g_getenv("SNAP"))
         httpConfig.wwwRoot = std::string(snapPath) + "/www";
 #endif
     ProxyConfig config;
+    config.bindToLoopbackOnly = false;
     if(!LoadConfig(&config))
         return -1;
 
