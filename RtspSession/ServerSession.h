@@ -19,6 +19,7 @@ protected:
     using Session::Session;
 
     virtual bool onOptionsRequest(std::unique_ptr<Request>&) noexcept;
+    virtual bool onListRequest(std::unique_ptr<Request>&) noexcept;
     virtual bool onDescribeRequest(std::unique_ptr<Request>&) noexcept;
     virtual bool onPlayRequest(std::unique_ptr<Request>&) noexcept;
     virtual bool onTeardownRequest(std::unique_ptr<Request>&) noexcept;

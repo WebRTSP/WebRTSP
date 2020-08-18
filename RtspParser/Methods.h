@@ -10,6 +10,7 @@ namespace rtsp {
 enum class Method {
     NONE,
     OPTIONS,
+    LIST,
     DESCRIBE,
     // ANNOUNCE,
     SETUP,

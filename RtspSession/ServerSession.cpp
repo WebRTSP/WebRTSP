@@ -9,6 +9,12 @@ bool ServerSession::onOptionsRequest(
     return false;
 }
 
+bool ServerSession::onListRequest(
+    std::unique_ptr<Request>&) noexcept
+{
+    return false;
+}
+
 bool ServerSession::onDescribeRequest(
     std::unique_ptr<Request>&) noexcept
 {
@@ -33,6 +39,8 @@ bool ServerSession::handleRequest(
     switch(requestPtr->method) {
     case Method::OPTIONS:
         return onOptionsRequest(requestPtr);
+    case Method::LIST:
+        return onListRequest(requestPtr);
     case Method::DESCRIBE:
         return onDescribeRequest(requestPtr);
     case Method::SETUP:

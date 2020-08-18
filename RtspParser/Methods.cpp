@@ -11,6 +11,7 @@ namespace {
 
 static const Method Methods[] = {
     Method::OPTIONS,
+    Method::LIST,
     Method::DESCRIBE,
     //Method::ANNOUNCE,
     Method::SETUP,
@@ -32,6 +33,8 @@ const char* MethodName(Method method) noexcept
     switch(method) {
     case Method::NONE:
         return nullptr;
+    case Method::LIST:
+        return "LIST";
     case Method::OPTIONS:
         return "OPTIONS";
     case Method::DESCRIBE:
