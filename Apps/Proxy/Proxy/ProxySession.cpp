@@ -3,7 +3,7 @@
 #include "RtspParser/RtspParser.h"
 
 
-InverseProxyAgentSession::InverseProxyAgentSession(
+ProxySession::ProxySession(
     const std::string& clientName,
     const std::string& authToken,
     const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
@@ -14,7 +14,7 @@ InverseProxyAgentSession::InverseProxyAgentSession(
 {
 }
 
-bool InverseProxyAgentSession::onConnected() noexcept
+bool ProxySession::onConnected() noexcept
 {
     const std::string parameters =
         "name: " + _clientName + "\r\n"
@@ -25,7 +25,7 @@ bool InverseProxyAgentSession::onConnected() noexcept
     return true;
 }
 
-bool InverseProxyAgentSession::onGetParameterResponse(
+bool ProxySession::onGetParameterResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
 {
@@ -60,7 +60,7 @@ bool InverseProxyAgentSession::onGetParameterResponse(
     return true;
 }
 
-bool InverseProxyAgentSession::onSetParameterResponse(
+bool ProxySession::onSetParameterResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
 {

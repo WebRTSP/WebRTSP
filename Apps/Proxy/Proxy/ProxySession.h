@@ -3,10 +3,10 @@
 #include "Signalling/ServerSession.h"
 
 
-class InverseProxyAgentSession : public ServerSession
+class ProxySession : public ServerSession
 {
 public:
-    InverseProxyAgentSession(
+    ProxySession(
         const std::string& clientName,
         const std::string& authToken,
         const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
