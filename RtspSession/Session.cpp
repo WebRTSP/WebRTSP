@@ -81,6 +81,13 @@ Response* Session::prepareResponse(
 
 Response* Session::prepareOkResponse(
     CSeq cseq,
+    Response* out)
+{
+    return prepareResponse(OK, "OK", cseq, std::string(), out);
+}
+
+Response* Session::prepareOkResponse(
+    CSeq cseq,
     const SessionId& session,
     Response* out)
 {
@@ -93,6 +100,21 @@ void Session::sendOkResponse(
 {
     Response response;
     sendResponse(*prepareOkResponse(cseq, session, &response));
+}
+
+void Session::sendOkResponse(
+    CSeq cseq,
+    const std::string& contentType,
+    const std::string& body)
+{
+    Response response;
+    prepareOkResponse(cseq, &response);
+
+    response.headerFields.emplace("content-type", contentType);
+
+    response.body = body;
+
+    sendResponse(response);
 }
 
 void Session::sendOkResponse(

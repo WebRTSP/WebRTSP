@@ -45,7 +45,14 @@ protected:
         CSeq cseq,
         const SessionId& session,
         Response* out);
+    static Response* prepareOkResponse(
+        CSeq cseq,
+        Response* out);
     void sendOkResponse(CSeq, const SessionId&);
+    void sendOkResponse(
+        CSeq,
+        const std::string& contentType,
+        const std::string& body);
     void sendOkResponse(
         CSeq,
         const SessionId&,
