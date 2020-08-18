@@ -1,28 +1,77 @@
 #include "InverseProxyAgentSession.h"
 
+#include <glib.h>
+
+#include <CxxPtr/CPtr.h>
+
 #include "RtspParser/RtspParser.h"
+
+#include "Config.h"
 
 
 InverseProxyAgentSession::InverseProxyAgentSession(
-    const std::string& clientName,
-    const std::string& authToken,
+    const InverseProxyAgentConfig* config,
+    Cache* cache,
     const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
     ServerSession(createPeer, sendRequest, sendResponse),
-    _clientName(clientName), _authToken(authToken)
+    _config(config), _cache(cache)
 {
 }
 
 bool InverseProxyAgentSession::onConnected() noexcept
 {
-    const std::string parameters =
-        "name: " + _clientName + "\r\n"
-        "token: " + _authToken + "\r\n";
+    if(_cache->parameters.empty()) {
+        _cache->parameters =
+            "name: " + _config->name + "\r\n"
+            "token: " + _config->authToken + "\r\n";
+        if(!_config->description.empty())
+            _cache->parameters +=
+                "description: " + _config->description + "\r\n";
+    }
 
-    _authCSeq = requestSetParameter("*", "text/parameters", parameters);
+    _authCSeq = requestSetParameter("*", "text/parameters", _cache->parameters);
 
     return true;
+}
+
+bool InverseProxyAgentSession::onOptionsRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    rtsp::Response response;
+    prepareOkResponse(requestPtr->cseq, &response);
+
+    response.headerFields.emplace("Public", "LIST, DESCRIBE, SETUP, PLAY, TEARDOWN");
+
+    sendResponse(response);
+
+    return true;
+}
+
+bool InverseProxyAgentSession::onListRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    if(_cache->list.empty()) {
+        if(_config->streamers.empty())
+            _cache->list = "\r\n";
+        else {
+            for(const auto& pair: _config->streamers) {
+                CharPtr escapedNamePtr(
+                    g_uri_escape_string(pair.first.data(), nullptr, false));
+                if(!escapedNamePtr)
+                    return false; // insufficient memory?
+
+                _cache->list += escapedNamePtr.get();
+                _cache->list += pair.first + ": ";
+                _cache->list += pair.second.description + "\r\n";
+            }
+        }
+    }
+
+    sendOkResponse(requestPtr->cseq, "text/parameters", _cache->list);
+
+    return false;
 }
 
 bool InverseProxyAgentSession::onGetParameterResponse(

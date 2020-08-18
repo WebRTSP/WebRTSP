@@ -72,6 +72,10 @@ static bool LoadConfig(InverseProxyAgentConfig* config)
             if(CONFIG_TRUE == config_setting_lookup_string(authConfig, "name", &name)) {
                 loadedConfig.name = name;
             }
+            const char* description = nullptr;
+            if(CONFIG_TRUE == config_setting_lookup_string(authConfig, "description", &description)) {
+                loadedConfig.description = description;
+            }
             const char* authToken = nullptr;
             if(CONFIG_TRUE == config_setting_lookup_string(authConfig, "token", &authToken)) {
                 loadedConfig.authToken = authToken;
@@ -102,6 +106,9 @@ static bool LoadConfig(InverseProxyAgentConfig* config)
                     Log()->warn("Missing streamer uri. Streamer skipped.");
                     break;
                 }
+                const char* description = nullptr;
+                config_setting_lookup_string(streamerConfig, "description", &uri);
+
                 StreamerConfig::Type streamerType;
                 if(0 == strcmp(type, "test"))
                     streamerType = StreamerConfig::Type::Test;
@@ -114,7 +121,12 @@ static bool LoadConfig(InverseProxyAgentConfig* config)
 
                 loadedConfig.streamers.emplace(
                     name,
-                    StreamerConfig { streamerType, uri });
+                    StreamerConfig {
+                        streamerType,
+                        uri,
+                        description ?
+                            std::string(description) :
+                            std::string() });
             }
         }
         config_setting_t* debugConfig = config_lookup(&config, "debug");

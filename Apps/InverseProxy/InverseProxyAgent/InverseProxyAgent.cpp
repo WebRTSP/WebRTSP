@@ -48,13 +48,14 @@ CreateInverseProxyAgentPeer(
 
 static std::unique_ptr<rtsp::ServerSession> CreateInverseProxyAgentSession (
     const InverseProxyAgentConfig* config,
+    InverseProxyAgentSession::Cache* cache,
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
     return
         std::make_unique<InverseProxyAgentSession>(
-            config->name,
-            config->authToken,
+            config,
+            cache,
             std::bind(CreateInverseProxyAgentPeer, config, std::placeholders::_1),
             sendRequest, sendResponse);
 }
@@ -85,12 +86,15 @@ int InverseProxyAgentMain(const InverseProxyAgentConfig& config)
     GMainLoopPtr loopPtr(g_main_loop_new(clientContext, FALSE));
     GMainLoop* loop = loopPtr.get();
 
+    InverseProxyAgentSession::Cache sessionsCache;
+
     client::WsClient client(
         config.clientConfig,
         loop,
         std::bind(
             CreateInverseProxyAgentSession,
             &config,
+            &sessionsCache,
             std::placeholders::_1,
             std::placeholders::_2),
         std::bind(ClientDisconnected, &config, &client));
