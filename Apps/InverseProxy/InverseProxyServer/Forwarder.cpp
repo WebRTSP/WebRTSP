@@ -3,6 +3,10 @@
 #include <cassert>
 #include <map>
 
+#include <glib.h>
+
+#include <CxxPtr/CPtr.h>
+
 #include "RtspParser/Common.h"
 
 #include "InverseProxyServerConfig.h"
@@ -14,6 +18,14 @@
 
 static const auto Log = InverseProxyServerLog;
 
+namespace {
+
+struct BackSessionData {
+    BackSession *const backSession;
+    rtsp::Parameters list;
+};
+
+}
 
 // FIXME! need some protection from different session on the same address
 struct Forwarder::Private
@@ -22,7 +34,9 @@ struct Forwarder::Private
 
     const InverseProxyServerConfig& config;
 
-    std::map<std::string, BackSession*> backSessions;
+    std::map<std::string, BackSessionData> backSessions;
+
+    std::string cachedAllSourcesList;
 };
 
 Forwarder::Private::Private(const InverseProxyServerConfig& config) :
@@ -82,7 +96,7 @@ bool Forwarder::registerBackSession(
         return false;
     }
 
-    const auto pair = _p->backSessions.emplace(name, session);
+    const auto pair = _p->backSessions.emplace(name, BackSessionData{ session });
     if(!pair.second) {
         Log()->error("[Forwarder] Streaming source \"{}\" already registered.", name);
         return false;
@@ -91,6 +105,56 @@ bool Forwarder::registerBackSession(
     Log()->info("[Forwarder] Streaming source \"{}\" registered.", name);
 
     return true;
+}
+
+bool Forwarder::swapBackSessionSourcesList(
+    const std::string& name,
+    rtsp::Parameters* sourcesList)
+{
+    assert(sourcesList);
+
+    const auto backSessionIt = _p->backSessions.find(name);
+    if(backSessionIt == _p->backSessions.end())
+        return false;
+
+    BackSessionData& data = backSessionIt->second;
+    if(!data.list.empty())
+        return false;
+
+    data.list.swap(*sourcesList);
+
+    _p->cachedAllSourcesList.clear();
+
+    return true;
+}
+
+const std::string& Forwarder::allSourcesList()
+{
+    if(!_p->cachedAllSourcesList.empty())
+        return _p->cachedAllSourcesList;
+
+    for(const auto& sessionPair: _p->backSessions) {
+        const std::string& name = sessionPair.first;
+        const BackSessionData& data = sessionPair.second;
+        for(const auto& sourcePair: data.list) {
+            const std::string& sourceName = name + "/" + sourcePair.first;
+            const std::string& sourceDescription = sourcePair.first;
+            CharPtr escapedNamePtr(
+                g_uri_escape_string(sourceName.data(), nullptr, false));
+            if(!escapedNamePtr) {
+                static std::string emptyList;
+                return emptyList; // insufficient memory?
+            }
+
+            _p->cachedAllSourcesList += escapedNamePtr.get();
+            _p->cachedAllSourcesList += ": " + sourceDescription + "\r\n";
+        }
+    }
+
+    if(_p->cachedAllSourcesList.empty())
+        _p->cachedAllSourcesList = "\r\n";
+
+    return _p->cachedAllSourcesList;
 }
 
 void Forwarder::removeBackSession(
@@ -133,7 +197,7 @@ bool Forwarder::forwardToBackSession(
     if(backSessionIt == _p->backSessions.end())
         return false;
 
-    BackSession* target2 = backSessionIt->second;
+    BackSession* target2 = backSessionIt->second.backSession;
 
     if(target && target != target2)
         return false;

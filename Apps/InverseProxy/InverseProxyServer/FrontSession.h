@@ -30,6 +30,11 @@ public:
     using rtsp::Session::disconnect;
 
 protected:
+    bool forward(std::unique_ptr<rtsp::Request>&);
+
+    bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept;
+    bool onListRequest(std::unique_ptr<rtsp::Request>&) noexcept;
+
     bool handleResponse(
         const rtsp::Request&,
         std::unique_ptr<rtsp::Response>&) noexcept override;

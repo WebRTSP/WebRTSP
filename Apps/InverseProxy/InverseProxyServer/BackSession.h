@@ -32,6 +32,8 @@ public:
     void forceTeardown(const rtsp::SessionId&);
 
 protected:
+    rtsp::CSeq requestList() noexcept;
+
     bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
     bool onGetParameterRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
@@ -41,6 +43,9 @@ protected:
     bool handleResponse(
         const rtsp::Request&,
         std::unique_ptr<rtsp::Response>&) noexcept override;
+
+    bool onListResponse(
+        const rtsp::Request&, const rtsp::Response&) noexcept;
 
 private:
     struct Private;

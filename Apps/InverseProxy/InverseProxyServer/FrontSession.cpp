@@ -93,8 +93,35 @@ FrontSession::~FrontSession()
     }
 }
 
-bool FrontSession::handleRequest(
+bool FrontSession::onOptionsRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    rtsp::Response response;
+    prepareOkResponse(requestPtr->cseq, rtsp::SessionId(), &response);
+
+    response.headerFields.emplace("Public", "LIST, DESCRIBE, SETUP, PLAY, TEARDOWN");
+
+    sendResponse(response);
+
+    return true;
+}
+
+bool FrontSession::onListRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    const std::string& list = _p->forwarder->allSourcesList();
+    if(list.empty())
+        return false;
+
+    sendOkResponse(
+        requestPtr->cseq,
+        "text/parameters",
+        list);
+
+    return true;
+}
+
+bool FrontSession::forward(std::unique_ptr<rtsp::Request>& requestPtr)
 {
     const rtsp::SessionId sessionId = rtsp::RequestSession(*requestPtr);
     BackSession* target = nullptr;
@@ -110,6 +137,19 @@ bool FrontSession::handleRequest(
     }
 
     return _p->forwarder->forwardToBackSession(this, target, requestPtr);
+}
+
+bool FrontSession::handleRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    switch(requestPtr->method) {
+        case rtsp::Method::OPTIONS:
+            return onOptionsRequest(requestPtr);
+        case rtsp::Method::LIST:
+            return onListRequest(requestPtr);
+        default:
+            return forward(requestPtr);
+    }
 }
 
 bool FrontSession::handleResponse(

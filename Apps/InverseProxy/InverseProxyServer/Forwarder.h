@@ -6,6 +6,7 @@
 
 #include <RtspParser/Request.h>
 #include <RtspParser/Response.h>
+#include <RtspParser/RtspParser.h>
 
 class InverseProxyServerConfig;
 class FrontSession;
@@ -35,6 +36,12 @@ public:
         const std::string& token,
         BackSession*);
     void removeBackSession(const std::string& name, BackSession*);
+
+    bool swapBackSessionSourcesList(
+        const std::string& name,
+        rtsp::Parameters* sourcesList);
+
+    const std::string& allSourcesList();
 
     void registerMediaSession(
         FrontSession*,

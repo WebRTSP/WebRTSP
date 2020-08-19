@@ -109,6 +109,16 @@ void BackSession::unregisterMediaSession(
     _p->mediaSessions.erase(mediaSession);
 }
 
+rtsp::CSeq BackSession::requestList() noexcept
+{
+    rtsp::Request& request =
+        *createRequest(rtsp::Method::LIST, "*");
+
+    sendRequest(request);
+
+    return request.cseq;
+}
+
 bool BackSession::handleRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     if(rtsp::Method::SET_PARAMETER != requestPtr->method && _p->clientName.empty())
@@ -221,6 +231,8 @@ bool BackSession::onSetParameterRequest(
 
     sendOkResponse(requestPtr->cseq, rtsp::SessionId());
 
+    requestList();
+
     return true;
 }
 
@@ -287,10 +299,27 @@ bool BackSession::forward(const rtsp::Response& response)
     return true;
 }
 
+bool BackSession::onListResponse(
+    const rtsp::Request& request,
+    const rtsp::Response& response) noexcept
+{
+    if(RequestContentType(request) != "text/parameters")
+        return false;
+
+    rtsp::Parameters list;
+    if(!rtsp::ParseParameters(response.body, &list))
+        return false;
+
+    return _p->forwarder->swapBackSessionSourcesList(_p->clientName, &list);
+}
+
 bool BackSession::handleResponse(
     const rtsp::Request& request,
     std::unique_ptr<rtsp::Response>& responsePtr) noexcept
 {
+    if(request.method == rtsp::Method::LIST)
+        return onListResponse(request, *responsePtr);
+
     const auto requestIt = _p->forwardRequests.find(responsePtr->cseq);
     if(requestIt == _p->forwardRequests.end()) {
         Log()->error(
