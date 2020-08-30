@@ -17,7 +17,7 @@ struct ClientSession::Private
 
     ClientSession* owner;
 
-    const std::string uri;
+    std::string uri;
 
     std::unique_ptr<WebRTCPeer> client;
     std::string remoteSdp;
@@ -68,13 +68,6 @@ void ClientSession::Private::eos()
 }
 
 
-bool ClientSession::onConnected() noexcept
-{
-    requestOptions(_p->uri);
-
-    return true;
-}
-
 ClientSession::ClientSession(
     const std::string& uri,
     const std::function<std::unique_ptr<WebRTCPeer> ()>& createPeer,
@@ -85,8 +78,34 @@ ClientSession::ClientSession(
 {
 }
 
+ClientSession::ClientSession(
+    const std::function<std::unique_ptr<WebRTCPeer> () noexcept>& createPeer,
+    const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
+    const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept :
+    ClientSession(std::string(), createPeer, sendRequest, sendResponse)
+{
+}
+
 ClientSession::~ClientSession()
 {
+}
+
+void ClientSession::setUri(const std::string& uri)
+{
+    _p->uri = uri;
+}
+
+bool ClientSession::onConnected() noexcept
+{
+    requestOptions(!_p->uri.empty() ? _p->uri : "*");
+
+    return true;
+}
+
+rtsp::CSeq ClientSession::requestDescribe() noexcept
+{
+    assert(!_p->uri.empty());
+    return rtsp::ClientSession::requestDescribe(_p->uri);
 }
 
 bool ClientSession::onOptionsResponse(
@@ -96,7 +115,8 @@ bool ClientSession::onOptionsResponse(
     if(!rtsp::ClientSession::onOptionsResponse(request, response))
         return false;
 
-    requestDescribe(_p->uri);
+    if(!_p->uri.empty())
+        requestDescribe();
 
     return true;
 }

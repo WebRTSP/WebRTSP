@@ -14,6 +14,10 @@ bool ClientSession::isSupported(Method method)
 
 CSeq ClientSession::requestOptions(const std::string& uri) noexcept
 {
+    assert(!uri.empty());
+    if(uri.empty())
+        return 0;
+
     Request& request =
         *createRequest(Method::OPTIONS, uri);
 

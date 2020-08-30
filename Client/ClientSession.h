@@ -12,11 +12,19 @@ public:
         const std::function<std::unique_ptr<WebRTCPeer> () noexcept>& createPeer,
         const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
         const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept;
+    ClientSession(
+        const std::function<std::unique_ptr<WebRTCPeer> () noexcept>& createPeer,
+        const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
+        const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept;
     ~ClientSession();
 
     bool onConnected() noexcept override;
 
 private:
+    void setUri(const std::string&);
+
+    rtsp::CSeq requestDescribe() noexcept;
+
     bool onOptionsResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept override;
     bool onDescribeResponse(
