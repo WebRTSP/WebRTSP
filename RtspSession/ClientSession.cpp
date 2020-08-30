@@ -1,12 +1,31 @@
 #include "ClientSession.h"
 
+#include <cassert>
+
+#include "RtspParser/RtspParser.h"
+
 
 namespace rtsp {
+
+bool ClientSession::isSupported(Method method)
+{
+    return _supportedMethods.find(method) != _supportedMethods.end();
+}
 
 CSeq ClientSession::requestOptions(const std::string& uri) noexcept
 {
     Request& request =
         *createRequest(Method::OPTIONS, uri);
+
+    sendRequest(request);
+
+    return request.cseq;
+}
+
+CSeq ClientSession::requestList() noexcept
+{
+    Request& request =
+        *createRequest(rtsp::Method::LIST, "*");
 
     sendRequest(request);
 
@@ -54,6 +73,8 @@ bool ClientSession::handleResponse(
     switch(request.method) {
         case Method::OPTIONS:
             return onOptionsResponse(request, *responsePtr);
+        case Method::LIST:
+            return onListResponse(request, *responsePtr);
         case Method::DESCRIBE:
             return onDescribeResponse(request, *responsePtr);
         case Method::PLAY:
@@ -63,6 +84,22 @@ bool ClientSession::handleResponse(
         default:
             return Session::handleResponse(request, responsePtr);
     }
+}
+
+bool ClientSession::onOptionsResponse(
+    const rtsp::Request& request,
+    const rtsp::Response& response) noexcept
+{
+    if(rtsp::StatusCode::OK != response.statusCode)
+        return false;
+
+    _supportedMethods = rtsp::ParseOptions(response);
+
+    return
+        isSupported(Method::DESCRIBE) &&
+        isSupported(Method::SETUP) &&
+        isSupported(Method::PLAY) &&
+        isSupported(Method::TEARDOWN);
 }
 
 }

@@ -93,7 +93,7 @@ bool ClientSession::onOptionsResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
 {
-    if(rtsp::StatusCode::OK != response.statusCode)
+    if(!rtsp::ClientSession::onOptionsResponse(request, response))
         return false;
 
     requestDescribe(_p->uri);

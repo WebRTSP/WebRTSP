@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-#include <map>
+#include <set>
 
 #include "RtspParser/Request.h"
 #include "RtspParser/Response.h"
@@ -15,6 +15,8 @@ struct ClientSession : public Session
 {
     using Session::handleResponse;
 
+    bool isSupported(Method);
+
 protected:
     using Session::Session;
 
@@ -23,11 +25,14 @@ protected:
         std::unique_ptr<Response>&) noexcept override;
 
     CSeq requestOptions(const std::string& uri) noexcept;
+    CSeq requestList() noexcept;
     CSeq requestDescribe(const std::string& uri) noexcept;
     CSeq requestPlay(const std::string& uri, const SessionId&) noexcept;
     CSeq requestTeardown(const std::string& uri, const SessionId&) noexcept;
 
     virtual bool onOptionsResponse(
+        const Request&, const Response&) noexcept;
+    virtual bool onListResponse(
         const Request&, const Response&) noexcept
         { return false; }
     virtual bool onDescribeResponse(
@@ -39,6 +44,9 @@ protected:
     virtual bool onTeardownResponse(
         const Request&, const Response&) noexcept
         { return false; }
+
+private:
+    std::set<Method> _supportedMethods;
 };
 
 }
