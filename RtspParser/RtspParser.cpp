@@ -545,7 +545,6 @@ bool ParseParameters(
     size_t size = body.size();
     size_t position = 0;
 
-
     while(!IsEOS(position, size)) {
         if(!ParseParameter(buf, &position, size, parameters))
             return false;
