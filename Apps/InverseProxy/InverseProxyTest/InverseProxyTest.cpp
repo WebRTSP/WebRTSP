@@ -68,8 +68,9 @@ int main(int argc, char *argv[])
 
     LibGst libGst;
 
+    const spdlog::level::level_enum wsLogLevel = spdlog::level::warn;
+    InitLwsLogger(wsLogLevel);
     const spdlog::level::level_enum logLevel = spdlog::level::trace;
-    InitLwsLogger(logLevel);
     InitWsClientLogger(logLevel);
     InitWsServerLogger(logLevel);
     InitInverseProxyAgentLogger(logLevel);
