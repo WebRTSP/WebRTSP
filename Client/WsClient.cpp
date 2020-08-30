@@ -336,6 +336,8 @@ bool WsClient::Private::onMessage(
 
 void WsClient::Private::send(SessionContextData* scd, MessageBuffer* message)
 {
+    assert(!message->empty());
+
     scd->data->sendMessages.emplace_back(std::move(*message));
 
     lws_callback_on_writable(scd->wsi);

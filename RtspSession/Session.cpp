@@ -1,5 +1,7 @@
 #include "Session.h"
 
+#include <cassert>
+
 
 namespace rtsp {
 
@@ -144,6 +146,8 @@ CSeq Session::requestSetup(
     const SessionId& session,
     const std::string& body) noexcept
 {
+    assert(!uri.empty());
+
     Request& request =
         *createRequest(Method::SETUP, uri);
 
