@@ -140,7 +140,7 @@ const std::string& Forwarder::allSourcesList()
             const std::string& sourceName = name + "/" + sourcePair.first;
             const std::string& sourceDescription = sourcePair.first;
             CharPtr escapedNamePtr(
-                g_uri_escape_string(sourceName.data(), nullptr, false));
+                g_uri_escape_string(sourceName.data(), "/", false));
             if(!escapedNamePtr) {
                 static std::string emptyList;
                 return emptyList; // insufficient memory?

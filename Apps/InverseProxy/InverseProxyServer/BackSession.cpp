@@ -132,7 +132,7 @@ bool BackSession::onGetParameterRequest(
 {
     const rtsp::Request& request = *requestPtr;
 
-    if(RequestContentType(request) != "text/parameters")
+    if(RequestContentType(request) != "text/list")
         return false;
 
     rtsp::ParametersNames names;
@@ -303,7 +303,7 @@ bool BackSession::onListResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
 {
-    if(RequestContentType(request) != "text/parameters")
+    if(ResponseContentType(response) != "text/parameters")
         return false;
 
     rtsp::Parameters list;

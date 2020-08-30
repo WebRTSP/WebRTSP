@@ -4,9 +4,13 @@
 #include <CxxPtr/GlibPtr.h>
 
 #include "Common/LwsLog.h"
+
+#include "RtspParser/RtspParser.h"
+
 #include "Signalling/Log.h"
 #include "Signalling/WsServer.h"
 #include "Signalling/ServerSession.h"
+
 #include "Client/Log.h"
 #include "Client/WsClient.h"
 #include "Client/ClientSession.h"
@@ -29,19 +33,70 @@ enum {
 };
 
 
+#if ENABLE_VIEWER
+
+struct TestClientSession: public ClientSession
+{
+    using ClientSession::ClientSession;
+
+protected:
+    bool onOptionsResponse(
+        const rtsp::Request&, const rtsp::Response&) noexcept override;
+    bool onListResponse(
+        const rtsp::Request&, const rtsp::Response&) noexcept override;
+
+private:
+    rtsp::Parameters _list;
+};
+
+bool TestClientSession::onOptionsResponse(
+    const rtsp::Request& request,
+    const rtsp::Response& response) noexcept
+{
+    if(!ClientSession::onOptionsResponse(request, response))
+        return false;
+
+    if(!isSupported(rtsp::Method::LIST))
+        return false;
+
+    requestList();
+
+    return true;
+}
+
+bool TestClientSession::onListResponse(
+    const rtsp::Request&,
+    const rtsp::Response& response) noexcept
+{
+    if(ResponseContentType(response) != "text/parameters")
+        return false;
+
+    if(!rtsp::ParseParameters(response.body, &_list))
+        return false;
+
+    if(_list.empty())
+        return false;
+
+    const guint32 randomStreamer = g_random_int_range(0, _list.size());
+
+    setUri(std::next(_list.begin(), randomStreamer)->first);
+
+    requestDescribe();
+
+    return true;
+}
+
 static std::unique_ptr<WebRTCPeer> CreateClientPeer()
 {
     return std::make_unique<GstClient>();
 }
 
 static std::unique_ptr<rtsp::ClientSession> CreateClientSession (
-    const std::string& sourceUri,
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
     return
-        std::make_unique<ClientSession>(
-            sourceUri,
+        std::make_unique<TestClientSession>(
             CreateClientPeer,
             sendRequest,
             sendResponse);
@@ -58,6 +113,7 @@ static void ClientDisconnected(client::WsClient* client) noexcept
         }, client, nullptr);
     g_source_attach(timeoutSource, g_main_context_get_thread_default());
 }
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -136,7 +192,6 @@ int main(int argc, char *argv[])
                 loop,
                 std::bind(
                     CreateClientSession,
-                    sourceName + '/' + streamerName,
                     std::placeholders::_1,
                     std::placeholders::_2),
                 std::bind(ClientDisconnected, &client));

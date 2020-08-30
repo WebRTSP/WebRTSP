@@ -63,15 +63,16 @@ bool InverseProxyAgentSession::onListRequest(
                     return false; // insufficient memory?
 
                 _cache->list += escapedNamePtr.get();
-                _cache->list += pair.first + ": ";
-                _cache->list += pair.second.description + "\r\n";
+                _cache->list += ": ";
+                _cache->list += pair.second.description;
+                _cache->list += + "\r\n";
             }
         }
     }
 
     sendOkResponse(requestPtr->cseq, "text/parameters", _cache->list);
 
-    return false;
+    return true;
 }
 
 bool InverseProxyAgentSession::onGetParameterResponse(
@@ -124,7 +125,7 @@ bool InverseProxyAgentSession::onSetParameterResponse(
     const std::string parameters =
         "ice-servers\r\n";
 
-    _iceServerCSeq = requestGetParameter("*", "text/parameters", parameters);
+    _iceServerCSeq = requestGetParameter("*", "text/list", parameters);
 
     return true;
 }

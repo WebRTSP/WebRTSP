@@ -20,7 +20,7 @@ public:
 
     bool onConnected() noexcept override;
 
-private:
+protected:
     void setUri(const std::string&);
 
     rtsp::CSeq requestDescribe() noexcept;
