@@ -594,4 +594,42 @@ bool ParseParametersNames(
 
 }
 
+std::set<rtsp::Method> ParseOptions(const Response& response)
+{
+    std::set<rtsp::Method> returnOptions;
+
+    auto it = response.headerFields.find("public");
+    if(response.headerFields.end() == it)
+        return returnOptions;
+
+    std::set<rtsp::Method> parsedOptions;
+
+    const std::string& optionsString = it->second;
+
+    const char* buf = optionsString.data();
+    size_t size = optionsString.size();
+    size_t pos = 0;
+
+    while(!IsEOS(pos, size)) {
+        SkipWSP(buf, &pos, size);
+        const Token token = GetToken(buf, &pos, size);
+
+        Method method = ParseMethod(token);
+
+        if(Method::NONE == method)
+            return returnOptions;
+
+        SkipWSP(buf, &pos, size);
+
+        if(!IsEOS(pos, size) && !Skip(buf, &pos, size, ','))
+            return returnOptions;
+
+        parsedOptions.insert(method);
+    }
+
+    returnOptions.swap(parsedOptions);
+
+    return returnOptions;
+}
+
 }

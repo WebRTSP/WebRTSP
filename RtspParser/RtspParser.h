@@ -27,4 +27,6 @@ bool ParseParametersNames(
     const std::string& body,
     ParametersNames*) noexcept;
 
+std::set<rtsp::Method> ParseOptions(const Response&);
+
 }
