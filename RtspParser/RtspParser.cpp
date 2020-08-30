@@ -159,6 +159,18 @@ static bool Skip(const char* buf, size_t* pos, size_t size, char c)
     return false;
 }
 
+static bool SkipNot(const char* buf, size_t* pos, size_t size, char c)
+{
+    while(!IsEOS(*pos, size)) {
+        if(IsChar(buf, *pos, size, c))
+            return true;
+
+        ++(*pos);
+    }
+
+    return false;
+}
+
 static Token GetToken(const char* buf, size_t* pos, size_t size)
 {
     const size_t tokenPos = *pos;
@@ -499,8 +511,14 @@ static bool ParseParameter(
     const char* buf, size_t* pos, size_t size,
     Parameters* parameters)
 {
-    const Token name = GetToken(buf, pos, size);
-    if(IsEmptyToken(name))
+    Token name { buf + *pos };
+
+    if(!SkipNot(buf, pos, size, ':'))
+        return false;
+
+    name.size = buf + *pos - name.token;
+
+    if(!name.size)
         return false;
 
     if(!Skip(buf, pos, size, ':'))
@@ -510,7 +528,7 @@ static bool ParseParameter(
 
     size_t valuePos = *pos;
 
-    while(*pos < size) {
+    while(!IsEOS(*pos, size)) {
         size_t tmpPos = *pos;
         if(SkipEOL(buf, pos, size)) {
             std::string lowerName(name.token, name.size);
