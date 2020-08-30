@@ -103,23 +103,19 @@ static bool SkipWSP(const char* buf, size_t* pos, size_t size)
     return savePos != *pos;
 }
 
+static bool IsEOL(const char* buf, size_t pos, size_t size)
+{
+    return IsChar(buf, pos, size, '\r') && IsChar(buf, pos + 1, size, '\n');
+}
+
 static bool SkipEOL(const char* buf, size_t* pos, size_t size)
 {
-    if(IsEOS(*pos, size))
+    if(!IsEOL(buf, *pos, size))
         return false;
 
-    switch(buf[*pos]) {
-    case '\n':
-        ++*pos;
-        return true;
-    case '\r':
-        ++*pos;
-        if(!IsEOS(*pos, size) && buf[*pos] == '\n')
-            ++*pos;
-        return true;
-    }
+    *pos += 2;
 
-    return false;
+    return true;
 }
 
 static bool SkipFolding(const char* buf, size_t* pos, size_t size)
