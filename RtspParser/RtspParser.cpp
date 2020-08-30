@@ -94,6 +94,12 @@ static inline bool IsTspecials(char c)
     return false;
 }
 
+
+static bool IsChar(const char* buf, size_t pos, size_t size, char c)
+{
+    return !IsEOS(pos, size) && buf[pos] == c;
+}
+
 static bool SkipWSP(const char* buf, size_t* pos, size_t size)
 {
     const size_t savePos = *pos;
@@ -145,10 +151,7 @@ static bool SkipLWS(const char* buf, size_t* pos, size_t size)
 
 static bool Skip(const char* buf, size_t* pos, size_t size, char c)
 {
-    if(*pos == size)
-        return false;
-
-    if(buf[*pos] == c) {
+    if(IsChar(buf, *pos, size, c)) {
         ++(*pos);
         return true;
     }
