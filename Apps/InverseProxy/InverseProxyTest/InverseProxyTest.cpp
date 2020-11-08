@@ -136,8 +136,14 @@ int main(int argc, char *argv[])
 
     const std::string server = "localhost";
     const std::string sourceName = "source1";
-    const std::string streamerName = "bars";
-    const std::string streamer2Name = "green";
+    const std::string streamer1Name = "smpte";
+    const std::string streamer2Name = "snow";
+    const std::string streamer3Name = "ball";
+    const std::string rtspServer = "rtsp://ipcam.stream:8554/";
+    const std::string rtspStreamer1Name = "bars";
+    const std::string rtspStreamer2Name = "red";
+    const std::string rtspStreamer3Name = "green";
+    const std::string rtspStreamer4Name = "blue";
     const std::string sourceAuthToken = "dummyToken";
 
 #if ENABLE_SERVER
@@ -159,18 +165,34 @@ int main(int argc, char *argv[])
 
 #if ENABLE_STREAMER
     std::thread streamSourceClientThread(
-        [&sourceName, &streamerName, &streamer2Name, &sourceAuthToken] () {
+        [&] () {
             InverseProxyAgentConfig config {};
             config.clientConfig.server = "localhost";
             config.clientConfig.serverPort = BACK_SERVER_PORT;
             config.name = sourceName;
             config.authToken = sourceAuthToken;
             config.streamers.emplace(
-                streamerName,
-                StreamerConfig { StreamerConfig::Type::Test, streamerName });
+                streamer1Name,
+                StreamerConfig { StreamerConfig::Type::Test, streamer1Name });
             config.streamers.emplace(
                 streamer2Name,
                 StreamerConfig { StreamerConfig::Type::Test, streamer2Name });
+            config.streamers.emplace(
+                streamer3Name,
+                StreamerConfig { StreamerConfig::Type::Test, streamer3Name });
+
+            config.streamers.emplace(
+                rtspStreamer1Name,
+                StreamerConfig { StreamerConfig::Type::ReStreamer, rtspServer + rtspStreamer1Name});
+            config.streamers.emplace(
+                rtspStreamer2Name,
+                StreamerConfig { StreamerConfig::Type::ReStreamer, rtspServer + rtspStreamer2Name});
+            config.streamers.emplace(
+                rtspStreamer3Name,
+                StreamerConfig { StreamerConfig::Type::ReStreamer, rtspServer + rtspStreamer3Name});
+            config.streamers.emplace(
+                rtspStreamer4Name,
+                StreamerConfig { StreamerConfig::Type::ReStreamer, rtspServer + rtspStreamer4Name});
 
             InverseProxyAgentMain(config);
         });
