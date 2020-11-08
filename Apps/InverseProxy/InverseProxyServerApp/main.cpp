@@ -29,7 +29,7 @@ static bool LoadConfig(InverseProxyServerConfig* config)
     bool someConfigFound = false;
     for(const std::string& configDir: configDirs) {
         const std::string configFile = configDir + "/webrtsp-proxy.conf";
-        if(!g_file_test(configFile.c_str(),  G_FILE_TEST_IS_REGULAR)) {
+        if(!g_file_test(configFile.c_str(), G_FILE_TEST_IS_REGULAR)) {
             Log()->info("Config \"{}\" not found", configFile);
             continue;
         }
