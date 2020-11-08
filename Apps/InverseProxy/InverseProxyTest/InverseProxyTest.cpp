@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
 
     std::thread clientThread(clientThreadMain);
 
-    g_usleep(4 * G_USEC_PER_SEC);
+    g_usleep(2 * G_USEC_PER_SEC);
 
     std::thread client2Thread(clientThreadMain);
 #endif
