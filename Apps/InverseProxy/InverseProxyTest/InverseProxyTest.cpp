@@ -117,6 +117,8 @@ static void ClientDisconnected(client::WsClient* client) noexcept
 
 int main(int argc, char *argv[])
 {
+    g_random_set_seed(time(nullptr) & 0xffffffff);
+
     enum {
         FRONT_SERVER_PORT = 8010,
         BACK_SERVER_PORT = 8011,
