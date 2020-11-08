@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 
 #if ENABLE_VIEWER
     auto clientThreadMain =
-        [&server, &sourceName] (const std::string& streamerName) {
+        [&server, &sourceName] () {
             client::Config config {};
             config.server = server;
             config.serverPort = FRONT_SERVER_PORT;
@@ -204,11 +204,11 @@ int main(int argc, char *argv[])
 
     g_usleep(2 * G_USEC_PER_SEC);
 
-    std::thread clientThread(std::bind(clientThreadMain, streamerName));
+    std::thread clientThread(clientThreadMain);
 
     g_usleep(4 * G_USEC_PER_SEC);
 
-    std::thread client2Thread(std::bind(clientThreadMain, streamer2Name));
+    std::thread client2Thread(clientThreadMain);
 #endif
 
 #if ENABLE_SERVER
