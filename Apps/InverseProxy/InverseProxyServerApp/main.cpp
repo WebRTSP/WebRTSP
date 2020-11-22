@@ -178,12 +178,12 @@ static bool LoadConfig(InverseProxyServerConfig* config)
     bool success = true;
 
     if(!loadedConfig.frontPort) {
-        Log()->error("Missing proxy front port");
+        Log()->error("Missing \"proxy.front-port\"");
         success = false;
     }
 
     if(!loadedConfig.backPort) {
-        Log()->error("Missing proxy back port");
+        Log()->error("Missing \"proxy.back-port\"");
         success = false;
     }
 
