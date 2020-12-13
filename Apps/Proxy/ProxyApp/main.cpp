@@ -4,6 +4,7 @@
 
 #include <libwebsockets.h>
 
+#include <CxxPtr/CPtr.h>
 #include "CxxPtr/libconfigDestroy.h"
 
 #include "Common/ConfigHelpers.h"
@@ -23,13 +24,13 @@
 static const auto Log = ProxyLog;
 
 
-static bool LoadConfig(ProxyConfig* config)
+static bool LoadConfig(Config* config)
 {
     const std::deque<std::string> configDirs = ::ConfigDirs();
     if(configDirs.empty())
         return false;
 
-    ProxyConfig loadedConfig = *config;
+    Config loadedConfig = *config;
 
     for(const std::string& configDir: configDirs) {
         const std::string configFile = configDir + "/webrtsp-proxy.conf";
@@ -75,6 +76,61 @@ static bool LoadConfig(ProxyConfig* config)
             }
         }
 
+        config_setting_t* streamersConfig = config_lookup(&config, "streamers");
+        if(streamersConfig && CONFIG_TRUE == config_setting_is_list(streamersConfig)) {
+            const int streamersCount = config_setting_length(streamersConfig);
+            for(int streamerIdx = 0; streamerIdx < streamersCount; ++streamerIdx) {
+                config_setting_t* streamerConfig =
+                    config_setting_get_elem(streamersConfig, streamerIdx);
+                if(!streamerConfig || CONFIG_FALSE == config_setting_is_group(streamerConfig)) {
+                    Log()->warn("Wrong streamer config format. Streamer skipped.");
+                    break;
+                }
+                const char* name;
+                if(CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "name", &name)) {
+                    Log()->warn("Missing streamer name. Streamer skipped.");
+                    break;
+                }
+
+                const char* type = nullptr;
+                config_setting_lookup_string(streamerConfig, "type", &type);
+
+                const char* uri;
+                if(CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "uri", &uri) &&
+                   CONFIG_FALSE == config_setting_lookup_string(streamerConfig, "url", &uri))
+                {
+                    Log()->warn("Missing streamer uri. Streamer skipped.");
+                    break;
+                }
+                const char* description = nullptr;
+                config_setting_lookup_string(streamerConfig, "description", &description);
+
+                StreamerConfig::Type streamerType;
+                if(nullptr == type || 0 == strcmp(type, "restreamer"))
+                    streamerType = StreamerConfig::Type::ReStreamer;
+                else if(0 == strcmp(type, "test"))
+                    streamerType = StreamerConfig::Type::Test;
+                else {
+                    Log()->warn("Unknown streamer type. Streamer skipped.");
+                    break;
+                }
+
+                CharPtr escapedNamePtr(
+                    g_uri_escape_string(name, nullptr, false));
+                if(!escapedNamePtr)
+                    break; // insufficient memory?
+
+                loadedConfig.streamers.emplace(
+                    escapedNamePtr.get(),
+                    StreamerConfig {
+                        streamerType,
+                        uri,
+                        description ?
+                            std::string(description) :
+                            std::string() });
+            }
+        }
+
         config_setting_t* stunServerConfig = config_lookup(&config, "stun");
         if(stunServerConfig && CONFIG_TRUE == config_setting_is_group(stunServerConfig)) {
             const char* server = nullptr;
@@ -117,7 +173,7 @@ int main(int argc, char *argv[])
     if(const gchar* snapPath = g_getenv("SNAP"))
         httpConfig.wwwRoot = std::string(snapPath) + "/www";
 #endif
-    ProxyConfig config {};
+    Config config {};
     config.bindToLoopbackOnly = false;
     if(!LoadConfig(&config))
         return -1;

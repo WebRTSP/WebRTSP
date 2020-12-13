@@ -1,26 +1,51 @@
 #include "ProxySession.h"
 
+#include <glib.h>
+
 #include "RtspParser/RtspParser.h"
 
 
 ProxySession::ProxySession(
-    const std::string& clientName,
-    const std::string& authToken,
+    const Config* config,
+    Cache* cache,
     const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
     ServerSession(createPeer, sendRequest, sendResponse),
-    _clientName(clientName), _authToken(authToken)
+    _config(config), _cache(cache)
 {
 }
 
-bool ProxySession::onConnected() noexcept
+bool ProxySession::onOptionsRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    const std::string parameters =
-        "name: " + _clientName + "\r\n"
-        "token: " + _authToken + "\r\n";
+    rtsp::Response response;
+    prepareOkResponse(requestPtr->cseq, &response);
 
-    _authCSeq = requestSetParameter("*", "text/parameters", parameters);
+    response.headerFields.emplace("Public", "LIST, DESCRIBE, SETUP, PLAY, TEARDOWN");
+
+    sendResponse(response);
+
+    return true;
+}
+
+bool ProxySession::onListRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    if(_cache->list.empty()) {
+        if(_config->streamers.empty())
+            _cache->list = "\r\n";
+        else {
+            for(const auto& pair: _config->streamers) {
+                _cache->list += pair.first;
+                _cache->list += ": ";
+                _cache->list += pair.second.description;
+                _cache->list += + "\r\n";
+            }
+        }
+    }
+
+    sendOkResponse(requestPtr->cseq, "text/parameters", _cache->list);
 
     return true;
 }
@@ -75,7 +100,7 @@ bool ProxySession::onSetParameterResponse(
     const std::string parameters =
         "ice-servers\r\n";
 
-    _iceServerCSeq = requestGetParameter("*", "text/parameters", parameters);
+    _iceServerCSeq = requestGetParameter("*", "text/list", parameters);
 
     return true;
 }
