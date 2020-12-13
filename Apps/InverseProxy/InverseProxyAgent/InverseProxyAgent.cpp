@@ -23,7 +23,7 @@ CreateInverseProxyAgentPeer(
 
     if(uri == config->name) {
         streamerIt = config->streamers.find(std::string());
-    } if(uri.size() > config->name.size() + 1 &&
+    } else if(uri.size() > config->name.size() + 1 &&
        0 == uri.compare(0, config->name.size(), config->name) &&
        uri[config->name.size()] == '/')
     {
