@@ -44,7 +44,7 @@ server {
   server_name $TARGET_DOMAIN;
 
   location / {
-      proxy_pass http://localhost:8000/;
+      proxy_pass http://localhost:6554/;
       proxy_http_version 1.1;
       proxy_set_header Upgrade \$http_upgrade;
       proxy_set_header Connection "Upgrade";
@@ -52,8 +52,8 @@ server {
 
   error_page 497 https://\$server_name:\$server_port\$request_uri;
 
-  listen [::]:8010 ssl ipv6only=on;
-  listen 8010 ssl;
+  listen [::]:6555 ssl ipv6only=on;
+  listen 6555 ssl;
   ssl_certificate /etc/letsencrypt/live/$TARGET_DOMAIN/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/$TARGET_DOMAIN/privkey.pem;
 }
@@ -62,7 +62,7 @@ server {
   server_name $TARGET_DOMAIN;
 
   location / {
-      proxy_pass http://localhost:8001/;
+      proxy_pass http://localhost:6654/;
       proxy_http_version 1.1;
       proxy_set_header Upgrade \$http_upgrade;
       proxy_set_header Connection "Upgrade";
@@ -70,8 +70,8 @@ server {
 
   error_page 497 https://\$server_name:\$server_port\$request_uri;
 
-  listen [::]:8011 ssl ipv6only=on;
-  listen 8011 ssl;
+  listen [::]:6655 ssl ipv6only=on;
+  listen 6655 ssl;
   ssl_certificate /etc/letsencrypt/live/$TARGET_DOMAIN/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/$TARGET_DOMAIN/privkey.pem;
 }
