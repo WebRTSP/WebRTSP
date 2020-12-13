@@ -28,13 +28,11 @@ ssh $TARGET_USER@$TARGET_DOMAIN -p $TARGET_PORT <<EOF
 
 set -e
 
-sudo apt install software-properties-common -y
-sudo add-apt-repository universe
-sudo add-apt-repository ppa:certbot/certbot
+sudo snap install --classic certbot
 
 sudo apt update
 sudo apt upgrade -y
-sudo apt install nginx certbot python-certbot-nginx -y
+sudo apt install nginx -y
 
 sudo systemctl stop nginx
 sudo rm -rf /etc/nginx/sites-enabled/*
