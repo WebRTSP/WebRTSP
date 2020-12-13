@@ -37,7 +37,7 @@ sudo apt install nginx -y
 sudo systemctl stop nginx
 sudo rm -rf /etc/nginx/sites-enabled/*
 
-sudo certbot certonly --standalone --non-interactive --agree-tos -d $TARGET_DOMAIN
+sudo certbot certonly --standalone --non-interactive --agree-tos --email rsatom+certbot@gmail.com -d $TARGET_DOMAIN
 
 sudo tee /etc/nginx/conf.d/WebRTSPProxy.conf > /dev/null <<'EOF2'
 server {
