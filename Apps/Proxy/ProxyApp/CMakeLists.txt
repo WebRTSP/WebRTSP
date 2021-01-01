@@ -9,6 +9,7 @@ pkg_search_module(LIBCONFIG REQUIRED libconfig)
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.cpp
     *.h
+    webrtsp-proxy.conf.sample
     *.cmake)
 
 add_executable(${PROJECT_NAME} ${SOURCES})

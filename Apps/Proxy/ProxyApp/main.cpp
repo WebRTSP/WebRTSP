@@ -74,6 +74,10 @@ static bool LoadConfig(Config* config)
             if(CONFIG_TRUE == config_setting_lookup_string(proxyConfig, "key", &privateKey)) {
                 loadedConfig.key = FullPath(configDir, privateKey);
             }
+            int allowClientUrls = false;
+            if(CONFIG_TRUE == config_setting_lookup_bool(proxyConfig, "allow-client-urls", &allowClientUrls)) {
+                loadedConfig.allowClientUrls = allowClientUrls != false;
+            }
         }
 
         config_setting_t* streamersConfig = config_lookup(&config, "streamers");
