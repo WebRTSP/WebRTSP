@@ -19,7 +19,7 @@ target_link_libraries(${PROJECT_NAME}
     ${LIBCONFIG_LIBRARIES}
     Proxy)
 
-install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+install(TARGETS ${PROJECT_NAME})
 if(SNAPCRAFT_BUILD)
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/webrtsp-proxy.conf.sample TYPE SYSCONF)
 endif()
