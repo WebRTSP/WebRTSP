@@ -21,7 +21,7 @@ struct Config : public signalling::Config
 {
     spdlog::level::level_enum logLevel = spdlog::level::info;
 
-    bool allowClientUrls = true;
+    bool allowClientUrls = false;
 
     std::string stunServer;
 
