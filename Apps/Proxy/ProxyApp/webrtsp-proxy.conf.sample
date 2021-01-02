@@ -1,6 +1,6 @@
 proxy: {
   port: 5554
-#  allow-client-urls: false
+  allow-client-urls: false
 }
 
 streamers: (
