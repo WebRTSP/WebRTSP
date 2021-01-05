@@ -12,8 +12,6 @@ if(DEFINED ENV{SNAPCRAFT_BUILD_ENVIRONMENT})
     set(SNAPCRAFT_BUILD YES)
 endif()
 
-add_definitions(-DLWS_WITH_GLIB=1)
-
 if(CMAKE_COMPILER_IS_GNUCC)
     set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -O0")
 endif()
