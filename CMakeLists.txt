@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.0)
 
 project(WebRTSP)
 
-option(BUILD_TEST_APPS "Build test applications" ON)
-option(BUILD_BASIC_SERVER "Build basic server application" ON)
-option(BUILD_INVERSE_PROXY_SERVER "Build inverse proxy server application" ON)
-option(BUILD_INVERSE_PROXY_AGENT "Build inverse proxy client application" ON)
+option(BUILD_TEST_APPS "Build test applications" OFF)
+option(BUILD_BASIC_SERVER "Build basic server application" OFF)
+option(BUILD_INVERSE_PROXY_SERVER "Build inverse proxy server application" OFF)
+option(BUILD_INVERSE_PROXY_AGENT "Build inverse proxy client application" OFF)
 
 if(DEFINED ENV{SNAPCRAFT_BUILD_ENVIRONMENT})
     add_definitions(-DSNAPCRAFT_BUILD=1)
