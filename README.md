@@ -1,5 +1,1 @@
-Native WebRTSP client and server based on GStreamer
-
-## Basic WebRTSP Server Demo
-
-http://ipcam.stream:5080/
+Native WebRTSP client and server implementation based on GStreamer
