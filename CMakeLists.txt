@@ -4,8 +4,6 @@ project(WebRTSP)
 
 option(BUILD_TEST_APPS "Build test applications" OFF)
 option(BUILD_BASIC_SERVER "Build basic server application" OFF)
-option(BUILD_INVERSE_PROXY_SERVER "Build inverse proxy server application" OFF)
-option(BUILD_INVERSE_PROXY_AGENT "Build inverse proxy client application" OFF)
 
 if(DEFINED ENV{SNAPCRAFT_BUILD_ENVIRONMENT})
     add_definitions(-DSNAPCRAFT_BUILD=1)
@@ -42,10 +40,6 @@ endif()
 
 if(BUILD_BASIC_SERVER)
     add_subdirectory(Apps/BasicServer)
-endif()
-
-if(BUILD_INVERSE_PROXY_TEST OR BUILD_INVERSE_PROXY_SERVER OR BUILD_INVERSE_PROXY_AGENT)
-    add_subdirectory(Apps/InverseProxy)
 endif()
 
 #get_cmake_property(_variableNames VARIABLES)
