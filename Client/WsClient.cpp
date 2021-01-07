@@ -353,16 +353,17 @@ void WsClient::Private::sendRequest(
         return;
     }
 
-    MessageBuffer requestMessage;
-    requestMessage.assign(rtsp::Serialize(*request));
-
-    if(requestMessage.empty()) {
+    const std::string serializedRequest = rtsp::Serialize(*request);
+    if(serializedRequest.empty()) {
         scd->data->terminateSession = true;
         lws_callback_on_writable(scd->wsi);
-        return;
-    }
+    } else {
+        Log()->trace("WsClient -> : {}", serializedRequest);
 
-    send(scd, &requestMessage);
+        MessageBuffer requestMessage;
+        requestMessage.assign(serializedRequest);
+        send(scd, &requestMessage);
+    }
 }
 
 void WsClient::Private::sendResponse(
@@ -375,16 +376,17 @@ void WsClient::Private::sendResponse(
         return;
     }
 
-    MessageBuffer responseMessage;
-    responseMessage.assign(rtsp::Serialize(*response));
-
-    if(responseMessage.empty()) {
+    const std::string serializedResponse = rtsp::Serialize(*response);
+    if(serializedResponse.empty()) {
         scd->data->terminateSession = true;
         lws_callback_on_writable(scd->wsi);
-        return;
-    }
+    } else {
+        Log()->trace("WsClient -> : {}", serializedResponse);
 
-    send(scd, &responseMessage);
+        MessageBuffer responseMessage;
+        responseMessage.assign(serializedResponse);
+        send(scd, &responseMessage);
+    }
 }
 
 WsClient::WsClient(
