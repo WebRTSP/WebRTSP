@@ -142,7 +142,7 @@ int WsServer::Private::wsCallback(
             break;
         case LWS_CALLBACK_RECEIVE: {
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
-                if(Log()->level() <= spdlog::level::debug) {
+                if(Log()->level() <= spdlog::level::trace) {
                     std::string logMessage;
                     logMessage.reserve(scd->data->incomingMessage.size());
                     std::remove_copy(
