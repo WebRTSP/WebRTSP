@@ -531,18 +531,10 @@ static bool ParseParameter(
     while(!IsEOS(*pos, size)) {
         size_t tmpPos = *pos;
         if(SkipEOL(buf, pos, size)) {
-            std::string lowerName(name.token, name.size);
-            std::transform(
-                lowerName.begin(), lowerName.end(),
-                lowerName.begin(),
-                [] (std::string::value_type c) {
-                    return std::tolower(static_cast<unsigned char>(c));
-                });
-
             const Token value { buf + valuePos, tmpPos - valuePos };
 
             parameters->emplace(
-                lowerName,
+                std::string(name.token, name.size),
                 std::string(value.token, value.size));
 
             return true;
