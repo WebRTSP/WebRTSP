@@ -358,7 +358,15 @@ void WsClient::Private::sendRequest(
         scd->data->terminateSession = true;
         lws_callback_on_writable(scd->wsi);
     } else {
-        Log()->trace("WsClient -> : {}", serializedRequest);
+        if(Log()->level() <= spdlog::level::trace) {
+            std::string logMessage;
+            logMessage.reserve(serializedRequest.size());
+            std::remove_copy(
+                serializedRequest.begin(),
+                serializedRequest.end(),
+                std::back_inserter(logMessage), '\r');
+            Log()->trace("WsClient -> : {}", logMessage);
+        }
 
         MessageBuffer requestMessage;
         requestMessage.assign(serializedRequest);
@@ -381,7 +389,15 @@ void WsClient::Private::sendResponse(
         scd->data->terminateSession = true;
         lws_callback_on_writable(scd->wsi);
     } else {
-        Log()->trace("WsClient -> : {}", serializedResponse);
+        if(Log()->level() <= spdlog::level::trace) {
+            std::string logMessage;
+            logMessage.reserve(serializedResponse.size());
+            std::remove_copy(
+                serializedResponse.begin(),
+                serializedResponse.end(),
+                std::back_inserter(logMessage), '\r');
+            Log()->trace("WsClient -> : {}", logMessage);
+        }
 
         MessageBuffer responseMessage;
         responseMessage.assign(serializedResponse);
