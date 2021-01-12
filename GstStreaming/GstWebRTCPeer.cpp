@@ -13,7 +13,9 @@ void GstWebRTCPeer::addIceCandidate(
     assert(rtcbin);
 
     std::string resolvedCandidate;
-    ResolveIceCandidate(candidate, &resolvedCandidate);
+    if(!candidate.empty())
+        ResolveIceCandidate(candidate, &resolvedCandidate);
+
     if(!resolvedCandidate.empty()) {
         g_signal_emit_by_name(
             rtcbin, "add-ice-candidate",

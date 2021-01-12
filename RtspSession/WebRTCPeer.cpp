@@ -12,6 +12,11 @@ void WebRTCPeer::ResolveIceCandidate(
     if(!resolvedCandidate)
         return;
 
+    resolvedCandidate->clear();
+
+    if(candidate.empty())
+        return;
+
     enum {
         ConnectionAddressPos = 4,
         PortPos = 5,
