@@ -33,7 +33,7 @@ void InitServerSessionLogger(spdlog::level::level_enum level)
 {
     spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
 
-    ServerSessionLogger = std::make_shared<spdlog::logger>("ClientSession", sink);
+    ServerSessionLogger = std::make_shared<spdlog::logger>("ServerSession", sink);
 
     ServerSessionLogger->set_level(level);
 }
