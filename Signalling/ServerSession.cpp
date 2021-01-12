@@ -284,10 +284,7 @@ bool ServerSession::onSetupRequest(
 
         Log()->trace("Adding ice candidate \"{}\"", candidate);
 
-        if(candidate == "a=end-of-candidates")
-            ;
-        else
-            streamer.addIceCandidate(idx, candidate);
+        streamer.addIceCandidate(idx, candidate);
 
         sendOkResponse(requestPtr->cseq, session);
 

@@ -225,10 +225,7 @@ bool ClientSession::onSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) n
         if(candidate.empty())
             return false;
 
-        if(candidate == "a=end-of-candidates")
-            ;
-        else
-            _p->client->addIceCandidate(idx, candidate);
+        _p->client->addIceCandidate(idx, candidate);
 
         sendOkResponse(requestPtr->cseq, rtsp::RequestSession(*requestPtr));
 
