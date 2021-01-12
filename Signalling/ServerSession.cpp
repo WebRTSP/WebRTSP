@@ -282,6 +282,8 @@ bool ServerSession::onSetupRequest(
         if(candidate.empty())
             return false;
 
+        Log()->trace("Adding ice candidate \"{}\"", candidate);
+
         if(candidate == "a=end-of-candidates")
             ;
         else
