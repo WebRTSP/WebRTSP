@@ -5,10 +5,13 @@
 #include <cstring>
 
 
-bool WebRTCPeer::ResolveIceCandidate(
+void WebRTCPeer::ResolveIceCandidate(
     const std::string& candidate,
     std::string* resolvedCandidate)
 {
+    if(!resolvedCandidate)
+        return;
+
     enum {
         ConnectionAddressPos = 4,
         PortPos = 5,
@@ -49,8 +52,7 @@ bool WebRTCPeer::ResolveIceCandidate(
                std::string::npos,
                localSuffix) == 0)
         {
-            hostent* host = gethostbyname(connectionAddress.c_str());
-            if(host && resolvedCandidate) {
+            if(hostent* host = gethostbyname(connectionAddress.c_str())) {
                 int ipLen;
                 switch(host->h_addrtype) {
                 case AF_INET:
@@ -60,7 +62,7 @@ bool WebRTCPeer::ResolveIceCandidate(
                     ipLen = INET6_ADDRSTRLEN;
                     break;
                 default:
-                    return false;
+                    return;
                 }
 
                 char ip[ipLen];
@@ -69,22 +71,20 @@ bool WebRTCPeer::ResolveIceCandidate(
                     host->h_addr_list[0],
                     ip, ipLen))
                 {
-                   return false;
+                   return;
                 }
 
-                ipLen = strlen(ip);
+                if(resolvedCandidate) {
+                    ipLen = strlen(ip);
 
-                *resolvedCandidate = candidate.substr(0, connectionAddressPos);
-                resolvedCandidate->append(ip, ipLen);
-                resolvedCandidate->append(
-                    candidate,
-                    portPos - 1,
-                    std::string::npos);
+                    *resolvedCandidate = candidate.substr(0, connectionAddressPos);
+                    resolvedCandidate->append(ip, ipLen);
+                    resolvedCandidate->append(
+                        candidate,
+                        portPos - 1,
+                        std::string::npos);
+                }
             }
-
-            return true;
         }
     }
-
-    return false;
 }
