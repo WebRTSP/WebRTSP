@@ -3,6 +3,7 @@
 #include <cassert>
 
 #include <gst/gst.h>
+#include <gst/webrtc/rtptransceiver.h>
 
 #include <CxxPtr/GlibPtr.h>
 #include <CxxPtr/GstPtr.h>
@@ -115,6 +116,14 @@ void GstRtspReStreamer::Private::rtspSrcPadAdded(
         };
     g_signal_connect(rtcbin, "on-ice-candidate",
         G_CALLBACK(onIceCandidateCallback), this);
+
+    GArray* transceivers;
+    g_signal_emit_by_name(rtcbin, "get-transceivers", &transceivers);
+    for(guint i = 0; i < transceivers->len; ++i) {
+        GstWebRTCRTPTransceiver* transceiver = g_array_index(transceivers, GstWebRTCRTPTransceiver*, 0);
+        transceiver->direction = GST_WEBRTC_RTP_TRANSCEIVER_DIRECTION_SENDONLY;
+    }
+    g_array_unref(transceivers);
 }
 
 void GstRtspReStreamer::Private::rtspNoMorePads(GstElement* /*rtspsrc*/)
