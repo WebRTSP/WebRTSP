@@ -144,27 +144,6 @@ void GstTestStreamer::Private::prepare(const IceServers& iceServers)
     }
     g_array_unref(transceivers);
 
-    auto onPadAddedCallback =
-        (void (*) (GstElement* webrtc, GstPad* pad, gpointer* userData))
-        [] (GstElement* webrtc, GstPad* pad, gpointer* userData)
-        {
-            GstElement* pipeline = reinterpret_cast<GstElement*>(userData);
-
-            if(GST_PAD_DIRECTION(pad) != GST_PAD_SRC)
-                return;
-
-            GstElement* out = gst_parse_bin_from_description("rtpvp8depay ! vp8dec ! "
-                "videoconvert ! queue ! xvimagesink", TRUE, NULL);
-            gst_bin_add(GST_BIN(pipeline), out);
-            gst_element_sync_state_with_parent(out);
-
-            GstPad* sink = (GstPad*)out->sinkpads->data;
-
-            gst_pad_link(pad, sink);
-        };
-    g_signal_connect(rtcbin, "pad-added",
-        G_CALLBACK(onPadAddedCallback), pipeline);
-
     setState(GST_STATE_PAUSED);
 }
 
