@@ -3,6 +3,7 @@
 #include <cassert>
 
 #include <gst/gst.h>
+#include <gst/pbutils/pbutils.h>
 #include <gst/webrtc/rtptransceiver.h>
 
 #include <CxxPtr/GlibPtr.h>
@@ -249,7 +250,15 @@ void GstRtspReStreamer::Private::onIceGatheringStateChanged(GstElement* rtcbin)
     g_object_get(rtcbin, "ice-gathering-state", &state, NULL);
 
     if(GST_WEBRTC_ICE_GATHERING_STATE_COMPLETE == state) {
-        iceCandidate(0, "a=end-of-candidates");
+        // "ice-gathering-state" is broken in GStreamer < 1.17.1
+        guint gstMajor = 0, gstMinor = 0, gstNano = 0;
+        gst_plugins_base_version(&gstMajor, &gstMinor, &gstNano, 0);
+        if((gstMajor == 1 && gstMinor == 17 && gstNano >= 1) ||
+           (gstMajor == 1 && gstMinor > 17) ||
+            gstMajor > 1)
+        {
+            iceCandidate(0, "a=end-of-candidates");
+        }
 
         g_signal_handler_disconnect(rtcbin, iceGatheringStateChangedHandlerId);
         iceGatheringStateChangedHandlerId = 0;
