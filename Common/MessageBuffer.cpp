@@ -82,6 +82,20 @@ void MessageBuffer::append(const char* chunk, size_t chunkSize)
     }
 }
 
+void MessageBuffer::append(const char* chunk)
+{
+    if(!chunk || *chunk == '\0')
+        return;
+
+    if(_buffer.empty())
+        _buffer.resize(LWS_PRE);
+
+    while(*chunk != '\0') {
+        _buffer.push_back(*chunk);
+        ++chunk;
+    }
+}
+
 void MessageBuffer::assign(const char* message, size_t size)
 {
     clear();
@@ -91,7 +105,7 @@ void MessageBuffer::assign(const char* message, size_t size)
 void MessageBuffer::assign(const char* message)
 {
     clear();
-    assign(message, strlen(message));
+    append(message);
 }
 
 void MessageBuffer::assign(const std::string& message)

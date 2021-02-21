@@ -22,6 +22,7 @@ public:
     size_t size() const;
 
     void append(const char*, size_t);
+    void append(const char*);
     void assign(const char*, size_t);
     void assign(const char*);
     void assign(const std::string&);
