@@ -15,10 +15,14 @@
 
 struct GstTestStreamer::Private
 {
-    Private(GstTestStreamer* owner, const std::string& pattern);
+    Private(
+        GstTestStreamer* owner,
+        GstStreaming::Videocodec videocodec,
+        const std::string& pattern);
 
     GstTestStreamer *const owner;
 
+    const GstStreaming::Videocodec videocodec;
     const std::string pattern;
 
     PreparedCallback prepared;
@@ -50,8 +54,9 @@ struct GstTestStreamer::Private
 
 GstTestStreamer::Private::Private(
     GstTestStreamer* owner,
+    GstStreaming::Videocodec videocodec,
     const std::string& pattern) :
-    owner(owner), pattern(pattern)
+    owner(owner), videocodec(videocodec), pattern(pattern)
 {
 }
 
@@ -73,16 +78,18 @@ void GstTestStreamer::Private::prepare(const IceServers& iceServers)
         usePattern = pattern;
     }
 
-    const char* pipelineDesc =
-#if 1
-        "videotestsrc name=src ! "
-        "x264enc ! video/x-h264, profile=baseline ! rtph264pay pt=96 ! "
-        "webrtcbin name=srcrtcbin";
-#else
-        "videotestsrc name=src ! "
-        "vp8enc ! rtpvp8pay pt=96 ! "
-        "webrtcbin name=srcrtcbin";
-#endif
+    const char* pipelineDesc;
+    if(videocodec == GstStreaming::Videocodec::h264) {
+        pipelineDesc =
+            "videotestsrc name=src ! "
+            "x264enc ! video/x-h264, profile=baseline ! rtph264pay pt=96 ! "
+            "webrtcbin name=srcrtcbin";
+    } else {
+        pipelineDesc =
+            "videotestsrc name=src ! "
+            "vp8enc ! rtpvp8pay pt=96 ! "
+            "webrtcbin name=srcrtcbin";
+    }
 
     GError* parseError = nullptr;
     pipelinePtr.reset(gst_parse_launch(pipelineDesc, &parseError));
@@ -275,8 +282,10 @@ void GstTestStreamer::Private::setState(GstState state)
 }
 
 
-GstTestStreamer::GstTestStreamer(const std::string& pattern) :
-    _p(new Private(this, pattern))
+GstTestStreamer::GstTestStreamer(
+    const std::string& pattern,
+    GstStreaming::Videocodec videocodec) :
+    _p(new Private(this, videocodec, pattern))
 {
 }
 

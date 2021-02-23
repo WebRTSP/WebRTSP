@@ -3,13 +3,16 @@
 #include <memory>
 #include <functional>
 
+#include "Types.h"
 #include "GstWebRTCPeer.h"
 
 
 class GstTestStreamer : public GstWebRTCPeer
 {
 public:
-    GstTestStreamer(const std::string& pattern = std::string());
+    GstTestStreamer(
+        const std::string& pattern = std::string(),
+        GstStreaming::Videocodec videocodec = GstStreaming::Videocodec::h264);
     ~GstTestStreamer();
 
     typedef std::function<void ()> PreparedCallback;
