@@ -25,7 +25,8 @@ struct GstReStreamer::Private
     IceCandidateCallback iceCandidate;
     EosCallback eos;
 
-     GstCapsPtr supportedCapsPtr;
+     GstCapsPtr h264CapsPtr;
+     GstCapsPtr vp8CapsPtr;
 
     GstElementPtr pipelinePtr;
     GstElement* decodebin = nullptr;
@@ -71,11 +72,24 @@ void GstReStreamer::Private::srcPadAdded(
     GstCapsPtr capsPtr(gst_pad_get_current_caps(pad));
     GstCaps* caps = capsPtr.get();
 
-    if(gst_caps_is_always_compatible(caps, supportedCapsPtr.get())) {
+    if(gst_caps_is_always_compatible(caps, h264CapsPtr.get())) {
         GstElement* out =
             gst_parse_bin_from_description(
                 "h264parse config-interval=-1 ! rtph264pay pt=96 ! "
                 "capssetter caps=\"application/x-rtp,profile-level-id=(string)42c015\" ! "
+                "webrtcbin name=srcrtcbin",
+                TRUE, NULL);
+        gst_bin_add(GST_BIN(pipeline), out);
+        gst_element_sync_state_with_parent(out);
+
+        GstPad *sink = (GstPad*)out->sinkpads->data;
+
+        if(GST_PAD_LINK_OK != gst_pad_link(pad, sink))
+            assert(false);
+    } else if(gst_caps_is_always_compatible(caps, vp8CapsPtr.get())) {
+        GstElement* out =
+            gst_parse_bin_from_description(
+                "rtpvp8pay pt=96 ! "
                 "webrtcbin name=srcrtcbin",
                 TRUE, NULL);
         gst_bin_add(GST_BIN(pipeline), out);
@@ -137,7 +151,11 @@ void GstReStreamer::Private::prepare(const IceServers& iceServers)
 
     this->iceServers = iceServers;
 
-    supportedCapsPtr.reset(gst_caps_from_string("video/x-h264"));
+    h264CapsPtr.reset(gst_caps_from_string("video/x-h264"));
+    vp8CapsPtr.reset(gst_caps_from_string("video/x-vp8"));
+
+    GstCapsPtr supportedCapsPtr(gst_caps_copy(h264CapsPtr.get()));
+    gst_caps_append(supportedCapsPtr.get(), gst_caps_copy(vp8CapsPtr.get()));
     GstCaps* supportedCaps = supportedCapsPtr.get();
 
     pipelinePtr.reset(gst_pipeline_new(nullptr));
