@@ -44,6 +44,7 @@ struct GstTestStreamer::Private
     void onNegotiationNeeded(GstElement* rtcbin);
     void onIceGatheringStateChanged(GstElement* rtcbin);
     void onOfferCreated(GstPromise*);
+    void onSetRemoteDescription(GstPromise*);
     void onIceCandidate(
         GstElement* rtcbin,
         guint candidate,
@@ -340,8 +341,32 @@ void GstTestStreamer::setRemoteSdp(const std::string& sdp) noexcept
     GstWebRTCSessionDescription* sessionDescription =
         sessionDescriptionPtr.get();
 
+    auto onSetRemoteDescriptionCallback =
+        (void (*) (GstPromise*, gpointer))
+        [] (GstPromise* promise, gpointer userData)
+    {
+        Private* self = static_cast<Private*>(userData);
+        return self->onSetRemoteDescription(promise);
+    };
+
+    GstPromise* promise =
+        gst_promise_new_with_change_func(
+            onSetRemoteDescriptionCallback,
+            this->_p.get(), nullptr);
+
     g_signal_emit_by_name(rtcbin,
-        "set-remote-description", sessionDescription, NULL);
+        "set-remote-description", sessionDescription, promise);
+}
+
+void GstTestStreamer::Private::onSetRemoteDescription(GstPromise* promise)
+{
+    GstPromisePtr promisePtr(promise);
+
+    GstElement* rtcbin = rtcbinPtr.get();
+    GstWebRTCSignalingState state = GST_WEBRTC_SIGNALING_STATE_CLOSED;
+    g_object_get(rtcbin, "signaling-state", &state, nullptr);
+    if(state != GST_WEBRTC_SIGNALING_STATE_STABLE)
+        owner->eos(true);
 }
 
 void GstTestStreamer::addIceCandidate(
