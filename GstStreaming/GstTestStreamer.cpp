@@ -202,7 +202,7 @@ void GstTestStreamer::Private::onNegotiationNeeded(GstElement* rtcbin)
         return self->onOfferCreated(promise);
     };
 
-    GstPromise *promise =
+    GstPromise* promise =
         gst_promise_new_with_change_func(
             onOfferCreatedCallback,
             this, nullptr);
