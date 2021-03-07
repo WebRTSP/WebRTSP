@@ -14,15 +14,9 @@
 
 struct GstStreamer::Private
 {
-    Private(
-        GstStreamer* owner,
-        GstStreaming::Videocodec videocodec,
-        const std::string& pattern);
+    Private(GstStreamer* owner);
 
     GstStreamer *const owner;
-
-    const GstStreaming::Videocodec videocodec;
-    const std::string pattern;
 
     PreparedCallback prepared;
     IceCandidateCallback iceCandidate;
@@ -52,11 +46,8 @@ struct GstStreamer::Private
     void setState(GstState);
 };
 
-GstStreamer::Private::Private(
-    GstStreamer* owner,
-    GstStreaming::Videocodec videocodec,
-    const std::string& pattern) :
-    owner(owner), videocodec(videocodec), pattern(pattern)
+GstStreamer::Private::Private(GstStreamer* owner) :
+    owner(owner)
 {
 }
 
@@ -250,10 +241,8 @@ void GstStreamer::Private::setState(GstState state)
 }
 
 
-GstStreamer::GstStreamer(
-    const std::string& pattern,
-    GstStreaming::Videocodec videocodec) :
-    _p(new Private(this, videocodec, pattern))
+GstStreamer::GstStreamer() :
+    _p(new Private(this))
 {
 }
 

@@ -5,16 +5,13 @@
 
 #include <CxxPtr/GstPtr.h>
 
-#include "Types.h"
 #include "GstWebRTCPeer.h"
 
 
 class GstStreamer : public GstWebRTCPeer
 {
 public:
-    GstStreamer(
-        const std::string& pattern = std::string(),
-        GstStreaming::Videocodec videocodec = GstStreaming::Videocodec::h264);
+    GstStreamer();
     ~GstStreamer();
 
     typedef std::function<void ()> PreparedCallback;
