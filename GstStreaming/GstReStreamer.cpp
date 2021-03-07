@@ -68,6 +68,9 @@ void GstReStreamer::Private::srcPadAdded(
     GstElement* /*decodebin*/,
     GstPad* pad)
 {
+    if(rtcbinPtr)
+        return;
+
     GstElement* pipeline = pipelinePtr.get();
 
     GstCapsPtr capsPtr(gst_pad_get_current_caps(pad));
