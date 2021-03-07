@@ -318,9 +318,7 @@ void GstClient::addIceCandidate(
     unsigned mlineIndex,
     const std::string& candidate) noexcept
 {
-    GstElement* rtcbin = _p->rtcbinPtr.get();
-
-    GstWebRTCPeer::addIceCandidate(rtcbin, mlineIndex, candidate);
+    GstWebRTCPeer::addIceCandidate(mlineIndex, candidate);
 }
 
 void GstClient::eos(bool error)

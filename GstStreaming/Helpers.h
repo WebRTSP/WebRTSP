@@ -12,8 +12,5 @@ namespace GstStreaming
 {
 
 IceServerType ParseIceServerType(const std::string& iceServer);
-void SetIceServers(
-    GstElement* rtcbin,
-    const std::deque<std::string>& iceServers);
 
 }
