@@ -14,13 +14,13 @@
 #include "Helpers.h"
 
 
-GstStreamer::PrepareResult GstPipelineStreamer::prepare()
+void GstPipelineStreamer::prepare()
 {
     GError* parseError = nullptr;
     GstElementPtr pipelinePtr(gst_parse_launch(_pipeline.c_str(), &parseError));
     GErrorPtr parseErrorPtr(parseError);
     if(parseError)
-        return {};
+        return;
 
     GstElement* pipeline = pipelinePtr.get();
 
@@ -42,7 +42,10 @@ GstStreamer::PrepareResult GstPipelineStreamer::prepare()
     }
     gst_iterator_free(it);
 
-    return { std::move(pipelinePtr), std::move(rtcbinPtr) };
+    setPipeline(std::move(pipelinePtr));
+    setWebRtcBin(std::move(rtcbinPtr));
+
+    pause();
 }
 
 GstPipelineStreamer::GstPipelineStreamer(

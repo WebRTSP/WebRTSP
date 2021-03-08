@@ -13,7 +13,7 @@
 #include "Helpers.h"
 
 
-GstStreamer::PrepareResult GstTestStreamer::prepare()
+void GstTestStreamer::prepare()
 {
     std::string usePattern = "smpte";
     if(_pattern == "bars")
@@ -43,9 +43,9 @@ GstStreamer::PrepareResult GstTestStreamer::prepare()
     GError* parseError = nullptr;
     GstElementPtr pipelinePtr(gst_parse_launch(pipelineDesc, &parseError));
     GErrorPtr parseErrorPtr(parseError);
-    if(parseError) {
-        return {};
-    }
+    if(parseError)
+        return;
+
     GstElement* pipeline = pipelinePtr.get();
 
     GstElementPtr srcPtr(gst_bin_get_by_name(GST_BIN(pipeline), "src"));
@@ -56,7 +56,10 @@ GstStreamer::PrepareResult GstTestStreamer::prepare()
     GstElementPtr rtcbinPtr(
         gst_bin_get_by_name(GST_BIN(pipeline), "srcrtcbin"));
 
-    return { std::move(pipelinePtr), std::move(rtcbinPtr) };
+    setPipeline(std::move(pipelinePtr));
+    setWebRtcBin(std::move(rtcbinPtr));
+
+    pause();
 }
 
 GstTestStreamer::GstTestStreamer(

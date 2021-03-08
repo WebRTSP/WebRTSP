@@ -16,11 +16,69 @@ GstWebRTCPeer::~GstWebRTCPeer()
     setState(GST_STATE_NULL);
 }
 
+void GstWebRTCPeer::setState(GstState state) noexcept
+{
+    if(!_pipelinePtr) {
+        if(state != GST_STATE_NULL)
+            ;
+        return;
+    }
+
+    GstElement* pipeline = _pipelinePtr.get();
+
+    switch(gst_element_set_state(pipeline, state)) {
+        case GST_STATE_CHANGE_FAILURE:
+            break;
+        case GST_STATE_CHANGE_SUCCESS:
+            break;
+        case GST_STATE_CHANGE_ASYNC:
+            break;
+        case GST_STATE_CHANGE_NO_PREROLL:
+            break;
+    }
+}
+
+void GstWebRTCPeer::pause() noexcept
+{
+    setState(GST_STATE_PAUSED);
+}
+
+void GstWebRTCPeer::play() noexcept
+{
+    setState(GST_STATE_PLAYING);
+}
+
+void GstWebRTCPeer::stop() noexcept
+{
+    setState(GST_STATE_NULL);
+}
+
+void GstWebRTCPeer::prepare(
+    const IceServers& iceServers,
+    const PreparedCallback& prepared,
+    const IceCandidateCallback& iceCandidate,
+    const EosCallback& eos) noexcept
+{
+    assert(!pipeline());
+    if(pipeline())
+        return;
+
+    _iceServers = iceServers;
+    _preparedCallback = prepared;
+    _iceCandidateCallback = iceCandidate;
+    _eosCallback = eos;
+
+    prepare();
+
+    if(!pipeline())
+        onEos(true);
+}
+
 gboolean GstWebRTCPeer::onBusMessage(GstBus*, GstMessage* msg)
 {
     switch(GST_MESSAGE_TYPE(msg)) {
         case GST_MESSAGE_EOS:
-            eos(false);
+            onEos(false);
             break;
         case GST_MESSAGE_ERROR: {
             gchar* debug;
@@ -31,47 +89,14 @@ gboolean GstWebRTCPeer::onBusMessage(GstBus*, GstMessage* msg)
             g_free(debug);
             g_error_free(error);
 
-            eos(true);
-           break;
+            onEos(true);
+            break;
         }
         default:
             break;
     }
 
     return TRUE;
-}
-
-void GstWebRTCPeer::onNegotiationNeeded()
-{
-    GstElement* rtcbin = webRtcBin();
-
-    auto onIceGatheringStateChangedCallback =
-        (void (*) (GstElement*, GParamSpec* , gpointer))
-        [] (GstElement* rtcbin, GParamSpec*, gpointer userData)
-    {
-        GstWebRTCPeer* self = static_cast<GstWebRTCPeer*>(userData);
-        assert(rtcbin == self->webRtcBin());
-        return self->onIceGatheringStateChanged();
-    };
-    iceGatheringStateChangedHandlerId =
-        g_signal_connect(rtcbin,
-            "notify::ice-gathering-state",
-            G_CALLBACK(onIceGatheringStateChangedCallback), this);
-
-    auto onOfferCreatedCallback =
-        (void (*) (GstPromise*, gpointer))
-        [] (GstPromise* promise, gpointer userData)
-    {
-        GstWebRTCPeer* self = static_cast<GstWebRTCPeer*>(userData);
-        return self->onOfferCreated(promise);
-    };
-
-    GstPromise* promise =
-        gst_promise_new_with_change_func(
-            onOfferCreatedCallback,
-            this, nullptr);
-    g_signal_emit_by_name(
-        rtcbin, "create-offer", nullptr, promise);
 }
 
 void GstWebRTCPeer::setPipeline(GstElementPtr&& pipelinePtr) noexcept
@@ -153,7 +178,7 @@ GstElement*GstWebRTCPeer:: webRtcBin() const noexcept
     return _rtcbinPtr.get();
 }
 
-void GstWebRTCPeer::setIceServers(const std::deque<std::string>& iceServers)
+void GstWebRTCPeer::setIceServers()
 {
     GstElement* rtcbin = webRtcBin();
 
@@ -163,7 +188,7 @@ void GstWebRTCPeer::setIceServers(const std::deque<std::string>& iceServers)
     const bool useAddTurnServer =
         vMajor > 1 || (vMajor == 1 && vMinor >= 16);
 
-    for(const std::string& iceServer: iceServers) {
+    for(const std::string& iceServer: _iceServers) {
         using namespace GstStreaming;
         switch(ParseIceServerType(iceServer)) {
             case IceServerType::Stun:
@@ -194,6 +219,39 @@ void GstWebRTCPeer::setIceServers(const std::deque<std::string>& iceServers)
     }
 }
 
+void GstWebRTCPeer::onNegotiationNeeded()
+{
+    GstElement* rtcbin = webRtcBin();
+
+    auto onIceGatheringStateChangedCallback =
+        (void (*) (GstElement*, GParamSpec* , gpointer))
+        [] (GstElement* rtcbin, GParamSpec*, gpointer userData)
+    {
+        GstWebRTCPeer* self = static_cast<GstWebRTCPeer*>(userData);
+        assert(rtcbin == self->webRtcBin());
+        return self->onIceGatheringStateChanged();
+    };
+    iceGatheringStateChangedHandlerId =
+        g_signal_connect(rtcbin,
+            "notify::ice-gathering-state",
+            G_CALLBACK(onIceGatheringStateChangedCallback), this);
+
+    auto onOfferCreatedCallback =
+        (void (*) (GstPromise*, gpointer))
+        [] (GstPromise* promise, gpointer userData)
+    {
+        GstWebRTCPeer* self = static_cast<GstWebRTCPeer*>(userData);
+        return self->onOfferCreated(promise);
+    };
+
+    GstPromise* promise =
+        gst_promise_new_with_change_func(
+            onOfferCreatedCallback,
+            this, nullptr);
+    g_signal_emit_by_name(
+        rtcbin, "create-offer", nullptr, promise);
+}
+
 void GstWebRTCPeer::onIceGatheringStateChanged()
 {
     GstElement* rtcbin = webRtcBin();
@@ -209,7 +267,7 @@ void GstWebRTCPeer::onIceGatheringStateChanged()
            (gstMajor == 1 && gstMinor > 17) ||
             gstMajor > 1)
         {
-            iceCandidate(0, "a=end-of-candidates");
+            onIceCandidate(0, std::string());
         }
 
         g_signal_handler_disconnect(rtcbin, iceGatheringStateChangedHandlerId);
@@ -236,15 +294,7 @@ void GstWebRTCPeer::onOfferCreated(GstPromise* promise)
     GCharPtr sdpPtr(gst_sdp_message_as_text(sessionDescription->sdp));
     _sdp = sdpPtr.get();
 
-    prepared();
-}
-
-void GstWebRTCPeer::onIceCandidate(
-    guint candidate,
-    gchar* arg2)
-{
-    static std::string prefix("a=");
-    iceCandidate(candidate, prefix + arg2);
+    onPrepared();
 }
 
 void GstWebRTCPeer::addIceCandidate(
@@ -281,43 +331,6 @@ void GstWebRTCPeer::addIceCandidate(
             rtcbin, "add-ice-candidate",
             mlineIndex, candidate.data());
     }
-}
-
-void GstWebRTCPeer::setState(GstState state) noexcept
-{
-    if(!_pipelinePtr) {
-        if(state != GST_STATE_NULL)
-            ;
-        return;
-    }
-
-    GstElement* pipeline = _pipelinePtr.get();
-
-    switch(gst_element_set_state(pipeline, state)) {
-        case GST_STATE_CHANGE_FAILURE:
-            break;
-        case GST_STATE_CHANGE_SUCCESS:
-            break;
-        case GST_STATE_CHANGE_ASYNC:
-            break;
-        case GST_STATE_CHANGE_NO_PREROLL:
-            break;
-    }
-}
-
-void GstWebRTCPeer::pause() noexcept
-{
-    setState(GST_STATE_PAUSED);
-}
-
-void GstWebRTCPeer::play() noexcept
-{
-    setState(GST_STATE_PLAYING);
-}
-
-void GstWebRTCPeer::stop() noexcept
-{
-    setState(GST_STATE_NULL);
 }
 
 void GstWebRTCPeer::setRemoteSdp(const std::string& sdp) noexcept
@@ -378,5 +391,27 @@ void GstWebRTCPeer::onSetRemoteDescription(GstPromise* promise)
     GstWebRTCSignalingState state = GST_WEBRTC_SIGNALING_STATE_CLOSED;
     g_object_get(rtcbin, "signaling-state", &state, nullptr);
     if(state != GST_WEBRTC_SIGNALING_STATE_STABLE)
-        eos(true);
+        onEos(true);
+}
+
+void GstWebRTCPeer::onPrepared()
+{
+    if(_preparedCallback)
+        _preparedCallback();
+}
+
+void GstWebRTCPeer::onIceCandidate(unsigned mlineIndex, const std::string& candidate)
+{
+    if(_iceCandidateCallback) {
+        if(candidate.empty())
+            _iceCandidateCallback(mlineIndex, "a=end-of-candidates");
+        else
+            _iceCandidateCallback(mlineIndex, "a=" + candidate);
+    }
+}
+
+void GstWebRTCPeer::onEos(bool /*error*/)
+{
+    if(_eosCallback)
+        _eosCallback();
 }

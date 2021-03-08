@@ -10,6 +10,12 @@
 class GstWebRTCPeer : public WebRTCPeer
 {
 public:
+    void prepare(
+        const IceServers&,
+        const PreparedCallback&,
+        const IceCandidateCallback&,
+        const EosCallback&) noexcept override;
+
     void setRemoteSdp(const std::string& sdp) noexcept override;
     void addIceCandidate(unsigned mlineIndex, const std::string& candidate) noexcept override;
     bool sdp(std::string* sdp) noexcept override;
@@ -23,7 +29,7 @@ protected:
     void setWebRtcBin(GstElementPtr&&) noexcept;
     GstElement* webRtcBin() const noexcept;
 
-    void setIceServers(const std::deque<std::string>& iceServers);
+    void setIceServers();
 
     void setState(GstState) noexcept;
     void pause() noexcept;
@@ -35,15 +41,21 @@ protected:
     void onOfferCreated(GstPromise*);
     void onSetRemoteDescription(GstPromise*);
 
-    virtual void prepared() = 0;
-    virtual void iceCandidate(unsigned mlineIndex, const std::string& candidate) = 0;
-    virtual void eos(bool error) = 0;
+    virtual void prepare() = 0;
 
 private:
     gboolean onBusMessage(GstBus*, GstMessage*);
-    void onIceCandidate(guint candidate, gchar* arg2);
+
+    void onPrepared();
+    void onIceCandidate(unsigned mlineIndex, const std::string& candidate);
+    void onEos(bool error);
 
 private:
+    std::deque<std::string> _iceServers;
+    PreparedCallback _preparedCallback;
+    IceCandidateCallback _iceCandidateCallback;
+    EosCallback _eosCallback;
+
     GstElementPtr _pipelinePtr;
     GstElementPtr _rtcbinPtr;
 

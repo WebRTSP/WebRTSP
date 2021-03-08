@@ -21,21 +21,11 @@ GstReStreamer::~GstReStreamer()
 {
 }
 
-void GstReStreamer::prepare(
-    const IceServers& iceServers,
-    const PreparedCallback& prepared,
-    const IceCandidateCallback& iceCandidate,
-    const EosCallback& eos) noexcept
+void GstReStreamer::prepare() noexcept
 {
     assert(!pipeline());
     if(pipeline())
         return;
-
-    _preparedCallback = prepared;
-    _iceCandidateCallback = iceCandidate;
-    _eosCallback = eos;
-
-    _iceServers = iceServers;
 
     _h264CapsPtr.reset(gst_caps_from_string("video/x-h264"));
     _vp8CapsPtr.reset(gst_caps_from_string("video/x-vp8"));
@@ -125,29 +115,10 @@ void GstReStreamer::srcPadAdded(
 
     setWebRtcBin(GstElementPtr(gst_bin_get_by_name(GST_BIN(pipeline), "srcrtcbin")));
 
-    setIceServers(_iceServers);
+    setIceServers();
 }
 
 void GstReStreamer::noMorePads(GstElement* /*decodebin*/)
 {
     pause();
-}
-
-
-void GstReStreamer::prepared()
-{
-    if(_preparedCallback)
-        _preparedCallback();
-}
-
-void GstReStreamer::iceCandidate(unsigned mlineIndex, const std::string& candidate)
-{
-    if(_iceCandidateCallback)
-        _iceCandidateCallback(mlineIndex, candidate);
-}
-
-void GstReStreamer::eos(bool /*error*/)
-{
-    if(_eosCallback)
-        _eosCallback();
 }

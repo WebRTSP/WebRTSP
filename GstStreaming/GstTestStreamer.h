@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Types.h"
-#include "GstStreamer.h"
+#include "GstWebRTCPeer.h"
 
 
-class GstTestStreamer : public GstStreamer
+class GstTestStreamer : public GstWebRTCPeer
 {
 public:
     GstTestStreamer(
@@ -12,7 +12,7 @@ public:
         GstStreaming::Videocodec videocodec = GstStreaming::Videocodec::h264);
 
 protected:
-    PrepareResult prepare() override;
+    void prepare() override;
 
 private:
     const std::string _pattern;

@@ -1,16 +1,16 @@
 #pragma once
 
 #include "Types.h"
-#include "GstStreamer.h"
+#include "GstWebRTCPeer.h"
 
 
-class GstPipelineStreamer : public GstStreamer
+class GstPipelineStreamer : public GstWebRTCPeer
 {
 public:
     GstPipelineStreamer(const std::string& pipeline);
 
 protected:
-    PrepareResult prepare() override;
+    void prepare() override;
 
 private:
     const std::string _pipeline;
