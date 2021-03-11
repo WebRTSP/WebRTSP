@@ -18,18 +18,15 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(DEPS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps)
-
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${DEPS_DIR})
+    ${CMAKE_CURRENT_SOURCE_DIR}/RtcStreaming/deps)
 
-add_subdirectory(deps/CxxPtr)
 add_subdirectory(Common)
 
 add_subdirectory(RtspParser)
 add_subdirectory(RtspSession)
-add_subdirectory(GstStreaming)
+add_subdirectory(RtcStreaming)
 add_subdirectory(Signalling)
 add_subdirectory(Client)
 add_subdirectory(Http)
