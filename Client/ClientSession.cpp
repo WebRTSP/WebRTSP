@@ -65,6 +65,8 @@ void ClientSession::Private::iceCandidate(
 void ClientSession::Private::eos()
 {
     Log()->trace("Eos");
+
+    owner->onEos();
 }
 
 

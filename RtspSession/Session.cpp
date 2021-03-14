@@ -265,4 +265,9 @@ bool Session::onSetParameterResponse(
     return false;
 }
 
+void Session::onEos() noexcept
+{
+    disconnect();
+}
+
 }

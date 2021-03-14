@@ -146,6 +146,8 @@ void ServerSession::Private::iceCandidate(
 void ServerSession::Private::eos(const rtsp::SessionId& session)
 {
     Log()->trace("Eos. Session: {}", session);
+
+    owner->onEos();
 }
 
 

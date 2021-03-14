@@ -98,6 +98,8 @@ protected:
         const Request&,
         const Response&) noexcept;
 
+    virtual void onEos() noexcept;
+
 private:
     const std::function<void (const Request*)> _sendRequest;
     const std::function<void (const Response*)> _sendResponse;
