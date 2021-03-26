@@ -3,36 +3,6 @@
 
 namespace rtsp {
 
-bool ServerSession::onOptionsRequest(
-    std::unique_ptr<Request>&) noexcept
-{
-    return false;
-}
-
-bool ServerSession::onListRequest(
-    std::unique_ptr<Request>&) noexcept
-{
-    return false;
-}
-
-bool ServerSession::onDescribeRequest(
-    std::unique_ptr<Request>&) noexcept
-{
-    return false;
-}
-
-bool ServerSession::onPlayRequest(
-    std::unique_ptr<Request>&) noexcept
-{
-    return false;
-}
-
-bool ServerSession::onTeardownRequest(
-    std::unique_ptr<Request>&) noexcept
-{
-    return false;
-}
-
 bool ServerSession::handleRequest(
     std::unique_ptr<Request>& requestPtr) noexcept
 {
