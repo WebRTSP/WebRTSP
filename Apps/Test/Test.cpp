@@ -3,15 +3,7 @@
 
 #include <CxxPtr/GlibPtr.h>
 
-#include "Signalling/WsServer.h"
-#include "Signalling/ServerSession.h"
-#include "Client/WsClient.h"
-#include "Client/ClientSession.h"
-#include "GstStreaming/LibGst.h"
-#include "GstStreaming/GstTestStreamer.h"
-#include "GstStreaming/GstRtspReStreamer.h"
-#include "GstStreaming/GstReStreamer.h"
-#include "GstStreaming/GstClient.h"
+#include "RtcStreaming/GstRtcStreaming/LibGst.h"
 
 #include "TestParse.h"
 #include "TestSerialize.h"
@@ -21,7 +13,31 @@
 #define USE_RTSP_RESTREAMER 0
 #define USE_RESTREAMER 1
 
+#if ENABLE_SERVER
+    #include "Signalling/Log.h"
+    #include "Signalling/WsServer.h"
+    #include "Signalling/ServerSession.h"
+
+    #include "RtcStreaming/GstRtcStreaming/GstTestStreamer.h"
+    #include "RtcStreaming/GstRtcStreaming/GstReStreamer.h"
+#endif
+
+#if ENABLE_CLIENT
+    #include "RtcStreaming/GstRtcStreaming/GstClient.h"
+
+    #include "Client/Log.h"
+    #include "Client/WsClient.h"
+    #include "Client/ClientSession.h"
+#endif
+
+#if ENABLE_SERVER
+    #define SERVER_HOST "localhost"
+#else
+    #define SERVER_HOST "ipcam.stream"
+#endif
+
 enum {
+    SERVER_PORT = 5554,
     RECONNECT_TIMEOUT = 5,
 };
 
@@ -60,9 +76,11 @@ static std::unique_ptr<rtsp::ClientSession> CreateClientSession (
 {
     const std::string url =
 #if USE_RTSP_RESTREAMER || USE_RESTREAMER
-         "rtsp://camproxy.online:8554/bars";
-#else
+        "rtsp://ipcam.stream:8554/bars";
+#elif ENABLE_SERVER
         "*";
+#else
+        "Bars";
 #endif
     return
         std::make_unique<ClientSession>(
@@ -87,10 +105,6 @@ static void ClientDisconnected(client::WsClient* client) noexcept
 
 int main(int argc, char *argv[])
 {
-    enum {
-        SERVER_PORT = 8081,
-    };
-
     LibGst libGst;
 
     TestParse();
@@ -99,6 +113,8 @@ int main(int argc, char *argv[])
 #if ENABLE_SERVER
     std::thread signallingThread(
         [] () {
+            InitWsServerLogger(spdlog::level::trace);
+
             signalling::Config config {};
             config.port = SERVER_PORT;
 
@@ -118,8 +134,10 @@ int main(int argc, char *argv[])
 #if ENABLE_CLIENT
     std::thread clientThread(
         [] () {
+            InitWsClientLogger(spdlog::level::trace);
+
             client::Config config {};
-            config.server = "localhost";
+            config.server = SERVER_HOST;
             config.serverPort = SERVER_PORT;
 
             GMainContextPtr clientContextPtr(g_main_context_new());
