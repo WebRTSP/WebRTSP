@@ -12,15 +12,15 @@ enum class Method {
     OPTIONS,
     LIST,
     DESCRIBE,
-    // ANNOUNCE,
+    ANNOUNCE,
     SETUP,
     PLAY,
+    RECORD,
 //     PAUSE,
     TEARDOWN,
     GET_PARAMETER,
     SET_PARAMETER,
     // REDIRECT,
-    // RECORD,
 };
 
 const char* MethodName(Method) noexcept;

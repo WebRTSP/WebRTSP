@@ -13,10 +13,14 @@ bool ServerSession::handleRequest(
         return onListRequest(requestPtr);
     case Method::DESCRIBE:
         return onDescribeRequest(requestPtr);
+    case Method::ANNOUNCE:
+        return onAnnounceRequest(requestPtr);
     case Method::SETUP:
         return onSetupRequest(requestPtr);
     case Method::PLAY:
         return onPlayRequest(requestPtr);
+    case Method::RECORD:
+        return onRecordRequest(requestPtr);
     case Method::TEARDOWN:
         return onTeardownRequest(requestPtr);
     default:

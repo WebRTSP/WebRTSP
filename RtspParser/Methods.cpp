@@ -13,15 +13,15 @@ static const Method Methods[] = {
     Method::OPTIONS,
     Method::LIST,
     Method::DESCRIBE,
-    //Method::ANNOUNCE,
+    Method::ANNOUNCE,
     Method::SETUP,
     Method::PLAY,
+    Method::RECORD,
     //Method::PAUSE,
     Method::TEARDOWN,
     Method::GET_PARAMETER,
     Method::SET_PARAMETER,
     //Method::REDIRECT,
-    //Method::RECORD,
 };
 
 static const unsigned MethodsCount = sizeof(Methods) / sizeof(Methods[0]);
@@ -39,12 +39,14 @@ const char* MethodName(Method method) noexcept
         return "LIST";
     case Method::DESCRIBE:
         return "DESCRIBE";
-    // case Method::ANNOUNCE:
-    //     return "ANNOUNCE";
+    case Method::ANNOUNCE:
+        return "ANNOUNCE";
     case Method::SETUP:
         return "SETUP";
     case Method::PLAY:
         return "PLAY";
+    case Method::RECORD:
+        return "RECORD";
     // case Method::PAUSE:
     //     return "PAUSE";
     case Method::TEARDOWN:
@@ -55,8 +57,6 @@ const char* MethodName(Method method) noexcept
         return "SET_PARAMETER";
     // case Method::REDIRECT:
     //     return "REDIRECT";
-    // case Method::RECORD:
-    //     return "RECORD";
     }
 
     return nullptr;
