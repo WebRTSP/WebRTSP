@@ -33,10 +33,10 @@ const char* MethodName(Method method) noexcept
     switch(method) {
     case Method::NONE:
         return nullptr;
-    case Method::LIST:
-        return "LIST";
     case Method::OPTIONS:
         return "OPTIONS";
+    case Method::LIST:
+        return "LIST";
     case Method::DESCRIBE:
         return "DESCRIBE";
     // case Method::ANNOUNCE:
