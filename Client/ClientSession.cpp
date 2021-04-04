@@ -167,8 +167,13 @@ bool ClientSession::onSetupResponse(
     if(ResponseSession(response) != _p->session)
         return false;
 
-    if(RequestContentType(request) == "application/sdp")
+    const std::string contentType = RequestContentType(request);
+    if(contentType == "application/sdp")
         requestPlay(_p->uri, _p->session);
+    else if(contentType == "application/x-ice-candidate")
+        ;
+    else
+        return false;
 
     return true;
 }
