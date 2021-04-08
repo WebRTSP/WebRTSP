@@ -11,6 +11,11 @@ public:
         const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
         const std::function<void (const rtsp::Request*)>& sendRequest,
         const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
+    ServerSession(
+        const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
+        const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createRecordPeer,
+        const std::function<void (const rtsp::Request*)>& sendRequest,
+        const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
     ~ServerSession();
 
     void setIceServers(const WebRTCPeer::IceServers&);
@@ -18,8 +23,10 @@ public:
 private:
     bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onAnnounceRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onPlayRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onRecordRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 private:

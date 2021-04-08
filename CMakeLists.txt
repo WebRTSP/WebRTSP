@@ -33,6 +33,7 @@ add_subdirectory(Http)
 
 if(BUILD_TEST_APPS)
     add_subdirectory(Apps/Test)
+    add_subdirectory(Apps/RecordTest)
 endif()
 
 if(BUILD_BASIC_SERVER)

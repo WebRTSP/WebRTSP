@@ -19,11 +19,10 @@ struct ClientSession::Private
 
     std::string uri;
 
-    std::unique_ptr<WebRTCPeer> client;
-    std::string remoteSdp;
+    std::unique_ptr<WebRTCPeer> receiver;
     rtsp::SessionId session;
 
-    void streamerPrepared();
+    void receiverPrepared();
     void iceCandidate(unsigned, const std::string&);
     void eos();
 };
@@ -32,14 +31,14 @@ ClientSession::Private::Private(
     ClientSession* owner,
     const std::string& uri,
     std::function<std::unique_ptr<WebRTCPeer> ()> createPeer) :
-    owner(owner), uri(uri), client(createPeer())
+    owner(owner), uri(uri), receiver(createPeer())
 {
 }
 
-void ClientSession::Private::streamerPrepared()
+void ClientSession::Private::receiverPrepared()
 {
     std::string sdp;
-    client->sdp(&sdp);
+    receiver->sdp(&sdp);
     if(sdp.empty()) {
         owner->disconnect();
         return;
@@ -134,10 +133,10 @@ bool ClientSession::onDescribeResponse(
     if(_p->session.empty())
         return false;
 
-    _p->client->prepare(
+    _p->receiver->prepare(
         WebRTCPeer::IceServers(),
         std::bind(
-            &ClientSession::Private::streamerPrepared,
+            &ClientSession::Private::receiverPrepared,
             _p.get()),
         std::bind(
             &ClientSession::Private::iceCandidate,
@@ -148,11 +147,11 @@ bool ClientSession::onDescribeResponse(
             &ClientSession::Private::eos,
             _p.get()));
 
-    _p->remoteSdp = response.body;
-    if(_p->remoteSdp.empty())
+    const std::string& sdp = response.body;
+    if(sdp.empty())
         return false;
 
-    _p->client->setRemoteSdp(_p->remoteSdp);
+    _p->receiver->setRemoteSdp(sdp);
 
     return true;
 }
@@ -188,7 +187,7 @@ bool ClientSession::onPlayResponse(
     if(ResponseSession(response) != _p->session)
         return false;
 
-    _p->client->play();
+    _p->receiver->play();
 
     return true;
 }
@@ -232,7 +231,7 @@ bool ClientSession::onSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) n
         if(candidate.empty())
             return false;
 
-        _p->client->addIceCandidate(idx, candidate);
+        _p->receiver->addIceCandidate(idx, candidate);
 
         sendOkResponse(requestPtr->cseq, rtsp::RequestSession(*requestPtr));
 
