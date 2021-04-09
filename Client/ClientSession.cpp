@@ -37,9 +37,7 @@ ClientSession::Private::Private(
 
 void ClientSession::Private::receiverPrepared()
 {
-    std::string sdp;
-    receiver->sdp(&sdp);
-    if(sdp.empty()) {
+    if(receiver->sdp().empty()) {
         owner->disconnect();
         return;
     }
@@ -48,7 +46,7 @@ void ClientSession::Private::receiverPrepared()
         uri,
         "application/sdp",
         session,
-        sdp);
+        receiver->sdp());
 }
 
 void ClientSession::Private::iceCandidate(

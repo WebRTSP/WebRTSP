@@ -143,8 +143,7 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
     MediaSession& mediaSession = *(it->second);
     WebRTCPeer& localPeer = *mediaSession.localPeer;
 
-    std::string sdp;
-    if(!localPeer.sdp(&sdp))
+    if(localPeer.sdp().empty())
         owner->disconnect();
     else {
         rtsp::Response response;
@@ -152,7 +151,7 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
 
         response.headerFields.emplace("Content-Type", "application/sdp");
 
-        response.body.swap(sdp);
+        response.body = localPeer.sdp();
 
         owner->sendResponse(response);
 
@@ -184,8 +183,7 @@ void ServerSession::Private::recorderPrepared(rtsp::CSeq announceRequestCSeq)
     MediaSession& mediaSession = *(it->second);
     WebRTCPeer& recorder = *mediaSession.localPeer;
 
-    std::string sdp;
-    if(!recorder.sdp(&sdp))
+    if(recorder.sdp().empty())
         owner->disconnect();
     else {
         rtsp::Response response;
@@ -193,7 +191,7 @@ void ServerSession::Private::recorderPrepared(rtsp::CSeq announceRequestCSeq)
 
         response.headerFields.emplace("Content-Type", "application/sdp");
 
-        response.body.swap(sdp);
+        response.body = recorder.sdp();
 
         owner->sendResponse(response);
 

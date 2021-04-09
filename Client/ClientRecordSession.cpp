@@ -46,14 +46,12 @@ ClientRecordSession::Private::Private(
 
 void ClientRecordSession::Private::streamerPrepared()
 {
-    std::string sdp;
-    streamer->sdp(&sdp);
-    if(sdp.empty()) {
+    if(streamer->sdp().empty()) {
         owner->disconnect();
         return;
     }
 
-    owner->requestAnnounce(uri, sdp);
+    owner->requestAnnounce(uri, streamer->sdp());
 }
 
 void ClientRecordSession::Private::iceCandidate(
