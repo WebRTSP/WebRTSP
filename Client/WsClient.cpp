@@ -3,7 +3,7 @@
 #include <deque>
 #include <algorithm>
 
-#include "CxxPtr/libwebsocketsPtr.h"
+#include <CxxPtr/libwebsocketsPtr.h>
 
 #include "Common/MessageBuffer.h"
 #include "Common/LwsSource.h"

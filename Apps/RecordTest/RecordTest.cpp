@@ -3,7 +3,7 @@
 
 #include <CxxPtr/GlibPtr.h>
 
-#include "RtcStreaming/GstRtcStreaming/LibGst.h"
+#include "RtStreaming/GstRtStreaming/LibGst.h"
 
 #define ENABLE_SERVER 1
 #define ENABLE_CLIENT 1
@@ -14,12 +14,12 @@
     #include "Signalling/WsServer.h"
     #include "Signalling/ServerSession.h"
 
-    #include "RtcStreaming/GstRtcStreaming/GstTestStreamer.h"
-    #include "RtcStreaming/GstRtcStreaming/GstReStreamer.h"
+    #include "RtStreaming/GstRtStreaming/GstTestStreamer.h"
+    #include "RtStreaming/GstRtStreaming/GstReStreamer.h"
 #endif
 
 #if ENABLE_CLIENT
-    #include "RtcStreaming/GstRtcStreaming/GstClient.h"
+    #include "RtStreaming/GstRtStreaming/GstClient.h"
 
     #include "Client/Log.h"
     #include "Client/WsClient.h"

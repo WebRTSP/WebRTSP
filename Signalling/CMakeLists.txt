@@ -16,7 +16,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_link_libraries(${PROJECT_NAME}
     ${WS_LDFLAGS}
     RtspSession
-    Common)
+    Common
+    CxxPtr)
 
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})
