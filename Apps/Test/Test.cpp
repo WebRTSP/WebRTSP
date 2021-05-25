@@ -10,7 +10,6 @@
 
 #define ENABLE_SERVER 1
 #define ENABLE_CLIENT 1
-#define USE_RTSP_RESTREAMER 0
 #define USE_RESTREAMER 1
 
 #if ENABLE_SERVER
@@ -45,11 +44,7 @@ enum {
 #if ENABLE_SERVER
 static std::unique_ptr<WebRTCPeer> CreateServerPeer(const std::string& uri)
 {
-#if USE_RTSP_RESTREAMER
-    const std::string rtspSource =
-        uri;
-    return std::make_unique<GstRtspReStreamer>(rtspSource);
-#elif USE_RESTREAMER
+#if USE_RESTREAMER
     return std::make_unique<GstReStreamer>(uri);
 #else
     return std::make_unique<GstTestStreamer>();
@@ -75,7 +70,7 @@ static std::unique_ptr<rtsp::ClientSession> CreateClientSession (
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
     const std::string url =
-#if USE_RTSP_RESTREAMER || USE_RESTREAMER
+#if USE_RESTREAMER
         "rtsp://ipcam.stream:8554/bars";
 #elif ENABLE_SERVER
         "*";
