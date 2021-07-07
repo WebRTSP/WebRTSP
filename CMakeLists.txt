@@ -20,8 +20,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-add_subdirectory(Common)
-
+add_subdirectory(Helpers)
 add_subdirectory(RtspParser)
 add_subdirectory(RtspSession)
 add_subdirectory(RtStreaming)

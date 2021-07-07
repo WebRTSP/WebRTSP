@@ -5,8 +5,7 @@
 
 #include <CxxPtr/libwebsocketsPtr.h>
 
-#include "Common/MessageBuffer.h"
-#include "Common/LwsSource.h"
+#include "Helpers/MessageBuffer.h"
 #include "RtspParser/RtspSerialize.h"
 #include "RtspParser/RtspParser.h"
 
@@ -80,9 +79,6 @@ struct WsClient::Private
     CreateSession createSession;
     Disconnected disconnected;
 
-#if !defined(LWS_WITH_GLIB)
-    LwsSourcePtr lwsSourcePtr;
-#endif
     LwsContextPtr contextPtr;
 
     lws* connection = nullptr;
@@ -108,12 +104,6 @@ int WsClient::Private::wsCallback(
 {
     SessionContextData* scd = static_cast<SessionContextData*>(user);
     switch(reason) {
-#if !defined(LWS_WITH_GLIB)
-        case LWS_CALLBACK_ADD_POLL_FD:
-        case LWS_CALLBACK_DEL_POLL_FD:
-        case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
-            return LwsSourceCallback(lwsSourcePtr, wsi, reason, in, len);
-#endif
         case LWS_CALLBACK_CLIENT_ESTABLISHED: {
             Log()->info("Connection to server established.");
 
@@ -240,10 +230,8 @@ bool WsClient::Private::init()
     wsInfo.uid = -1;
     wsInfo.port = CONTEXT_PORT_NO_LISTEN;
     wsInfo.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
-#if defined(LWS_WITH_GLIB)
     wsInfo.options |= LWS_SERVER_OPTION_GLIB;
     wsInfo.foreign_loops = reinterpret_cast<void**>(&loop);
-#endif
     wsInfo.protocols = protocols;
 #if LWS_LIBRARY_VERSION_NUMBER < 4000000
     wsInfo.ws_ping_pong_interval = PING_INTERVAL;
@@ -258,12 +246,6 @@ bool WsClient::Private::init()
     lws_context* context = contextPtr.get();
     if(!context)
         return false;
-
-#if !defined(LWS_WITH_GLIB)
-    lwsSourcePtr = LwsSourceNew(context, g_main_context_get_thread_default());
-    if(!lwsSourcePtr)
-        return false;
-#endif
 
     return true;
 }

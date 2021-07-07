@@ -5,8 +5,6 @@
 
 #include <CxxPtr/libwebsocketsPtr.h>
 
-#include "Common/LwsSource.h"
-
 #include "Log.h"
 
 
@@ -31,9 +29,6 @@ struct Server::Private
     Config config;
     GMainLoop* loop;
 
-#if !defined(LWS_WITH_GLIB)
-    LwsSourcePtr lwsSourcePtr;
-#endif
     LwsContextPtr contextPtr;
 
     std::vector<uint8_t> configJsBuffer;
@@ -167,22 +162,14 @@ bool Server::Private::init(lws_context* context)
         info.gid = -1;
         info.uid = -1;
         info.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
-#if defined(LWS_WITH_GLIB)
         info.options |= LWS_SERVER_OPTION_GLIB;
         info.foreign_loops = reinterpret_cast<void**>(&loop);
-#endif
 
         contextPtr.reset(lws_create_context(&info));
         context = contextPtr.get();
     }
     if(!context)
         return false;
-
-#if !defined(LWS_WITH_GLIB)
-    lwsSourcePtr = LwsSourceNew(context, g_main_context_get_thread_default());
-    if(!lwsSourcePtr)
-        return false;
-#endif
 
     if(config.port != 0) {
         Log()->info("Starting HTTP server on port {}", config.port);

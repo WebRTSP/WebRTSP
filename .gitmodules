@@ -1,3 +1,6 @@
 [submodule "RtStreaming"]
 	path = RtStreaming
 	url = https://github.com/WebRTSP/RtStreaming.git
+[submodule "Helpers"]
+	path = Helpers
+	url = https://github.com/WebRTSP/Helpers.git

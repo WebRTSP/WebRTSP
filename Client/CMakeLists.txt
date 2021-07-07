@@ -26,7 +26,7 @@ target_link_libraries(${PROJECT_NAME}
     ${GSTREAMER_SDP_LDFLAGS}
     ${GSTREAMER_WEBRTC_LDFLAGS}
     GstRtStreaming
-    Common)
+    Helpers)
 
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})
