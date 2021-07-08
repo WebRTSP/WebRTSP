@@ -17,7 +17,7 @@ namespace http {
 class Server
 {
 public:
-    Server(const Config&, unsigned short webRTSPPort, GMainLoop*) noexcept;
+    Server(const Config&, const std::string& configJs, GMainLoop*) noexcept;
     bool init(lws_context* = nullptr) noexcept;
     ~Server();
 

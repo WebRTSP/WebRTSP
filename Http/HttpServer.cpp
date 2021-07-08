@@ -19,7 +19,7 @@ const auto Log = HttpServerLog;
 
 struct Server::Private
 {
-    Private(Server*, const Config&, unsigned short webRTSPPort, GMainLoop*);
+    Private(Server*, const Config&, const std::string& configJs, GMainLoop*);
 
     bool init(lws_context* context);
 
@@ -37,16 +37,13 @@ struct Server::Private
 Server::Private::Private(
     Server* owner,
     const Config& config,
-    unsigned short webRTSPPort,
+    const std::string& configJs,
     GMainLoop* loop) :
     owner(owner),
     config(config),
     loop(loop)
 {
-    const std::string configJs =
-        fmt::format("const WebRTSPPort = {} \r\n", webRTSPPort);
-    configJsBuffer.reserve(configJs.size());
-    configJsBuffer.insert(configJsBuffer.end(), configJs.begin(), configJs.end());
+    configJsBuffer.assign(configJs.begin(), configJs.end());
 }
 
 int Server::Private::httpCallback(
@@ -215,9 +212,9 @@ bool Server::Private::init(lws_context* context)
 
 Server::Server(
     const Config& config,
-    unsigned short webRTSPPort,
+    const std::string& configJs,
     GMainLoop* loop) noexcept :
-    _p(std::make_unique<Private>(this, config, webRTSPPort, loop))
+    _p(std::make_unique<Private>(this, config, configJs, loop))
 {
 }
 
