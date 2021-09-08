@@ -3,14 +3,14 @@
 #include <CxxPtr/GlibPtr.h>
 #include <CxxPtr/libwebsocketsPtr.h>
 
-#include "Common/LwsLog.h"
+#include "Helpers/LwsLog.h"
 #include "Http/Log.h"
 #include "Http/HttpServer.h"
 #include "Signalling/Log.h"
 #include "Signalling/WsServer.h"
 #include "Signalling/ServerSession.h"
-#include "GstStreaming/LibGst.h"
-#include "GstStreaming/GstTestStreamer.h"
+#include "RtStreaming/GstRtStreaming/LibGst.h"
+#include "RtStreaming/GstRtStreaming/GstTestStreamer.h"
 
 
 static std::unique_ptr<WebRTCPeer> CreatePeer(const std::string& uri)
@@ -47,7 +47,9 @@ int main(int argc, char *argv[])
     LwsContextPtr contextPtr(lws_create_context(&lwsInfo));
     lws_context* context = contextPtr.get();
 
-    http::Server httpServer(httpConfig, loop);
+    std::string configJs =
+        fmt::format("const WebRTSPPort = {};\r\n", config.port);
+    http::Server httpServer(httpConfig, configJs, loop);
     signalling::WsServer server(config, loop, CreateSession);
 
     if(httpServer.init(context) && server.init(context))

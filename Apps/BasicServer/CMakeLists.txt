@@ -14,7 +14,7 @@ target_link_libraries(${PROJECT_NAME}
     RtspParser
     Signalling
     Http
-    GstStreaming)
+    RtStreaming)
 
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})
