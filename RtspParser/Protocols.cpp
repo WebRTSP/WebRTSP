@@ -8,7 +8,7 @@ namespace rtsp {
 namespace {
 
 static const Protocol Protocols[] = {
-    Protocol::WEBRTSP_0_1,
+    Protocol::WEBRTSP_0_2,
 };
 
 static const unsigned ProtocolsCount = sizeof(Protocols) / sizeof(Protocols[0]);
@@ -20,8 +20,8 @@ const char* ProtocolName(Protocol protocol) noexcept
     switch(protocol) {
     case Protocol::NONE:
         return nullptr;
-    case Protocol::WEBRTSP_0_1:
-        return "WEBRTSP/0.1";
+    case Protocol::WEBRTSP_0_2:
+        return "WEBRTSP/0.2";
     }
 
     return nullptr;

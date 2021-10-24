@@ -23,7 +23,7 @@ Request* Session::createRequest(
                 Request {
                     .method = method,
                     .uri = {},
-                    .protocol = Protocol::WEBRTSP_0_1,
+                    .protocol = Protocol::WEBRTSP_0_2,
                     .cseq = _nextCSeq
                 });
 
@@ -70,7 +70,7 @@ Response* Session::prepareResponse(
     const SessionId& session,
     Response* out)
 {
-    out->protocol = Protocol::WEBRTSP_0_1;
+    out->protocol = Protocol::WEBRTSP_0_2;
     out->cseq = cseq;
     out->statusCode = statusCode;
     out->reasonPhrase = reasonPhrase;

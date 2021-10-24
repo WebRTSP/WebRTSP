@@ -411,14 +411,6 @@ bool ServerSession::onSetupRequest(
 
     WebRTCPeer& localPeer = *it->second->localPeer;
 
-    if(RequestContentType(*requestPtr) == "application/sdp") {
-        localPeer.setRemoteSdp(requestPtr->body);
-
-        sendOkResponse(requestPtr->cseq, session);
-
-        return true;
-    }
-
     if(RequestContentType(*requestPtr) != "application/x-ice-candidate")
         return false;
 
@@ -477,9 +469,12 @@ bool ServerSession::onPlayRequest(
     if(mediaSession.recorder)
         return false;
 
+    if(RequestContentType(*requestPtr) != "application/sdp")
+        return false;
+
     WebRTCPeer& localPeer = *(mediaSession.localPeer);
 
-    localPeer.play();
+    localPeer.setRemoteSdp(requestPtr->body);
 
     sendOkResponse(requestPtr->cseq, session);
 
