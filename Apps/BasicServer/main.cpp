@@ -34,6 +34,9 @@ int main(int argc, char *argv[])
     http::Config httpConfig {};
     signalling::Config config {};
 
+    InitWsServerLogger(spdlog::level::trace);
+    InitServerSessionLogger(spdlog::level::trace);
+
     GMainLoopPtr loopPtr(g_main_loop_new(nullptr, FALSE));
     GMainLoop* loop = loopPtr.get();
 
