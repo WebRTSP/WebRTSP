@@ -10,12 +10,14 @@
 #include "Signalling/WsServer.h"
 #include "Signalling/ServerSession.h"
 #include "RtStreaming/GstRtStreaming/LibGst.h"
-#include "RtStreaming/GstRtStreaming/GstTestStreamer.h"
+#include "RtStreaming/GstRtStreaming/GstTestStreamer2.h"
 
 
-static std::unique_ptr<WebRTCPeer> CreatePeer(const std::string& uri)
+GstTestStreamer2 streamer;
+
+static std::unique_ptr<WebRTCPeer> CreatePeer(const std::string&)
 {
-    return std::make_unique<GstTestStreamer>(uri);
+    return streamer.createPeer();
 }
 
 static std::unique_ptr<rtsp::ServerSession> CreateSession (
