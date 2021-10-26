@@ -51,7 +51,7 @@ void ClientRecordSession::Private::streamerPrepared()
         return;
     }
 
-    owner->requestAnnounce(uri, streamer->sdp());
+    owner->requestRecord(uri, streamer->sdp());
 }
 
 void ClientRecordSession::Private::iceCandidate(
@@ -102,7 +102,7 @@ bool ClientRecordSession::onConnected() noexcept
     return true;
 }
 
-bool ClientRecordSession::onAnnounceResponse(
+bool ClientRecordSession::onRecordResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
 {
@@ -138,7 +138,7 @@ bool ClientRecordSession::onAnnounceResponse(
         _p->iceCandidates.clear();
     }
 
-    requestRecord(_p->uri, _p->session);
+    _p->streamer->play();
 
     return true;
 }
@@ -158,21 +158,6 @@ bool ClientRecordSession::onSetupResponse(
         ;
      else
          return false;
-
-    return true;
-}
-
-bool ClientRecordSession::onRecordResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
-{
-    if(rtsp::StatusCode::OK != response.statusCode)
-        return false;
-
-    if(ResponseSession(response) != _p->session)
-        return false;
-
-    _p->streamer->play();
 
     return true;
 }

@@ -12,7 +12,6 @@ enum class Method {
     OPTIONS,
     LIST,
     DESCRIBE,
-    ANNOUNCE,
     SETUP,
     PLAY,
     RECORD,

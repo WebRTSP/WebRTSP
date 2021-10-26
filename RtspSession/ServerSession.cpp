@@ -13,8 +13,6 @@ bool ServerSession::handleRequest(
         return onListRequest(requestPtr);
     case Method::DESCRIBE:
         return onDescribeRequest(requestPtr);
-    case Method::ANNOUNCE:
-        return onAnnounceRequest(requestPtr);
     case Method::SETUP:
         return onSetupRequest(requestPtr);
     case Method::PLAY:

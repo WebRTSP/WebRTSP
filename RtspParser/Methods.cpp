@@ -13,7 +13,6 @@ static const Method Methods[] = {
     Method::OPTIONS,
     Method::LIST,
     Method::DESCRIBE,
-    Method::ANNOUNCE,
     Method::SETUP,
     Method::PLAY,
     Method::RECORD,
@@ -39,8 +38,6 @@ const char* MethodName(Method method) noexcept
         return "LIST";
     case Method::DESCRIBE:
         return "DESCRIBE";
-    case Method::ANNOUNCE:
-        return "ANNOUNCE";
     case Method::SETUP:
         return "SETUP";
     case Method::PLAY:

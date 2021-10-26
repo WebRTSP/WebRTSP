@@ -21,8 +21,6 @@ public:
 protected:
     void setUri(const std::string&);
 
-    bool onAnnounceResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept override;
     bool onSetupResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept override;
     bool onRecordResponse(

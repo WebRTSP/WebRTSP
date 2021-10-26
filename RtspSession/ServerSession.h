@@ -24,8 +24,6 @@ protected:
         { return false; }
     virtual bool onDescribeRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
-    virtual bool onAnnounceRequest(std::unique_ptr<Request>&) noexcept
-        { return false; }
     virtual bool onPlayRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
     virtual bool onRecordRequest(std::unique_ptr<Request>&) noexcept

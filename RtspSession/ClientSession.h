@@ -27,9 +27,8 @@ protected:
     CSeq requestOptions(const std::string& uri) noexcept;
     CSeq requestList() noexcept;
     CSeq requestDescribe(const std::string& uri) noexcept;
-    CSeq requestAnnounce(const std::string& uri, const std::string& sdp) noexcept;
+    CSeq requestRecord(const std::string& uri, const std::string& sdp) noexcept;
     CSeq requestPlay(const std::string& uri, const SessionId&) noexcept;
-    CSeq requestRecord(const std::string& uri, const SessionId&) noexcept;
     CSeq requestTeardown(const std::string& uri, const SessionId&) noexcept;
 
     virtual bool onOptionsResponse(
@@ -38,9 +37,6 @@ protected:
         const Request&, const Response&) noexcept
         { return false; }
     virtual bool onDescribeResponse(
-        const Request&, const Response&) noexcept
-        { return false; }
-    virtual bool onAnnounceResponse(
         const Request&, const Response&) noexcept
         { return false; }
     virtual bool onPlayResponse(

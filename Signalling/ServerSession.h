@@ -23,7 +23,6 @@ public:
 private:
     bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool onAnnounceRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onPlayRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onRecordRequest(std::unique_ptr<rtsp::Request>&) noexcept override;

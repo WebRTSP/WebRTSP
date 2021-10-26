@@ -52,7 +52,7 @@ struct ServerSession::Private
     std::deque<std::string> iceServers;
 
     Requests describeRequests;
-    Requests announceRequests;
+    Requests recordRequests;
     MediaSessions mediaSessions;
 
     bool recordEnabled()
@@ -62,7 +62,7 @@ struct ServerSession::Private
         { return std::to_string(_nextSession++); }
 
     void streamerPrepared(rtsp::CSeq describeRequestCSeq);
-    void recorderPrepared(rtsp::CSeq announceRequestCSeq);
+    void recorderPrepared(rtsp::CSeq recordRequestCSeq);
     void iceCandidate(
         const rtsp::SessionId&,
         unsigned, const std::string&);
@@ -95,7 +95,7 @@ struct ServerSession::Private::AutoEraseRecordRequest
         Requests::const_iterator it) :
         _owner(owner), _it(it) {}
     ~AutoEraseRecordRequest()
-        { if(_owner) _owner->announceRequests.erase(_it); }
+        { if(_owner) _owner->recordRequests.erase(_it); }
     void discard()
         { _owner = nullptr; }
 
@@ -159,11 +159,11 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
     }
 }
 
-void ServerSession::Private::recorderPrepared(rtsp::CSeq announceRequestCSeq)
+void ServerSession::Private::recorderPrepared(rtsp::CSeq recordRequestCSeq)
 {
-    auto requestIt = announceRequests.find(announceRequestCSeq);
-    if(announceRequests.end() == requestIt ||
-       rtsp::Method::ANNOUNCE != requestIt->second.requestPtr->method)
+    auto requestIt = recordRequests.find(recordRequestCSeq);
+    if(recordRequests.end() == requestIt ||
+       rtsp::Method::RECORD != requestIt->second.requestPtr->method)
     {
         owner->disconnect();
         return;
@@ -263,7 +263,7 @@ bool ServerSession::onOptionsRequest(
     response.headerFields.emplace(
         "Public",
         _p->recordEnabled() ?
-            "DESCRIBE, ANNOUNCE, SETUP, PLAY, RECORD, TEARDOWN" :
+            "DESCRIBE, SETUP, PLAY, RECORD, TEARDOWN" :
             "DESCRIBE, SETUP, PLAY, TEARDOWN");
 
     sendResponse(response);
@@ -329,7 +329,7 @@ bool ServerSession::onDescribeRequest(
     return true;
 }
 
-bool ServerSession::onAnnounceRequest(
+bool ServerSession::onRecordRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     if(!_p->recordEnabled())
@@ -345,7 +345,7 @@ bool ServerSession::onAnnounceRequest(
 
     const rtsp::SessionId session = _p->nextSession();
     auto requestPair =
-        _p->announceRequests.emplace(
+        _p->recordRequests.emplace(
             requestPtr->cseq,
             RequestInfo {
                 .requestPtr = nullptr,
@@ -396,6 +396,10 @@ bool ServerSession::onAnnounceRequest(
     mediaSession.localPeer->setRemoteSdp(sdp);
 
     autoEraseRequest.discard();
+
+    WebRTCPeer& localPeer = *(mediaSession.localPeer);
+
+    localPeer.play();
 
     return true;
 }
@@ -475,33 +479,6 @@ bool ServerSession::onPlayRequest(
     WebRTCPeer& localPeer = *(mediaSession.localPeer);
 
     localPeer.setRemoteSdp(requestPtr->body);
-
-    sendOkResponse(requestPtr->cseq, session);
-
-    return true;
-}
-
-bool ServerSession::onRecordRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
-{
-    if(!_p->recordEnabled())
-        return false;
-
-    const rtsp::SessionId session = RequestSession(*requestPtr);
-    if(session.empty())
-        return false;
-
-    auto it = _p->mediaSessions.find(session);
-    if(it == _p->mediaSessions.end())
-        return false;
-
-    MediaSession& mediaSession = *it->second;
-    if(!mediaSession.recorder)
-        return false;
-
-    WebRTCPeer& localPeer = *(mediaSession.localPeer);
-
-    localPeer.play();
 
     sendOkResponse(requestPtr->cseq, session);
 

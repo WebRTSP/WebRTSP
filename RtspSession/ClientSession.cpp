@@ -46,12 +46,12 @@ CSeq ClientSession::requestDescribe(const std::string& uri) noexcept
     return request.cseq;
 }
 
-CSeq ClientSession::requestAnnounce(
+CSeq ClientSession::requestRecord(
     const std::string& uri,
     const std::string& sdp) noexcept
 {
     Request& request =
-        *createRequest(Method::ANNOUNCE, uri);
+        *createRequest(Method::RECORD, uri);
 
     request.headerFields.emplace("Content-Type", "application/sdp");
 
@@ -68,18 +68,6 @@ CSeq ClientSession::requestPlay(
 {
     Request& request =
         *createRequest(Method::PLAY, uri, session);
-
-    sendRequest(request);
-
-    return request.cseq;
-}
-
-CSeq ClientSession::requestRecord(
-    const std::string& uri,
-    const SessionId& session) noexcept
-{
-    Request& request =
-        *createRequest(Method::RECORD, uri, session);
 
     sendRequest(request);
 
@@ -109,8 +97,6 @@ bool ClientSession::handleResponse(
             return onListResponse(request, *responsePtr);
         case Method::DESCRIBE:
             return onDescribeResponse(request, *responsePtr);
-        case Method::ANNOUNCE:
-            return onAnnounceResponse(request, *responsePtr);
         case Method::PLAY:
             return onPlayResponse(request, *responsePtr);
         case Method::RECORD:
