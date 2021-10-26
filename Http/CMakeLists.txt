@@ -17,7 +17,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${WS_INCLUDE_DIRS}
     ${SPDLOG_INCLUDE_DIRS}
     ${GLIB_INCLUDE_DIRS})
-target_compile_definitions(${PROJECT_NAME} PRIVATE ${SPDLOG_CFLAGS})
+target_compile_options(${PROJECT_NAME} PRIVATE ${SPDLOG_CFLAGS})
 target_link_libraries(${PROJECT_NAME}
     ${WS_LDFLAGS}
     ${SPDLOG_LIBRARIES}
