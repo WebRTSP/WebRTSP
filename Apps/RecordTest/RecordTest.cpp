@@ -6,6 +6,8 @@
 #include "RtStreaming/GstRtStreaming/LibGst.h"
 
 #define ENABLE_SERVER 1
+#define USE_RECORD_STREAMER 1
+
 #define ENABLE_CLIENT 1
 #define USE_RESTREAMER 0
 
@@ -16,6 +18,7 @@
 
     #include "RtStreaming/GstRtStreaming/GstTestStreamer.h"
     #include "RtStreaming/GstRtStreaming/GstReStreamer.h"
+    #include "RtStreaming/GstRtStreaming/GstRecordStreamer.h"
 #endif
 
 #if ENABLE_CLIENT
@@ -39,14 +42,26 @@ enum {
 
 
 #if ENABLE_SERVER
+#if USE_RECORD_STREAMER
+    GstRecordStreamer recordStreamer;
+#endif
+
 static std::unique_ptr<WebRTCPeer> CreateServerPeer(const std::string&)
 {
+#if USE_RECORD_STREAMER
+    return recordStreamer.createPeer();
+#else
     return std::make_unique<GstTestStreamer>();
+#endif
 }
 
 static std::unique_ptr<WebRTCPeer> CreateServerRecordPeer(const std::string&)
 {
+#if USE_RECORD_STREAMER
+    return recordStreamer.createRecordPeer();
+#else
     return std::make_unique<GstClient>();
+#endif
 }
 
 
@@ -133,7 +148,8 @@ int main(int argc, char *argv[])
 #if ENABLE_SERVER
     std::thread signallingThread(
         [] () {
-            InitWsServerLogger(spdlog::level::info);
+            InitWsServerLogger(spdlog::level::trace);
+            InitServerSessionLogger(spdlog::level::trace);
 
             signalling::Config config {};
             config.port = SERVER_PORT;
