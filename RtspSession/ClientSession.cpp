@@ -57,7 +57,7 @@ CSeq ClientSession::requestRecord(
     request.headerFields.emplace("Content-Type", "application/sdp");
 
     if(!token.empty())
-        request.headerFields.emplace("Authorization", token);
+        request.headerFields.emplace("Authorization", "Bearer " + token);
 
     request.body.assign(sdp);
 
