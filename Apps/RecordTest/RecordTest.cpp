@@ -122,7 +122,7 @@ static std::unique_ptr<rtsp::ClientSession> CreateClientSession (
 #if USE_RESTREAMER
         "rtsp://ipcam.stream:8554/bars";
 #else
-        "Bars";
+        "Record";
 #endif
     return
         std::make_unique<TestRecordSession>(
