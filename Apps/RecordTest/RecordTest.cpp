@@ -11,6 +11,8 @@
 #define ENABLE_CLIENT 1
 #define USE_RESTREAMER 0
 
+#define RECORD_TOKEN "token"
+
 #if ENABLE_SERVER
     #include "Signalling/Log.h"
     #include "Signalling/WsServer.h"
@@ -100,7 +102,7 @@ bool TestRecordSession::onOptionsResponse(
     if(!isSupported(rtsp::Method::RECORD))
         return false;
 
-    startRecord();
+    startRecord(RECORD_TOKEN);
 
     return true;
 }

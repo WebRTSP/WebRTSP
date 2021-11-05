@@ -48,12 +48,16 @@ CSeq ClientSession::requestDescribe(const std::string& uri) noexcept
 
 CSeq ClientSession::requestRecord(
     const std::string& uri,
-    const std::string& sdp) noexcept
+    const std::string& sdp,
+    const std::string& token) noexcept
 {
     Request& request =
         *createRequest(Method::RECORD, uri);
 
     request.headerFields.emplace("Content-Type", "application/sdp");
+
+    if(!token.empty())
+        request.headerFields.emplace("Authorization", token);
 
     request.body.assign(sdp);
 

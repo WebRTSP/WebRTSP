@@ -16,7 +16,7 @@ public:
 
     bool onConnected() noexcept override;
 
-    void startRecord();
+    void startRecord(const std::string& recordToken);
 
 protected:
     void setUri(const std::string&);

@@ -26,6 +26,7 @@ struct ClientRecordSession::Private
     ClientRecordSession* owner;
 
     std::string uri;
+    std::string recordToken;
 
     std::unique_ptr<WebRTCPeer> streamer;
     std::deque<IceCandidate> iceCandidates;
@@ -51,7 +52,7 @@ void ClientRecordSession::Private::streamerPrepared()
         return;
     }
 
-    owner->requestRecord(uri, streamer->sdp());
+    owner->requestRecord(uri, streamer->sdp(), recordToken);
 }
 
 void ClientRecordSession::Private::iceCandidate(
@@ -211,9 +212,9 @@ bool ClientRecordSession::onSetupRequest(std::unique_ptr<rtsp::Request>& request
     }
 }
 
-
-void ClientRecordSession::startRecord()
+void ClientRecordSession::startRecord(const std::string& recordToken)
 {
+    _p->recordToken = recordToken;
     _p->streamer->prepare(
         WebRTCPeer::IceServers(),
         std::bind(
