@@ -20,6 +20,10 @@ public:
 
     void setIceServers(const WebRTCPeer::IceServers&);
 
+protected:
+    virtual bool listEnabled() noexcept { return false; }
+    virtual bool recordEnabled(const std::string& uri) noexcept;
+
 private:
     bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;

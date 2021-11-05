@@ -260,11 +260,16 @@ bool ServerSession::onOptionsRequest(
     rtsp::Response response;
     prepareOkResponse(requestPtr->cseq, rtsp::SessionId(), &response);
 
-    response.headerFields.emplace(
-        "Public",
-        _p->recordEnabled() ?
+    std::string options;
+    if(listEnabled())
+        options += "LIST, ";
+
+    options +=
+        recordEnabled(requestPtr->uri) && _p->recordEnabled() ?
             "DESCRIBE, SETUP, PLAY, RECORD, TEARDOWN" :
-            "DESCRIBE, SETUP, PLAY, TEARDOWN");
+            "DESCRIBE, SETUP, PLAY, TEARDOWN";
+
+    response.headerFields.emplace("Public", options);
 
     sendResponse(response);
 
@@ -329,10 +334,15 @@ bool ServerSession::onDescribeRequest(
     return true;
 }
 
+bool ServerSession::recordEnabled(const std::string&) noexcept
+{
+    return false;
+}
+
 bool ServerSession::onRecordRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    if(!_p->recordEnabled())
+    if(!recordEnabled(requestPtr->uri) || !_p->recordEnabled())
         return false;
 
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createRecordPeer(requestPtr->uri);
