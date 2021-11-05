@@ -204,6 +204,7 @@ int main(int argc, char *argv[])
     std::thread clientThread(
         [] () {
             InitWsClientLogger(spdlog::level::info);
+            InitClientSessionLogger(spdlog::level::info);
 
             client::Config config {};
             config.server = SERVER_HOST;
