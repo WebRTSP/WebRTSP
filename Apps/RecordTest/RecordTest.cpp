@@ -14,6 +14,8 @@
 #define RECORD_TOKEN "token"
 
 #if ENABLE_SERVER
+    #include "RtspParser/RtspParser.h"
+
     #include "Signalling/Log.h"
     #include "Signalling/WsServer.h"
     #include "Signalling/ServerSession.h"
@@ -67,13 +69,38 @@ static std::unique_ptr<WebRTCPeer> CreateServerRecordPeer(const std::string&)
 #endif
 }
 
+struct TestServerRecordSession : public ServerSession
+{
+public:
+    using ServerSession::ServerSession;
+
+protected:
+    bool recordEnabled(const std::string&) noexcept override
+        { return true; }
+
+    bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept override;
+};
+
+bool TestServerRecordSession::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    if(requestPtr->method != rtsp::Method::RECORD)
+        return ServerSession::authorize(requestPtr);
+
+    const std::pair<rtsp::Authentication, std::string> authPair =
+        rtsp::ParseAuthentication(*requestPtr);
+
+    if(authPair.first != rtsp::Authentication::Bearer)
+        return false;
+
+    return authPair.second == RECORD_TOKEN;
+}
 
 static std::unique_ptr<rtsp::ServerSession> CreateServerSession (
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
 {
     return
-        std::make_unique<ServerSession>(
+        std::make_unique<TestServerRecordSession>(
             CreateServerPeer,
             CreateServerRecordPeer,
             sendRequest,
