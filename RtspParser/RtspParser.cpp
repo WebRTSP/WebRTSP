@@ -645,7 +645,7 @@ std::pair<Authentication, std::string> ParseAuthentication(const Request& reques
     if(IsEOS(pos, size))
         return std::make_pair(authentication, std::string());
 
-    return std::make_pair(Authentication::None, std::string(pos, size));
+    return std::make_pair(authentication, std::string(buf + pos, size - pos));
 }
 
 }
