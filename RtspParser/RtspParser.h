@@ -6,6 +6,7 @@
 #include "Common.h"
 #include "Request.h"
 #include "Response.h"
+#include "Authentication.h"
 
 
 namespace rtsp {
@@ -28,5 +29,7 @@ bool ParseParametersNames(
     ParametersNames*) noexcept;
 
 std::set<rtsp::Method> ParseOptions(const Response&);
+
+std::pair<Authentication, std::string> ParseAuthentication(const Request&);
 
 }

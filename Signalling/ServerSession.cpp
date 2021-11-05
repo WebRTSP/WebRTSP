@@ -339,10 +339,18 @@ bool ServerSession::recordEnabled(const std::string&) noexcept
     return false;
 }
 
+bool ServerSession::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    return requestPtr->method != rtsp::Method::RECORD;
+}
+
 bool ServerSession::onRecordRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     if(!recordEnabled(requestPtr->uri) || !_p->recordEnabled())
+        return false;
+
+    if(!authorize(requestPtr))
         return false;
 
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createRecordPeer(requestPtr->uri);

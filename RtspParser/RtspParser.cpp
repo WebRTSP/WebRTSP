@@ -624,4 +624,28 @@ std::set<rtsp::Method> ParseOptions(const Response& response)
     return returnOptions;
 }
 
+std::pair<Authentication, std::string> ParseAuthentication(const Request& request)
+{
+    auto it = request.headerFields.find("authorization");
+    if(it == request.headerFields.end())
+        return std::make_pair(Authentication::None, std::string());
+
+    const char* buf = it->second.data();
+    size_t size = it->second.size();
+    size_t pos = 0;
+
+    const Token token = GetToken(buf, &pos, size);
+
+    Authentication authentication = ParseAuthentication(token);
+    if(Authentication::Unknown == authentication)
+        return std::make_pair(Authentication::Unknown, std::string());
+
+    SkipWSP(buf, &pos, size);
+
+    if(IsEOS(pos, size))
+        return std::make_pair(authentication, std::string());
+
+    return std::make_pair(Authentication::None, std::string(pos, size));
+}
+
 }

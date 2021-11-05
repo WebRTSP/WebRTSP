@@ -23,6 +23,7 @@ public:
 protected:
     virtual bool listEnabled() noexcept { return false; }
     virtual bool recordEnabled(const std::string& uri) noexcept;
+    virtual bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept;
 
 private:
     bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
