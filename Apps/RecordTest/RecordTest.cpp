@@ -16,7 +16,6 @@
     #include "Signalling/WsServer.h"
     #include "Signalling/ServerSession.h"
 
-    #include "RtStreaming/GstRtStreaming/GstTestStreamer.h"
     #include "RtStreaming/GstRtStreaming/GstReStreamer.h"
     #include "RtStreaming/GstRtStreaming/GstRecordStreamer.h"
 #endif
@@ -28,6 +27,8 @@
     #include "Client/WsClient.h"
     #include "Client/ClientRecordSession.h"
 #endif
+
+#include "RtStreaming/GstRtStreaming/GstTestStreamer.h"
 
 #if ENABLE_SERVER
     #define SERVER_HOST "localhost"
