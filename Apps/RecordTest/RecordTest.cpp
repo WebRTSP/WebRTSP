@@ -96,6 +96,9 @@ bool TestRecordSession::onOptionsResponse(
     if(!ClientRecordSession::onOptionsResponse(request, response))
         return false;
 
+    if(!isSupported(rtsp::Method::RECORD))
+        return false;
+
     startRecord();
 
     return true;
