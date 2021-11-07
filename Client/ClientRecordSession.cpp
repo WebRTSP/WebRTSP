@@ -1,20 +1,12 @@
 #include "ClientRecordSession.h"
 
 #include "RtspSession/StatusCode.h"
+#include "RtspSession/IceCandidate.h"
 
 #include "Log.h"
 
 
 static const auto Log = ClientSessionLog;
-
-namespace {
-
-struct IceCandidate {
-    unsigned mlineIndex;
-    std::string candidate;
-};
-
-}
 
 struct ClientRecordSession::Private
 {
@@ -29,7 +21,7 @@ struct ClientRecordSession::Private
     std::string recordToken;
 
     std::unique_ptr<WebRTCPeer> streamer;
-    std::deque<IceCandidate> iceCandidates;
+    std::deque<rtsp::IceCandidate> iceCandidates;
     rtsp::SessionId session;
 
     void streamerPrepared();
@@ -59,7 +51,7 @@ void ClientRecordSession::Private::iceCandidate(
     unsigned mlineIndex, const std::string& candidate)
 {
     if(session.empty()) {
-        iceCandidates.emplace_back(IceCandidate { mlineIndex, candidate });
+        iceCandidates.emplace_back(rtsp::IceCandidate { mlineIndex, candidate });
     } else {
         owner->requestSetup(
             uri,
@@ -123,7 +115,7 @@ bool ClientRecordSession::onRecordResponse(
 
     if(!_p->iceCandidates.empty()) {
         std::string iceCandidates;
-        for(const IceCandidate& c : _p->iceCandidates) {
+        for(const rtsp::IceCandidate& c : _p->iceCandidates) {
             iceCandidates +=
                 std::to_string(c.mlineIndex) + "/" + c.candidate + "\r\n";
         }
