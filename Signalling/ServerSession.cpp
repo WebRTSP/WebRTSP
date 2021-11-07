@@ -4,6 +4,7 @@
 #include <map>
 
 #include "RtspSession/StatusCode.h"
+#include "RtspSession/IceCandidate.h"
 
 #include "Log.h"
 
@@ -16,6 +17,8 @@ struct MediaSession
     std::string uri;
     std::unique_ptr<rtsp::Request> createRequest; // describe or announce
     std::unique_ptr<WebRTCPeer> localPeer;
+    std::deque<rtsp::IceCandidate> iceCandidates;
+    bool prepared = false;
 };
 
 typedef std::map<rtsp::SessionId, std::unique_ptr<MediaSession>> MediaSessions;
@@ -61,6 +64,7 @@ struct ServerSession::Private
     std::string nextSession()
         { return std::to_string(_nextSession++); }
 
+    void sendIceCandidates(const rtsp::SessionId&, MediaSession* mediaSession);
     void streamerPrepared(rtsp::CSeq describeRequestCSeq);
     void recorderPrepared(rtsp::CSeq recordRequestCSeq);
     void iceCandidate(
@@ -119,6 +123,29 @@ ServerSession::Private::Private(
 {
 }
 
+void ServerSession::Private::sendIceCandidates(
+    const rtsp::SessionId& session,
+    MediaSession* mediaSession)
+{
+    if(!mediaSession->iceCandidates.empty()) {
+        std::string iceCandidates;
+        for(const rtsp::IceCandidate& c : mediaSession->iceCandidates) {
+            iceCandidates +=
+                std::to_string(c.mlineIndex) + "/" + c.candidate + "\r\n";
+        }
+
+        if(!mediaSession->iceCandidates.empty()) {
+            owner->requestSetup(
+                mediaSession->uri,
+                "application/x-ice-candidate",
+                session,
+                iceCandidates);
+        }
+
+        mediaSession->iceCandidates.clear();
+    }
+}
+
 void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
 {
     auto requestIt = describeRequests.find(describeRequestCSeq);
@@ -143,6 +170,8 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
     MediaSession& mediaSession = *(it->second);
     WebRTCPeer& localPeer = *mediaSession.localPeer;
 
+    mediaSession.prepared = true;
+
     if(localPeer.sdp().empty())
         owner->disconnect();
     else {
@@ -156,6 +185,8 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
         owner->sendResponse(response);
 
         mediaSession.createRequest.swap(requestInfo.requestPtr);
+
+        sendIceCandidates(session, &mediaSession);
     }
 }
 
@@ -183,6 +214,8 @@ void ServerSession::Private::recorderPrepared(rtsp::CSeq recordRequestCSeq)
     MediaSession& mediaSession = *(it->second);
     WebRTCPeer& recorder = *mediaSession.localPeer;
 
+    mediaSession.prepared = true;
+
     if(recorder.sdp().empty())
         owner->disconnect();
     else {
@@ -196,6 +229,8 @@ void ServerSession::Private::recorderPrepared(rtsp::CSeq recordRequestCSeq)
         owner->sendResponse(response);
 
         mediaSession.createRequest.swap(requestInfo.requestPtr);
+
+        sendIceCandidates(session, &mediaSession);
     }
 }
 
@@ -209,13 +244,16 @@ void ServerSession::Private::iceCandidate(
         return;
     }
 
-    const MediaSession& mediaSession = *(it->second);
-
-    owner->requestSetup(
-        mediaSession.uri,
-        "application/x-ice-candidate",
-        session,
-        std::to_string(mlineIndex) + "/" + candidate + "\r\n");
+    MediaSession& mediaSession = *(it->second);
+    if(mediaSession.prepared) {
+        owner->requestSetup(
+            mediaSession.uri,
+            "application/x-ice-candidate",
+            session,
+            std::to_string(mlineIndex) + "/" + candidate + "\r\n");
+    } else {
+        mediaSession.iceCandidates.emplace_back(rtsp::IceCandidate { mlineIndex, candidate });
+    }
 }
 
 void ServerSession::Private::eos(const rtsp::SessionId& session)
