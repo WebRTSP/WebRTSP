@@ -107,10 +107,9 @@ protected:
     virtual void onEos() noexcept;
 
 private:
+    const IceServers _iceServers;
     const std::function<void (const Request*)> _sendRequest;
     const std::function<void (const Response*)> _sendResponse;
-
-    IceServers _iceServers;
 
     CSeq _nextCSeq = 1;
 
