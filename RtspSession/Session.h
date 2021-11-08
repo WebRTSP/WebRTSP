@@ -3,6 +3,7 @@
 #include <memory>
 #include <functional>
 #include <map>
+#include <deque>
 
 #include "RtspParser/Request.h"
 #include "RtspParser/Response.h"
@@ -16,6 +17,10 @@ struct Session
 {
     virtual ~Session() {}
 
+    typedef std::deque<std::string> IceServers;
+
+    const IceServers& iceServers() const noexcept;
+
     virtual bool onConnected() noexcept { return true; }
 
     virtual bool handleRequest(std::unique_ptr<Request>&) noexcept;
@@ -24,6 +29,7 @@ struct Session
 
 protected:
     Session(
+        const IceServers&,
         const std::function<void (const Request*)>& sendRequest,
         const std::function<void (const Response*)>& sendResponse) noexcept;
 
@@ -103,6 +109,8 @@ protected:
 private:
     const std::function<void (const Request*)> _sendRequest;
     const std::function<void (const Response*)> _sendResponse;
+
+    IceServers _iceServers;
 
     CSeq _nextCSeq = 1;
 

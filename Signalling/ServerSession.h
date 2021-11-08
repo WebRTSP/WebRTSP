@@ -8,17 +8,17 @@ class ServerSession: public rtsp::ServerSession
 {
 public:
     ServerSession(
+        const IceServers&,
         const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
         const std::function<void (const rtsp::Request*)>& sendRequest,
         const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
     ServerSession(
+        const IceServers&,
         const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
         const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createRecordPeer,
         const std::function<void (const rtsp::Request*)>& sendRequest,
         const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
     ~ServerSession();
-
-    void setIceServers(const WebRTCPeer::IceServers&);
 
 protected:
     virtual bool listEnabled() noexcept { return false; }

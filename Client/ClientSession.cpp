@@ -69,19 +69,21 @@ void ClientSession::Private::eos()
 
 ClientSession::ClientSession(
     const std::string& uri,
+    const IceServers& iceServers,
     const std::function<std::unique_ptr<WebRTCPeer> ()>& createPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
-    rtsp::ClientSession(sendRequest, sendResponse),
+    rtsp::ClientSession(iceServers, sendRequest, sendResponse),
     _p(new Private(this, uri, createPeer))
 {
 }
 
 ClientSession::ClientSession(
+    const IceServers& iceServers,
     const std::function<std::unique_ptr<WebRTCPeer> () noexcept>& createPeer,
     const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
     const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept :
-    ClientSession(std::string(), createPeer, sendRequest, sendResponse)
+    ClientSession(std::string(), iceServers, createPeer, sendRequest, sendResponse)
 {
 }
 

@@ -71,10 +71,11 @@ void ClientRecordSession::Private::eos()
 
 ClientRecordSession::ClientRecordSession(
     const std::string& uri,
+    const IceServers& iceServers,
     const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
-    rtsp::ClientSession(sendRequest, sendResponse),
+    rtsp::ClientSession(iceServers, sendRequest, sendResponse),
     _p(new Private(this, uri, createPeer))
 {
 }
@@ -208,7 +209,7 @@ void ClientRecordSession::startRecord(const std::string& recordToken)
 {
     _p->recordToken = recordToken;
     _p->streamer->prepare(
-        WebRTCPeer::IceServers(),
+        iceServers(),
         std::bind(
             &ClientRecordSession::Private::streamerPrepared,
             _p.get()),

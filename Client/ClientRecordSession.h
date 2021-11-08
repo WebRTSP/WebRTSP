@@ -9,6 +9,7 @@ class ClientRecordSession : public rtsp::ClientSession
 public:
     ClientRecordSession(
         const std::string& uri,
+        const IceServers&,
         const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri) noexcept>& createPeer,
         const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
         const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept;

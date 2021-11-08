@@ -6,10 +6,18 @@
 namespace rtsp {
 
 Session::Session(
+    const IceServers& iceServers,
     const std::function<void (const Request*)>& sendRequest,
     const std::function<void (const Response*)>& sendResponse) noexcept :
-    _sendRequest(sendRequest), _sendResponse(sendResponse)
+    _iceServers(iceServers),
+    _sendRequest(sendRequest),
+    _sendResponse(sendResponse)
 {
+}
+
+const Session::IceServers& Session::iceServers() const noexcept
+{
+    return _iceServers;
 }
 
 Request* Session::createRequest(
