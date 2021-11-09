@@ -385,8 +385,10 @@ bool ServerSession::onRecordRequest(
     if(!recordEnabled(requestPtr->uri) || !_p->recordEnabled())
         return false;
 
-    if(!authorize(requestPtr))
+    if(!authorize(requestPtr)) {
+        Log()->error("RECORD authorize failed for \"{}\"", requestPtr->uri);
         return false;
+    }
 
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createRecordPeer(requestPtr->uri);
     if(!peerPtr)
