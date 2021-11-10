@@ -510,7 +510,6 @@ bool ServerSession::onSetupRequest(
     sendOkResponse(requestPtr->cseq, session);
 
     return true;
-
 }
 
 bool ServerSession::onPlayRequest(
