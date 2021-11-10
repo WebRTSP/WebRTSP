@@ -212,32 +212,40 @@ bool ClientSession::onSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) n
 
     const std::string& ice = requestPtr->body;
 
-    const std::string::size_type delimiterPos = ice.find("/");
-    if(delimiterPos == std::string::npos || 0 == delimiterPos)
-        return false;
-
-    const std::string::size_type lineEndPos = ice.find("\r\n", delimiterPos + 1);
-    if(lineEndPos == std::string::npos)
-        return false;
-
-    try{
-        int idx = std::stoi(ice.substr(0, delimiterPos - 0));
-        if(idx < 0)
+    std::string::size_type pos = 0;
+    while(pos < ice.size()) {
+        const std::string::size_type lineEndPos = ice.find("\r\n", pos);
+        if(lineEndPos == std::string::npos)
             return false;
 
-        const std::string candidate =
-            ice.substr(delimiterPos + 1, lineEndPos - (delimiterPos + 1));
+        const std::string line = ice.substr(pos, lineEndPos - pos);
 
-        if(candidate.empty())
+        const std::string::size_type delimiterPos = line.find("/");
+        if(delimiterPos == std::string::npos || 0 == delimiterPos)
             return false;
 
-        _p->receiver->addIceCandidate(idx, candidate);
+        try{
+            const int idx = std::stoi(line.substr(0, delimiterPos));
+            if(idx < 0)
+                return false;
 
-        sendOkResponse(requestPtr->cseq, rtsp::RequestSession(*requestPtr));
+            const std::string candidate =
+                line.substr(delimiterPos + 1);
 
-        return true;
-    } catch(...) {
-        return false;
+            if(candidate.empty())
+                return false;
+
+            Log()->trace("Adding ice candidate \"{}\"", candidate);
+
+            _p->receiver->addIceCandidate(idx, candidate);
+        } catch(...) {
+            return false;
+        }
+        pos = lineEndPos + 2;
     }
+
+    sendOkResponse(requestPtr->cseq, rtsp::RequestSession(*requestPtr));
+
+    return true;
 }
 
