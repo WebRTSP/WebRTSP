@@ -42,17 +42,18 @@ struct ServerSession::Private
 
     Private(
         ServerSession* owner,
+        const IceServers& iceServers,
         std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer);
     Private(
         ServerSession* owner,
+        const IceServers& iceServers,
         std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer,
         std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createRecordPeer);
 
     ServerSession *const owner;
+    const std::deque<std::string> iceServers;
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer;
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createRecordPeer;
-
-    std::deque<std::string> iceServers;
 
     Requests describeRequests;
     Requests recordRequests;
@@ -110,16 +111,23 @@ private:
 
 ServerSession::Private::Private(
     ServerSession* owner,
+    const IceServers& iceServers,
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer) :
-    owner(owner), createPeer(createPeer)
+    owner(owner),
+    iceServers(iceServers),
+    createPeer(createPeer)
 {
 }
 
 ServerSession::Private::Private(
     ServerSession* owner,
+    const IceServers& iceServers,
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer,
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createRecordPeer) :
-    owner(owner), createPeer(createPeer), createRecordPeer(createRecordPeer)
+    owner(owner),
+    iceServers(iceServers),
+    createPeer(createPeer),
+    createRecordPeer(createRecordPeer)
 {
 }
 
@@ -270,7 +278,7 @@ ServerSession::ServerSession(
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
     rtsp::ServerSession(iceServers, sendRequest, sendResponse),
-    _p(new Private(this, createPeer))
+    _p(new Private(this, iceServers, createPeer))
 {
 }
 
@@ -281,7 +289,7 @@ ServerSession::ServerSession(
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
     rtsp::ServerSession(iceServers, sendRequest, sendResponse),
-    _p(new Private(this, createPeer, createRecordPeer))
+    _p(new Private(this, iceServers, createPeer, createRecordPeer))
 {
 }
 
