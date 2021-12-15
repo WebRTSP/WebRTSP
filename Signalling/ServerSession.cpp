@@ -48,7 +48,7 @@ struct ServerSession::Private
         std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer,
         std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createRecordPeer);
 
-    ServerSession* owner;
+    ServerSession *const owner;
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer;
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createRecordPeer;
 
