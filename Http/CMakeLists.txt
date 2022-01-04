@@ -20,8 +20,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_compile_options(${PROJECT_NAME} PRIVATE ${SPDLOG_CFLAGS})
 target_link_libraries(${PROJECT_NAME}
     ${WS_LDFLAGS}
-    ${SPDLOG_LIBRARIES}
-    ${GLIB_LIBRARIES}
+    ${SPDLOG_LDFLAGS}
+    ${GLIB_LDFLAGS}
     CxxPtr)
 
 #get_cmake_property(_variableNames VARIABLES)
