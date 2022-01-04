@@ -305,6 +305,22 @@ bool WsServer::Private::onMessage(
             return false;
         }
 
+        switch(requestPtr->method) {
+            case rtsp::Method::NONE:
+            case rtsp::Method::OPTIONS:
+            case rtsp::Method::LIST:
+            case rtsp::Method::SETUP:
+            case rtsp::Method::GET_PARAMETER:
+            case rtsp::Method::SET_PARAMETER:
+                break;
+            case rtsp::Method::DESCRIBE:
+            case rtsp::Method::PLAY:
+            case rtsp::Method::RECORD:
+            case rtsp::Method::TEARDOWN:
+                Log()->info("Got {} request for \"{}\"", rtsp::MethodName(requestPtr->method), requestPtr->uri);
+                break;
+        }
+
         if(!scd->data->rtspSession->handleRequest(requestPtr)) {
             Log()->debug("Fail handle request. Forcing session disconnect...");
             return false;
