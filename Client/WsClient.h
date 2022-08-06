@@ -21,7 +21,7 @@ public:
             const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
             const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept> CreateSession;
 
-    typedef std::function<void () noexcept> Disconnected;
+    typedef std::function<void (WsClient&) noexcept> Disconnected;
 
     WsClient(
         const Config&,

@@ -180,7 +180,7 @@ int WsClient::Private::wsCallback(
             connected = false;
 
             if(disconnected)
-                disconnected();
+                disconnected(*this->owner);
 
             break;
         case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
@@ -193,7 +193,7 @@ int WsClient::Private::wsCallback(
             connected = false;
 
             if(disconnected)
-                disconnected();
+                disconnected(*this->owner);
 
             break;
         default:
