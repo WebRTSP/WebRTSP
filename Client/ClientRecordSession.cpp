@@ -12,13 +12,17 @@ struct ClientRecordSession::Private
 {
     Private(
         ClientRecordSession* owner,
-        const std::string& uri,
+        const std::string& targetUri,
+        const std::string& recordToken,
         std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer);
 
     ClientRecordSession* owner;
 
-    std::string uri;
+    std::string targetUri;
+    std::string sourceUri;
     std::string recordToken;
+
+    const CreatePeer createPeer;
 
     std::unique_ptr<WebRTCPeer> streamer;
     std::deque<rtsp::IceCandidate> iceCandidates;
@@ -31,9 +35,10 @@ struct ClientRecordSession::Private
 
 ClientRecordSession::Private::Private(
     ClientRecordSession* owner,
-    const std::string& uri,
+    const std::string& targetUri,
+    const std::string& recordToken,
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer) :
-    owner(owner), uri(uri), streamer(createPeer(uri))
+    owner(owner), targetUri(targetUri), recordToken(recordToken), createPeer(createPeer)
 {
 }
 
@@ -44,7 +49,7 @@ void ClientRecordSession::Private::streamerPrepared()
         return;
     }
 
-    owner->requestRecord(uri, streamer->sdp(), recordToken);
+    owner->requestRecord(targetUri, streamer->sdp(), recordToken);
 }
 
 void ClientRecordSession::Private::iceCandidate(
@@ -54,7 +59,7 @@ void ClientRecordSession::Private::iceCandidate(
         iceCandidates.emplace_back(rtsp::IceCandidate { mlineIndex, candidate });
     } else {
         owner->requestSetup(
-            uri,
+            targetUri,
             "application/x-ice-candidate",
             session,
             std::to_string(mlineIndex) + "/" + candidate + "\r\n");
@@ -70,13 +75,14 @@ void ClientRecordSession::Private::eos()
 
 
 ClientRecordSession::ClientRecordSession(
-    const std::string& uri,
+    const std::string& targetUri,
+    const std::string& recordToken,
     const IceServers& iceServers,
     const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
     const std::function<void (const rtsp::Request*)>& sendRequest,
     const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
     rtsp::ClientSession(iceServers, sendRequest, sendResponse),
-    _p(new Private(this, uri, createPeer))
+    _p(new Private(this, targetUri, recordToken, createPeer))
 {
 }
 
@@ -84,14 +90,9 @@ ClientRecordSession::~ClientRecordSession()
 {
 }
 
-void ClientRecordSession::setUri(const std::string& uri)
-{
-    _p->uri = uri;
-}
-
 bool ClientRecordSession::onConnected() noexcept
 {
-    requestOptions(!_p->uri.empty() ? _p->uri : "*");
+    requestOptions(!_p->targetUri.empty() ? _p->targetUri : "*");
 
     return true;
 }
@@ -123,7 +124,7 @@ bool ClientRecordSession::onRecordResponse(
 
         if(!iceCandidates.empty()) {
             requestSetup(
-                _p->uri,
+                _p->targetUri,
                 "application/x-ice-candidate",
                 _p->session,
                 iceCandidates);
@@ -213,9 +214,20 @@ bool ClientRecordSession::onSetupRequest(std::unique_ptr<rtsp::Request>& request
     return true;
 }
 
-void ClientRecordSession::startRecord(const std::string& recordToken)
+void ClientRecordSession::startRecord(const std::string& sourceUri)
 {
-    _p->recordToken = recordToken;
+    assert(!_p->streamer);
+    if(_p->streamer) {
+        return;
+    }
+
+    _p->streamer = _p->createPeer(sourceUri);
+
+    assert(_p->streamer);
+    if(!_p->streamer) {
+        return;
+    }
+
     _p->streamer->prepare(
         iceServers(),
         std::bind(
