@@ -214,7 +214,7 @@ bool ClientRecordSession::onSetupRequest(std::unique_ptr<rtsp::Request>& request
     return true;
 }
 
-void ClientRecordSession::startRecord(const std::string& sourceUri)
+void ClientRecordSession::startRecord(const std::string& sourceUri) noexcept
 {
     assert(!_p->streamer);
     if(_p->streamer) {

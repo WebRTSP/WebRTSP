@@ -20,7 +20,7 @@ public:
 
     bool onConnected() noexcept override;
 
-    void startRecord(const std::string& sourceUri);
+    void startRecord(const std::string& sourceUri) noexcept;
 
 protected:
     bool onSetupResponse(
