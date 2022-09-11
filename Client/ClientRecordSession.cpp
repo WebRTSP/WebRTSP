@@ -214,6 +214,11 @@ bool ClientRecordSession::onSetupRequest(std::unique_ptr<rtsp::Request>& request
     return true;
 }
 
+bool ClientRecordSession::isStreaming() const noexcept
+{
+    return _p->streamer != nullptr;
+}
+
 void ClientRecordSession::startRecord(const std::string& sourceUri) noexcept
 {
     assert(!_p->streamer);

@@ -20,6 +20,7 @@ public:
 
     bool onConnected() noexcept override;
 
+    bool isStreaming() const noexcept;
     void startRecord(const std::string& sourceUri) noexcept;
 
 protected:
