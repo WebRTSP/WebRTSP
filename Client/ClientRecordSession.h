@@ -22,6 +22,7 @@ public:
 
     bool isStreaming() const noexcept;
     void startRecord(const std::string& sourceUri) noexcept;
+    void stopRecord() noexcept;
 
 protected:
     bool onSetupResponse(

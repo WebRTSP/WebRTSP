@@ -26,6 +26,8 @@ struct ClientRecordSession::Private
 
     std::unique_ptr<WebRTCPeer> streamer;
     std::deque<rtsp::IceCandidate> iceCandidates;
+
+    rtsp::CSeq recordRequested = false;
     rtsp::SessionId session;
 
     void streamerPrepared();
@@ -50,6 +52,7 @@ void ClientRecordSession::Private::streamerPrepared()
     }
 
     owner->requestRecord(targetUri, streamer->sdp(), recordToken);
+    recordRequested = true;
 }
 
 void ClientRecordSession::Private::iceCandidate(
@@ -233,6 +236,8 @@ void ClientRecordSession::startRecord(const std::string& sourceUri) noexcept
         return;
     }
 
+    assert(!_p->recordRequested);
+
     _p->streamer->prepare(
         iceServers(),
         std::bind(
@@ -246,4 +251,26 @@ void ClientRecordSession::startRecord(const std::string& sourceUri) noexcept
         std::bind(
             &ClientRecordSession::Private::eos,
             _p.get()));
+}
+
+void ClientRecordSession::stopRecord() noexcept
+{
+    if(!_p->streamer) {
+        assert(!_p->recordRequested);
+        return;
+    }
+
+    _p->streamer->stop();
+    _p->streamer.reset();
+
+    if(_p->recordRequested) {
+        assert(!_p->session.empty());
+        if(!_p->session.empty()) {
+            requestTeardown(_p->targetUri, _p->session);
+            _p->recordRequested = false;
+        } else {
+            // FIXME? didn't get response to RECORD request yet
+            disconnect();
+        }
+    }
 }
