@@ -16,6 +16,7 @@ static const Method Methods[] = {
     Method::SETUP,
     Method::PLAY,
     Method::RECORD,
+    Method::SUBSCRIBE,
     //Method::PAUSE,
     Method::TEARDOWN,
     Method::GET_PARAMETER,
@@ -44,6 +45,8 @@ const char* MethodName(Method method) noexcept
         return "PLAY";
     case Method::RECORD:
         return "RECORD";
+    case Method::SUBSCRIBE:
+        return "SUBSCRIBE";
     // case Method::PAUSE:
     //     return "PAUSE";
     case Method::TEARDOWN:

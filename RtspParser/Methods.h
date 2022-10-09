@@ -15,6 +15,7 @@ enum class Method {
     SETUP,
     PLAY,
     RECORD,
+    SUBSCRIBE,
 //     PAUSE,
     TEARDOWN,
     GET_PARAMETER,

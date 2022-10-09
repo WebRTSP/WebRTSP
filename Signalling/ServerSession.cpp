@@ -305,12 +305,14 @@ bool ServerSession::onOptionsRequest(
 
     std::string options;
     if(listEnabled())
-        options += "LIST, ";
+        options += "LIST";
 
-    options +=
-        recordEnabled(requestPtr->uri) && _p->recordEnabled() ?
-            "DESCRIBE, SETUP, PLAY, RECORD, TEARDOWN" :
-            "DESCRIBE, SETUP, PLAY, TEARDOWN";
+    options += ", DESCRIBE, SETUP, PLAY, TEARDOWN";
+
+    if(recordEnabled(requestPtr->uri) && _p->recordEnabled())
+        options += ", RECORD";
+    if(subscribeEnabled(requestPtr->uri))
+        options += ", SUBSCRIBE";
 
     response.headerFields.emplace("Public", options);
 
@@ -378,6 +380,11 @@ bool ServerSession::onDescribeRequest(
 }
 
 bool ServerSession::recordEnabled(const std::string&) noexcept
+{
+    return false;
+}
+
+bool ServerSession::subscribeEnabled(const std::string&) noexcept
 {
     return false;
 }

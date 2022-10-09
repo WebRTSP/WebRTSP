@@ -28,6 +28,8 @@ protected:
         { return false; }
     virtual bool onRecordRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
+    virtual bool onSubscribeRequest(std::unique_ptr<Request>&) noexcept
+        { return false; }
     virtual bool onTeardownRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
 };

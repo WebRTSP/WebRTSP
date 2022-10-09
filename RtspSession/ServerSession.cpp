@@ -19,6 +19,8 @@ bool ServerSession::handleRequest(
         return onPlayRequest(requestPtr);
     case Method::RECORD:
         return onRecordRequest(requestPtr);
+    case Method::SUBSCRIBE:
+        return onSubscribeRequest(requestPtr);
     case Method::TEARDOWN:
         return onTeardownRequest(requestPtr);
     default:

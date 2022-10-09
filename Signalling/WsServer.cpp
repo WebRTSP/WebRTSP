@@ -318,6 +318,7 @@ bool WsServer::Private::onMessage(
             case rtsp::Method::DESCRIBE:
             case rtsp::Method::PLAY:
             case rtsp::Method::RECORD:
+            case rtsp::Method::SUBSCRIBE:
             case rtsp::Method::TEARDOWN:
                 Log()->info("Got {} request for \"{}\"", rtsp::MethodName(requestPtr->method), requestPtr->uri);
                 break;
