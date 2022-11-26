@@ -34,7 +34,7 @@ struct SessionData
     bool terminateSession = false;
     MessageBuffer incomingMessage;
     std::deque<MessageBuffer> sendMessages;
-    std::unique_ptr<rtsp::Session> rtspSession;
+    std::unique_ptr<rtsp::ServerSession> rtspSession;
 };
 
 // Should contain only POD types,
@@ -107,7 +107,7 @@ int WsServer::Private::wsCallback(
         case LWS_CALLBACK_PROTOCOL_INIT:
             break;
         case LWS_CALLBACK_ESTABLISHED: {
-            std::unique_ptr<rtsp::Session> session =
+            std::unique_ptr<rtsp::ServerSession> session =
                 createSession(
                     std::bind(&Private::sendRequest, this, scd, std::placeholders::_1),
                     std::bind(&Private::sendResponse, this, scd, std::placeholders::_1));
