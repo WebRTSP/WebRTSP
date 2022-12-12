@@ -15,6 +15,8 @@ struct ClientSession : public Session
 {
     using Session::handleResponse;
 
+    virtual bool onConnected() noexcept { return true; }
+
     bool isSupported(Method);
 
 protected:

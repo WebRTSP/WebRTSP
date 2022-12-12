@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <algorithm>
+#include <optional>
 
 #include <CxxPtr/libwebsocketsPtr.h>
 
@@ -28,6 +29,8 @@ enum {
     HTTPS_PROTOCOL_ID,
     SECURE_PROTOCOL_ID,
 };
+
+const char* AuthCookieName = "WebRTSP-Auth";
 
 struct SessionData
 {
@@ -63,7 +66,7 @@ struct WsServer::Private
     void sendRequest(SessionContextData*, const rtsp::Request*);
     void sendResponse(SessionContextData*, const rtsp::Response*);
 
-    bool onConnected(SessionContextData*);
+    bool onConnected(SessionContextData*, const std::optional<std::string>&);
 
     WsServer *const owner;
     Config config;
@@ -122,7 +125,14 @@ int WsServer::Private::wsCallback(
                     .rtspSession = std::move(session)};
             scd->wsi = wsi;
 
-            if(!onConnected(scd))
+            std::optional<std::string> authCookie;
+            char cookieBuf[256];
+            size_t cookieSize = sizeof(cookieBuf);
+            if(0 == lws_http_cookie_get(wsi, AuthCookieName, cookieBuf, &cookieSize)) {
+                authCookie = std::string(cookieBuf, cookieSize);
+            }
+
+            if(!onConnected(scd, authCookie))
                 return -1;
 
             break;
@@ -288,9 +298,11 @@ bool WsServer::Private::init(lws_context* context)
     return true;
 }
 
-bool WsServer::Private::onConnected(SessionContextData* scd)
+bool WsServer::Private::onConnected(
+    SessionContextData* scd,
+    const std::optional<std::string>& authCookie)
 {
-    return scd->data->rtspSession->onConnected();
+    return scd->data->rtspSession->onConnected(authCookie);
 }
 
 bool WsServer::Private::onMessage(

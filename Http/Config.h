@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <map>
 
 
 namespace http {
@@ -17,6 +18,10 @@ struct Config
     unsigned short securePort = 5443;
 
     std::string wwwRoot = "./www";
+
+    std::map<std::string, std::string> passwd;
+    std::string realm = "WebRTSP";
+    std::string opaque = "WebRTSP";
 };
 
 }

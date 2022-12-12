@@ -21,8 +21,6 @@ struct Session
 
     const IceServers& iceServers() const noexcept;
 
-    virtual bool onConnected() noexcept { return true; }
-
     virtual bool handleRequest(std::unique_ptr<Request>&) noexcept;
 
     bool handleResponse(std::unique_ptr<Response>& responsePtr) noexcept;
@@ -64,6 +62,8 @@ protected:
         const SessionId&,
         const std::string& contentType,
         const std::string& body);
+    void sendUnauthorizedResponse(CSeq);
+    void sendForbiddenResponse(CSeq);
 
     void sendRequest(const Request&) noexcept;
     void sendResponse(const Response&) noexcept;

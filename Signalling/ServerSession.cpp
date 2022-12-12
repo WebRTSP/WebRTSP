@@ -55,6 +55,8 @@ struct ServerSession::Private
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer;
     std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createRecordPeer;
 
+    std::optional<std::string> authCookie;
+
     Requests describeRequests;
     Requests recordRequests;
     MediaSessions mediaSessions;
@@ -297,6 +299,16 @@ ServerSession::~ServerSession()
 {
 }
 
+bool ServerSession::onConnected(const std::optional<std::string>& authCookie) noexcept
+{
+    if(!rtsp::ServerSession::onConnected(authCookie))
+        return false;
+
+    _p->authCookie = authCookie;
+
+    return true;
+}
+
 bool ServerSession::onOptionsRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
@@ -324,6 +336,14 @@ bool ServerSession::onOptionsRequest(
 bool ServerSession::onDescribeRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
+    if(!authorize(requestPtr, _p->authCookie)) {
+        Log()->error("DESCRIBE authorize failed for \"{}\"", requestPtr->uri);
+
+        sendUnauthorizedResponse(requestPtr->cseq);
+
+        return true;
+    }
+
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(requestPtr->uri);
     if(!peerPtr)
         return false;
@@ -394,13 +414,20 @@ bool ServerSession::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) 
     return requestPtr->method != rtsp::Method::RECORD;
 }
 
+bool ServerSession::authorize(
+    const std::unique_ptr<rtsp::Request>& requestPtr,
+    const std::optional<std::string>&) noexcept
+{
+    return authorize(requestPtr);
+}
+
 bool ServerSession::onRecordRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     if(!recordEnabled(requestPtr->uri) || !_p->recordEnabled())
         return false;
 
-    if(!authorize(requestPtr)) {
+    if(!authorize(requestPtr, _p->authCookie)) {
         Log()->error("RECORD authorize failed for \"{}\"", requestPtr->uri);
         return false;
     }

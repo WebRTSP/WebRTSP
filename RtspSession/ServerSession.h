@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <functional>
+#include <optional>
 
 #include "RtspParser/Request.h"
 #include "RtspParser/Response.h"
@@ -14,6 +15,8 @@ namespace rtsp {
 struct ServerSession : public Session
 {
     bool handleRequest(std::unique_ptr<Request>&) noexcept override;
+
+    virtual bool onConnected(const std::optional<std::string>& authCookie) noexcept { return true; }
 
 protected:
     using Session::Session;

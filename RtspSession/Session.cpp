@@ -143,6 +143,20 @@ void Session::sendOkResponse(
     sendResponse(response);
 }
 
+void Session::sendUnauthorizedResponse(CSeq cseq)
+{
+    Response response;
+    prepareResponse(UNAUTHORIZED, "Unauthorized", cseq, std::string(), &response);
+    sendResponse(response);
+}
+
+void Session::sendForbiddenResponse(CSeq cseq)
+{
+    Response response;
+    prepareResponse(FORBIDDEN, "Forbidden", cseq, std::string(), &response);
+    sendResponse(response);
+}
+
 void Session::sendRequest(const Request& request) noexcept
 {
     _sendRequest(&request);
