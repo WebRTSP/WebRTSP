@@ -305,9 +305,9 @@ bool ServerSession::onOptionsRequest(
 
     std::string options;
     if(listEnabled())
-        options += "LIST";
+        options += "LIST, ";
 
-    options += ", DESCRIBE, SETUP, PLAY, TEARDOWN";
+    options += "DESCRIBE, SETUP, PLAY, TEARDOWN";
 
     if(recordEnabled(requestPtr->uri) && _p->recordEnabled())
         options += ", RECORD";
