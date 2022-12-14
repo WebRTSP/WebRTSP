@@ -548,6 +548,7 @@ bool ServerSession::onPlayRequest(
     WebRTCPeer& localPeer = *(mediaSession.localPeer);
 
     localPeer.setRemoteSdp(requestPtr->body);
+    localPeer.play();
 
     sendOkResponse(requestPtr->cseq, session);
 
