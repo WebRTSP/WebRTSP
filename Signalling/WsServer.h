@@ -21,7 +21,7 @@ public:
     typedef std::function<
         std::unique_ptr<rtsp::ServerSession> (
             const std::function<void (const rtsp::Request*)>& sendRequest,
-            const std::function<void (const rtsp::Response*)>& sendResponse) noexcept> CreateSession;
+            const std::function<void (const rtsp::Response*)>& sendResponse)> CreateSession;
 
     WsServer(const Config&, GMainLoop*, const CreateSession&) noexcept;
     bool init(lws_context* = nullptr) noexcept;
