@@ -7,15 +7,15 @@
 class ClientRecordSession : public rtsp::ClientSession
 {
 public:
-    typedef std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri) noexcept> CreatePeer;
+    typedef std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> CreatePeer;
 
     ClientRecordSession(
         const std::string& targetUri,
         const std::string& recordToken,
         const IceServers&,
         const CreatePeer& createPeer,
-        const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
-        const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept;
+        const std::function<void (const rtsp::Request*)>& sendRequest,
+        const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
     ~ClientRecordSession();
 
     bool onConnected() noexcept override;

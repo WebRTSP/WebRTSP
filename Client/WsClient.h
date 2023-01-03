@@ -18,10 +18,10 @@ class WsClient
 public:
     typedef std::function<
         std::unique_ptr<rtsp::ClientSession> (
-            const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
-            const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept> CreateSession;
+            const std::function<void (const rtsp::Request*)>& sendRequest,
+            const std::function<void (const rtsp::Response*)>& sendResponse)> CreateSession;
 
-    typedef std::function<void (WsClient&) noexcept> Disconnected;
+    typedef std::function<void (WsClient&)> Disconnected;
 
     WsClient(
         const Config&,
