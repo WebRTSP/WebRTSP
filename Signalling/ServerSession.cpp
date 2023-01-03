@@ -43,17 +43,17 @@ struct ServerSession::Private
     Private(
         ServerSession* owner,
         const IceServers& iceServers,
-        std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer);
+        const CreatePeer& createPeer);
     Private(
         ServerSession* owner,
         const IceServers& iceServers,
-        std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer,
-        std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createRecordPeer);
+        const CreatePeer& createPeer,
+        const CreatePeer& createRecordPeer);
 
     ServerSession *const owner;
     const std::deque<std::string> iceServers;
-    std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer;
-    std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createRecordPeer;
+    CreatePeer createPeer;
+    CreatePeer createRecordPeer;
 
     std::optional<std::string> authCookie;
 
@@ -114,7 +114,7 @@ private:
 ServerSession::Private::Private(
     ServerSession* owner,
     const IceServers& iceServers,
-    std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer) :
+    const CreatePeer& createPeer) :
     owner(owner),
     iceServers(iceServers),
     createPeer(createPeer)
@@ -124,8 +124,8 @@ ServerSession::Private::Private(
 ServerSession::Private::Private(
     ServerSession* owner,
     const IceServers& iceServers,
-    std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createPeer,
-    std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> createRecordPeer) :
+    const CreatePeer& createPeer,
+    const CreatePeer& createRecordPeer) :
     owner(owner),
     iceServers(iceServers),
     createPeer(createPeer),

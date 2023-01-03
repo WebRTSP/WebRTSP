@@ -15,6 +15,9 @@ namespace rtsp {
 
 struct Session
 {
+    typedef std::function<void (const Request*)> SendRequest;
+    typedef std::function<void (const Response*)> SendResponse;
+
     virtual ~Session() {}
 
     typedef std::deque<std::string> IceServers;
@@ -28,8 +31,8 @@ struct Session
 protected:
     Session(
         const IceServers&,
-        const std::function<void (const Request*)>& sendRequest,
-        const std::function<void (const Response*)>& sendResponse) noexcept;
+        const SendRequest& sendRequest,
+        const SendResponse& sendResponse) noexcept;
 
     Request* createRequest(
         Method,
@@ -108,8 +111,8 @@ protected:
 
 private:
     const IceServers _iceServers;
-    const std::function<void (const Request*)> _sendRequest;
-    const std::function<void (const Response*)> _sendResponse;
+    const SendRequest _sendRequest;
+    const SendResponse _sendResponse;
 
     CSeq _nextCSeq = 1;
 

@@ -14,8 +14,8 @@ public:
         const std::string& recordToken,
         const IceServers&,
         const CreatePeer& createPeer,
-        const std::function<void (const rtsp::Request*)>& sendRequest,
-        const std::function<void (const rtsp::Response*)>& sendResponse) noexcept;
+        const SendRequest& sendRequest,
+        const SendResponse& sendResponse) noexcept;
     ~ClientRecordSession();
 
     bool onConnected() noexcept override;

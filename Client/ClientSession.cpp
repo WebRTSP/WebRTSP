@@ -13,7 +13,7 @@ struct ClientSession::Private
     Private(
         ClientSession* owner,
         const std::string& uri,
-        std::function<std::unique_ptr<WebRTCPeer> ()> createPeer);
+        const CreatePeer& createPeer);
 
     ClientSession* owner;
 
@@ -30,7 +30,7 @@ struct ClientSession::Private
 ClientSession::Private::Private(
     ClientSession* owner,
     const std::string& uri,
-    std::function<std::unique_ptr<WebRTCPeer> ()> createPeer) :
+    const CreatePeer& createPeer) :
     owner(owner), uri(uri), receiver(createPeer())
 {
 }
@@ -70,9 +70,9 @@ void ClientSession::Private::eos()
 ClientSession::ClientSession(
     const std::string& uri,
     const IceServers& iceServers,
-    const std::function<std::unique_ptr<WebRTCPeer> ()>& createPeer,
-    const std::function<void (const rtsp::Request*)>& sendRequest,
-    const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
+    const CreatePeer& createPeer,
+    const SendRequest& sendRequest,
+    const SendResponse& sendResponse) noexcept :
     rtsp::ClientSession(iceServers, sendRequest, sendResponse),
     _p(new Private(this, uri, createPeer))
 {
@@ -80,9 +80,9 @@ ClientSession::ClientSession(
 
 ClientSession::ClientSession(
     const IceServers& iceServers,
-    const std::function<std::unique_ptr<WebRTCPeer> () noexcept>& createPeer,
-    const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
-    const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept :
+    const CreatePeer& createPeer,
+    const SendRequest& sendRequest,
+    const SendResponse& sendResponse) noexcept :
     ClientSession(std::string(), iceServers, createPeer, sendRequest, sendResponse)
 {
 }
