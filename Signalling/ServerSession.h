@@ -27,7 +27,6 @@ protected:
     virtual bool listEnabled() noexcept { return false; }
     virtual bool recordEnabled(const std::string& uri) noexcept;
     virtual bool subscribeEnabled(const std::string& uri) noexcept;
-    virtual bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept;
     virtual bool authorize(
         const std::unique_ptr<rtsp::Request>&,
         const std::optional<std::string>& authCookie) noexcept;

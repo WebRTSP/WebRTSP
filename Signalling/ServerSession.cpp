@@ -409,16 +409,11 @@ bool ServerSession::subscribeEnabled(const std::string&) noexcept
     return false;
 }
 
-bool ServerSession::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
-{
-    return requestPtr->method != rtsp::Method::RECORD;
-}
-
 bool ServerSession::authorize(
     const std::unique_ptr<rtsp::Request>& requestPtr,
     const std::optional<std::string>&) noexcept
 {
-    return authorize(requestPtr);
+    return requestPtr->method != rtsp::Method::RECORD;
 }
 
 bool ServerSession::onRecordRequest(
