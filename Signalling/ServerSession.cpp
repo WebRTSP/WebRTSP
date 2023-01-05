@@ -276,9 +276,9 @@ void ServerSession::Private::eos(const rtsp::SessionId& session)
 
 ServerSession::ServerSession(
     const IceServers& iceServers,
-    const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
-    const std::function<void (const rtsp::Request*)>& sendRequest,
-    const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
+    const CreatePeer& createPeer,
+    const SendRequest& sendRequest,
+    const SendResponse& sendResponse) noexcept :
     rtsp::ServerSession(iceServers, sendRequest, sendResponse),
     _p(new Private(this, iceServers, createPeer))
 {
@@ -286,10 +286,10 @@ ServerSession::ServerSession(
 
 ServerSession::ServerSession(
     const IceServers& iceServers,
-    const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createPeer,
-    const std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)>& createRecordPeer,
-    const std::function<void (const rtsp::Request*)>& sendRequest,
-    const std::function<void (const rtsp::Response*)>& sendResponse) noexcept :
+    const CreatePeer& createPeer,
+    const CreatePeer& createRecordPeer,
+    const SendRequest& sendRequest,
+    const SendResponse& sendResponse) noexcept :
     rtsp::ServerSession(iceServers, sendRequest, sendResponse),
     _p(new Private(this, iceServers, createPeer, createRecordPeer))
 {
