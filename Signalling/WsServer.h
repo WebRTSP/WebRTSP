@@ -6,9 +6,8 @@
 
 #include <glib.h>
 
-#include "RtspSession/ServerSession.h"
-
 #include "Config.h"
+#include "ServerSession.h"
 
 
 struct lws_context;

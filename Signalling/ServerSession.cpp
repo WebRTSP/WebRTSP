@@ -279,7 +279,7 @@ ServerSession::ServerSession(
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    rtsp::ServerSession(iceServers, sendRequest, sendResponse),
+    rtsp::Session(iceServers, sendRequest, sendResponse),
     _p(new Private(this, iceServers, createPeer))
 {
 }
@@ -290,7 +290,7 @@ ServerSession::ServerSession(
     const CreatePeer& createRecordPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    rtsp::ServerSession(iceServers, sendRequest, sendResponse),
+    rtsp::Session(iceServers, sendRequest, sendResponse),
     _p(new Private(this, iceServers, createPeer, createRecordPeer))
 {
 }
@@ -301,12 +301,34 @@ ServerSession::~ServerSession()
 
 bool ServerSession::onConnected(const std::optional<std::string>& authCookie) noexcept
 {
-    if(!rtsp::ServerSession::onConnected(authCookie))
-        return false;
-
     _p->authCookie = authCookie;
 
     return true;
+}
+
+bool ServerSession::handleRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    switch(requestPtr->method) {
+    case rtsp::Method::OPTIONS:
+        return onOptionsRequest(requestPtr);
+    case rtsp::Method::LIST:
+        return onListRequest(requestPtr);
+    case rtsp::Method::DESCRIBE:
+        return onDescribeRequest(requestPtr);
+    case rtsp::Method::SETUP:
+        return onSetupRequest(requestPtr);
+    case rtsp::Method::PLAY:
+        return onPlayRequest(requestPtr);
+    case rtsp::Method::SUBSCRIBE:
+        return onSubscribeRequest(requestPtr);
+    case rtsp::Method::RECORD:
+        return onRecordRequest(requestPtr);
+    case rtsp::Method::TEARDOWN:
+        return onTeardownRequest(requestPtr);
+    default:
+        return Session::handleRequest(requestPtr);
+    }
 }
 
 bool ServerSession::onOptionsRequest(
