@@ -314,6 +314,14 @@ std::string ServerSession::nextSessionId()
 bool ServerSession::handleRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
+    if(requestPtr->method != rtsp::Method::RECORD && !authorize(requestPtr, _p->authCookie)) {
+        Log()->error("{} authorize failed for \"{}\"", rtsp::MethodName(requestPtr->method), requestPtr->uri);
+
+        sendUnauthorizedResponse(requestPtr->cseq);
+
+        return true;
+    }
+
     switch(requestPtr->method) {
     case rtsp::Method::OPTIONS:
         return onOptionsRequest(requestPtr);
@@ -363,14 +371,6 @@ bool ServerSession::onOptionsRequest(
 bool ServerSession::onDescribeRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    if(!authorize(requestPtr, _p->authCookie)) {
-        Log()->error("DESCRIBE authorize failed for \"{}\"", requestPtr->uri);
-
-        sendUnauthorizedResponse(requestPtr->cseq);
-
-        return true;
-    }
-
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(requestPtr->uri);
     if(!peerPtr)
         return false;
