@@ -64,8 +64,8 @@ struct ServerSession::Private
     bool recordEnabled()
         { return createRecordPeer ? true : false; }
 
-    std::string nextSession()
-        { return std::to_string(_nextSession++); }
+    std::string nextSessionId()
+        { return std::to_string(_nextSessionId++); }
 
     void sendIceCandidates(const rtsp::SessionId&, MediaSession* mediaSession);
     void streamerPrepared(rtsp::CSeq describeRequestCSeq);
@@ -76,7 +76,7 @@ struct ServerSession::Private
     void eos(const rtsp::SessionId& session);
 
 private:
-    unsigned _nextSession = 1;
+    unsigned _nextSessionId = 1;
 };
 
 struct ServerSession::Private::AutoEraseRequest
@@ -306,6 +306,11 @@ bool ServerSession::onConnected(const std::optional<std::string>& authCookie) no
     return true;
 }
 
+std::string ServerSession::nextSessionId()
+{
+    return _p->nextSessionId();
+}
+
 bool ServerSession::handleRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
@@ -370,7 +375,7 @@ bool ServerSession::onDescribeRequest(
     if(!peerPtr)
         return false;
 
-    const rtsp::SessionId session = _p->nextSession();
+    const rtsp::SessionId session = nextSessionId();
     auto requestPair =
         _p->describeRequests.emplace(
             requestPtr->cseq,
@@ -457,7 +462,7 @@ bool ServerSession::onRecordRequest(
     if(contentType != "application/sdp")
         return false;
 
-    const rtsp::SessionId session = _p->nextSession();
+    const rtsp::SessionId session = nextSessionId();
     auto requestPair =
         _p->recordRequests.emplace(
             requestPtr->cseq,

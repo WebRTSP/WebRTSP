@@ -28,6 +28,7 @@ public:
     bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 protected:
+    std::string nextSessionId();
 
     virtual bool listEnabled() noexcept { return false; }
     virtual bool recordEnabled(const std::string& uri) noexcept;
