@@ -25,7 +25,6 @@ struct Session
     const IceServers& iceServers() const noexcept;
 
     virtual bool handleRequest(std::unique_ptr<Request>&) noexcept;
-
     bool handleResponse(std::unique_ptr<Response>& responsePtr) noexcept;
 
 protected:
@@ -86,28 +85,54 @@ protected:
         const std::string& contentType,
         const std::string& body) noexcept;
 
+    virtual bool onOptionsRequest(std::unique_ptr<Request>&) noexcept
+        { return false; }
+    virtual bool onListRequest(std::unique_ptr<Request>&) noexcept
+        { return false; }
+    virtual bool onDescribeRequest(std::unique_ptr<Request>&) noexcept
+        { return false; }
+    virtual bool onSetupRequest(std::unique_ptr<Request>&) noexcept
+        { return false; }
+    virtual bool onPlayRequest(std::unique_ptr<Request>&) noexcept
+        { return false; }
+    virtual bool onSubscribeRequest(std::unique_ptr<Request>&) noexcept
+        { return false; }
+    virtual bool onRecordRequest(std::unique_ptr<Request>&) noexcept
+        { return false; }
+    virtual bool onTeardownRequest(std::unique_ptr<Request>&) noexcept
+        { return false; }
     virtual bool onGetParameterRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
     virtual bool onSetParameterRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
-    virtual bool onSetupRequest(std::unique_ptr<Request>&) noexcept
-        { return false; }
 
-    virtual bool handleResponse(
-        const Request&,
-        std::unique_ptr<Response>&) noexcept;
-
-    virtual bool onSetupResponse(
-        const Request&,
-        const Response&) noexcept;
-    virtual bool onGetParameterResponse(
-        const Request&,
-        const Response&) noexcept;
-    virtual bool onSetParameterResponse(
-        const Request&,
-        const Response&) noexcept;
+    virtual bool onOptionsResponse(const Request& request, const Response& response) noexcept
+        { return StatusCode::OK == response.statusCode; }
+    virtual bool onListResponse(const Request& request, const Response& response) noexcept
+        { return StatusCode::OK == response.statusCode; }
+    virtual bool onDescribeResponse(const Request& request, const Response& response) noexcept
+        { return StatusCode::OK == response.statusCode; }
+    virtual bool onSetupResponse(const Request& request, const Response& response) noexcept
+        { return StatusCode::OK == response.statusCode; }
+    virtual bool onPlayResponse(const Request& request, const Response& response) noexcept
+        { return StatusCode::OK == response.statusCode; }
+    virtual bool onSubscribeResponse(const Request& request, const Response& response) noexcept
+        { return StatusCode::OK == response.statusCode; }
+    virtual bool onRecordResponse(const Request& request, const Response& response) noexcept
+        { return StatusCode::OK == response.statusCode; }
+    virtual bool onTeardownResponse(const Request& request, const Response& response) noexcept
+        { return StatusCode::OK == response.statusCode; }
+    virtual bool onGetParameterResponse(const Request& request, const Response& response) noexcept
+        { return StatusCode::OK == response.statusCode; }
+    virtual bool onSetParameterResponse(const Request& request, const Response& response) noexcept
+        { return StatusCode::OK == response.statusCode; }
 
     virtual void onEos() noexcept;
+
+private:
+    bool handleResponse(
+        const Request&,
+        std::unique_ptr<Response>&) noexcept;
 
 private:
     const IceServers _iceServers;

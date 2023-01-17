@@ -57,20 +57,6 @@ Request* Session::createRequest(
     return request;
 }
 
-bool Session::handleRequest(std::unique_ptr<Request>& requestPtr) noexcept
-{
-    switch(requestPtr->method) {
-    case Method::SETUP:
-        return onSetupRequest(requestPtr);
-    case Method::GET_PARAMETER:
-        return onGetParameterRequest(requestPtr);
-    case Method::SET_PARAMETER:
-        return onSetParameterRequest(requestPtr);
-    default:
-        return false;
-    }
-}
-
 Response* Session::prepareResponse(
     StatusCode statusCode,
     const std::string::value_type* reasonPhrase,
@@ -241,48 +227,64 @@ bool Session::handleResponse(std::unique_ptr<Response>& responsePtr) noexcept
     return success;
 }
 
+bool Session::handleRequest(std::unique_ptr<Request>& requestPtr) noexcept
+{
+    switch(requestPtr->method) {
+    case Method::NONE:
+        break;
+    case Method::OPTIONS:
+        return onOptionsRequest(requestPtr);
+    case Method::LIST:
+        return onListRequest(requestPtr);
+    case Method::DESCRIBE:
+        return onDescribeRequest(requestPtr);
+    case Method::SETUP:
+        return onSetupRequest(requestPtr);
+    case Method::PLAY:
+        return onPlayRequest(requestPtr);
+    case Method::SUBSCRIBE:
+        return onSubscribeRequest(requestPtr);
+    case Method::RECORD:
+        return onRecordRequest(requestPtr);
+    case Method::TEARDOWN:
+        return onTeardownRequest(requestPtr);
+    case Method::GET_PARAMETER:
+        return onGetParameterRequest(requestPtr);
+    case Method::SET_PARAMETER:
+        return onSetParameterRequest(requestPtr);
+    }
+
+    return false;
+}
+
 bool Session::handleResponse(
     const Request& request,
     std::unique_ptr<Response>& responsePtr) noexcept
 {
     switch(request.method) {
+    case Method::NONE:
+        break;
+    case Method::OPTIONS:
+        return onOptionsResponse(request, *responsePtr);
+    case Method::LIST:
+        return onListResponse(request, *responsePtr);
+    case Method::DESCRIBE:
+        return onDescribeResponse(request, *responsePtr);
     case Method::SETUP:
         return onSetupResponse(request, *responsePtr);
+    case Method::PLAY:
+        return onPlayResponse(request, *responsePtr);
+    case Method::SUBSCRIBE:
+        return onSubscribeResponse(request, *responsePtr);
+    case Method::RECORD:
+        return onRecordResponse(request, *responsePtr);
+    case Method::TEARDOWN:
+        return onTeardownResponse(request, *responsePtr);
     case Method::GET_PARAMETER:
         return onGetParameterResponse(request, *responsePtr);
     case Method::SET_PARAMETER:
         return onSetParameterResponse(request, *responsePtr);
-    default:
-        return false;
     }
-}
-
-bool Session::onSetupResponse(
-    const Request& request,
-    const Response& response) noexcept
-{
-    if(StatusCode::OK == response.statusCode)
-        return true;
-
-    return false;
-}
-
-bool Session::onGetParameterResponse(
-    const Request& request,
-    const Response& response) noexcept
-{
-    if(StatusCode::OK == response.statusCode)
-        return true;
-
-    return false;
-}
-
-bool Session::onSetParameterResponse(
-    const Request& request,
-    const Response& response) noexcept
-{
-    if(StatusCode::OK == response.statusCode)
-        return true;
 
     return false;
 }

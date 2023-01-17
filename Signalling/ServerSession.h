@@ -37,16 +37,12 @@ protected:
         const std::unique_ptr<rtsp::Request>&,
         const std::optional<std::string>& authCookie) noexcept;
 
-    virtual bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept;
-    virtual bool onListRequest(std::unique_ptr<rtsp::Request>&) noexcept
-        { return false; }
-    virtual bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept;
-    virtual bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept;
-    virtual bool onPlayRequest(std::unique_ptr<rtsp::Request>&) noexcept;
-    virtual bool onSubscribeRequest(std::unique_ptr<rtsp::Request>&) noexcept
-        { return false; }
-    virtual bool onRecordRequest(std::unique_ptr<rtsp::Request>&) noexcept;
-    virtual bool onTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept;
+    bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onPlayRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onRecordRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 private:
     struct Private;

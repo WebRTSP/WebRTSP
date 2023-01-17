@@ -90,28 +90,6 @@ CSeq ClientSession::requestTeardown(
     return request.cseq;
 }
 
-bool ClientSession::handleResponse(
-    const Request& request,
-    std::unique_ptr<Response>& responsePtr) noexcept
-{
-    switch(request.method) {
-        case Method::OPTIONS:
-            return onOptionsResponse(request, *responsePtr);
-        case Method::LIST:
-            return onListResponse(request, *responsePtr);
-        case Method::DESCRIBE:
-            return onDescribeResponse(request, *responsePtr);
-        case Method::PLAY:
-            return onPlayResponse(request, *responsePtr);
-        case Method::RECORD:
-            return onRecordResponse(request, *responsePtr);
-        case Method::TEARDOWN:
-            return onTeardownResponse(request, *responsePtr);
-        default:
-            return Session::handleResponse(request, responsePtr);
-    }
-}
-
 bool ClientSession::onOptionsResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
