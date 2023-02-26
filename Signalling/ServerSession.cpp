@@ -15,21 +15,12 @@ struct MediaSession
 {
     bool recorder = false;
     std::string uri;
-    std::unique_ptr<rtsp::Request> createRequest; // describe or announce
     std::unique_ptr<WebRTCPeer> localPeer;
     std::deque<rtsp::IceCandidate> iceCandidates;
     bool prepared = false;
 };
 
 typedef std::map<rtsp::SessionId, std::unique_ptr<MediaSession>> MediaSessions;
-
-struct RequestInfo
-{
-    std::unique_ptr<rtsp::Request> requestPtr;
-    const rtsp::SessionId session;
-};
-
-typedef std::map<rtsp::CSeq, RequestInfo> Requests;
 
 const auto Log = ServerSessionLog;
 
@@ -57,8 +48,6 @@ struct ServerSession::Private
 
     std::optional<std::string> authCookie;
 
-    Requests describeRequests;
-    Requests recordRequests;
     MediaSessions mediaSessions;
 
     bool recordEnabled()
@@ -68,8 +57,8 @@ struct ServerSession::Private
         { return std::to_string(_nextSessionId++); }
 
     void sendIceCandidates(const rtsp::SessionId&, MediaSession* mediaSession);
-    void streamerPrepared(rtsp::CSeq describeRequestCSeq);
-    void recorderPrepared(rtsp::CSeq recordRequestCSeq);
+    void streamerPrepared(rtsp::CSeq describeRequestCSeq, const rtsp::SessionId&);
+    void recorderPrepared(rtsp::CSeq recordRequestCSeq, const rtsp::SessionId&);
     void iceCandidate(
         const rtsp::SessionId&,
         unsigned, const std::string&);
@@ -77,38 +66,6 @@ struct ServerSession::Private
 
 private:
     unsigned _nextSessionId = 1;
-};
-
-struct ServerSession::Private::AutoEraseRequest
-{
-    AutoEraseRequest(
-        ServerSession::Private* owner,
-        Requests::const_iterator it) :
-        _owner(owner), _it(it) {}
-    ~AutoEraseRequest()
-        { if(_owner) _owner->describeRequests.erase(_it); }
-    void discard()
-        { _owner = nullptr; }
-
-private:
-    ServerSession::Private* _owner;
-    Requests::const_iterator _it;
-};
-
-struct ServerSession::Private::AutoEraseRecordRequest
-{
-    AutoEraseRecordRequest(
-        ServerSession::Private* owner,
-        Requests::const_iterator it) :
-        _owner(owner), _it(it) {}
-    ~AutoEraseRecordRequest()
-        { if(_owner) _owner->recordRequests.erase(_it); }
-    void discard()
-        { _owner = nullptr; }
-
-private:
-    ServerSession::Private* _owner;
-    Requests::const_iterator _it;
 };
 
 ServerSession::Private::Private(
@@ -156,21 +113,10 @@ void ServerSession::Private::sendIceCandidates(
     }
 }
 
-void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
+void ServerSession::Private::streamerPrepared(
+    rtsp::CSeq describeRequestCSeq,
+    const rtsp::SessionId& session)
 {
-    auto requestIt = describeRequests.find(describeRequestCSeq);
-    if(describeRequests.end() == requestIt ||
-       rtsp::Method::DESCRIBE != requestIt->second.requestPtr->method)
-    {
-        owner->disconnect();
-        return;
-    }
-
-    AutoEraseRequest autoEraseRequest(this, requestIt);
-
-    RequestInfo& requestInfo = requestIt->second;
-    const rtsp::SessionId& session = requestInfo.session;
-
     auto it = mediaSessions.find(session);
     if(mediaSessions.end() == it || it->second->recorder) {
         owner->disconnect();
@@ -186,7 +132,7 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
         owner->disconnect();
     else {
         rtsp::Response response;
-        prepareOkResponse(requestInfo.requestPtr->cseq, session, &response);
+        prepareOkResponse(describeRequestCSeq, session, &response);
 
         response.headerFields.emplace("Content-Type", "application/sdp");
 
@@ -194,27 +140,14 @@ void ServerSession::Private::streamerPrepared(rtsp::CSeq describeRequestCSeq)
 
         owner->sendResponse(response);
 
-        mediaSession.createRequest.swap(requestInfo.requestPtr);
-
         sendIceCandidates(session, &mediaSession);
     }
 }
 
-void ServerSession::Private::recorderPrepared(rtsp::CSeq recordRequestCSeq)
+void ServerSession::Private::recorderPrepared(
+    rtsp::CSeq recordRequestCSeq,
+    const rtsp::SessionId& session)
 {
-    auto requestIt = recordRequests.find(recordRequestCSeq);
-    if(recordRequests.end() == requestIt ||
-       rtsp::Method::RECORD != requestIt->second.requestPtr->method)
-    {
-        owner->disconnect();
-        return;
-    }
-
-    AutoEraseRecordRequest autoEraseRequest(this, requestIt);
-
-    RequestInfo& requestInfo = requestIt->second;
-    const rtsp::SessionId& session = requestInfo.session;
-
     auto it = mediaSessions.find(session);
     if(mediaSessions.end() == it || !it->second->recorder) {
         owner->disconnect();
@@ -230,15 +163,13 @@ void ServerSession::Private::recorderPrepared(rtsp::CSeq recordRequestCSeq)
         owner->disconnect();
     else {
         rtsp::Response response;
-        prepareOkResponse(requestInfo.requestPtr->cseq, session, &response);
+        prepareOkResponse(recordRequestCSeq, session, &response);
 
         response.headerFields.emplace("Content-Type", "application/sdp");
 
         response.body = recorder.sdp();
 
         owner->sendResponse(response);
-
-        mediaSession.createRequest.swap(requestInfo.requestPtr);
 
         sendIceCandidates(session, &mediaSession);
     }
@@ -371,26 +302,13 @@ bool ServerSession::onOptionsRequest(
 bool ServerSession::onDescribeRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
+    const rtsp::Request& request = *requestPtr.get();
+
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(requestPtr->uri);
     if(!peerPtr)
         return false;
 
     const rtsp::SessionId session = nextSessionId();
-    auto requestPair =
-        _p->describeRequests.emplace(
-            requestPtr->cseq,
-            RequestInfo {
-                .requestPtr = nullptr,
-                .session = session,
-            });
-    if(!requestPair.second)
-        return false;
-
-    RequestInfo& requestInfo = requestPair.first->second;
-    requestInfo.requestPtr = std::move(requestPtr);
-    rtsp::Request& request = *requestInfo.requestPtr;
-
-    Private::AutoEraseRequest autoEraseRequest(_p.get(), requestPair.first);
 
     auto emplacePair =
         _p->mediaSessions.emplace(
@@ -409,7 +327,8 @@ bool ServerSession::onDescribeRequest(
         std::bind(
             &ServerSession::Private::streamerPrepared,
             _p.get(),
-            request.cseq),
+            request.cseq,
+            session),
         std::bind(
             &ServerSession::Private::iceCandidate,
             _p.get(),
@@ -420,8 +339,6 @@ bool ServerSession::onDescribeRequest(
             &ServerSession::Private::eos,
             _p.get(),
             session));
-
-    autoEraseRequest.discard();
 
     return true;
 }
@@ -446,6 +363,8 @@ bool ServerSession::authorize(
 bool ServerSession::onRecordRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
+    const rtsp::Request& request = *requestPtr.get();
+
     if(!recordEnabled(requestPtr->uri) || !_p->recordEnabled())
         return false;
 
@@ -463,21 +382,6 @@ bool ServerSession::onRecordRequest(
         return false;
 
     const rtsp::SessionId session = nextSessionId();
-    auto requestPair =
-        _p->recordRequests.emplace(
-            requestPtr->cseq,
-            RequestInfo {
-                .requestPtr = nullptr,
-                .session = session,
-            });
-    if(!requestPair.second)
-        return false;
-
-    RequestInfo& requestInfo = requestPair.first->second;
-    requestInfo.requestPtr = std::move(requestPtr);
-    rtsp::Request& request = *requestInfo.requestPtr;
-
-    Private::AutoEraseRecordRequest autoEraseRequest(_p.get(), requestPair.first);
 
     auto emplacePair =
         _p->mediaSessions.emplace(
@@ -496,7 +400,8 @@ bool ServerSession::onRecordRequest(
         std::bind(
             &ServerSession::Private::recorderPrepared,
             _p.get(),
-            request.cseq),
+            request.cseq,
+            session),
         std::bind(
             &ServerSession::Private::iceCandidate,
             _p.get(),
@@ -508,13 +413,11 @@ bool ServerSession::onRecordRequest(
             _p.get(),
             session));
 
-    const std::string& sdp = requestInfo.requestPtr->body;
+    const std::string& sdp = request.body;
     if(sdp.empty())
         return false;
 
     mediaSession.localPeer->setRemoteSdp(sdp);
-
-    autoEraseRequest.discard();
 
     WebRTCPeer& localPeer = *(mediaSession.localPeer);
 
