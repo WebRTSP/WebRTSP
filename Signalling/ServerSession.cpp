@@ -373,6 +373,10 @@ bool ServerSession::onRecordRequest(
         return false;
     }
 
+    const std::string& sdp = request.body;
+    if(sdp.empty())
+        return false;
+
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createRecordPeer(requestPtr->uri);
     if(!peerPtr)
         return false;
@@ -412,10 +416,6 @@ bool ServerSession::onRecordRequest(
             &ServerSession::Private::eos,
             _p.get(),
             session));
-
-    const std::string& sdp = request.body;
-    if(sdp.empty())
-        return false;
 
     mediaSession.localPeer->setRemoteSdp(sdp);
 
