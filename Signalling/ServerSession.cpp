@@ -398,8 +398,9 @@ bool ServerSession::onRecordRequest(
     mediaSession.recorder = true;
     mediaSession.uri = request.uri;
     mediaSession.localPeer = std::move(peerPtr);
+    WebRTCPeer& localPeer = *(mediaSession.localPeer);
 
-    mediaSession.localPeer->prepare(
+    localPeer.prepare(
         _p->iceServers,
         std::bind(
             &ServerSession::Private::recorderPrepared,
@@ -417,9 +418,7 @@ bool ServerSession::onRecordRequest(
             _p.get(),
             session));
 
-    mediaSession.localPeer->setRemoteSdp(sdp);
-
-    WebRTCPeer& localPeer = *(mediaSession.localPeer);
+    localPeer.setRemoteSdp(sdp);
 
     localPeer.play();
 
