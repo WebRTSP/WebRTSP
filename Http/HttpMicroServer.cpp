@@ -131,7 +131,7 @@ bool MicroServer::Private::init()
         return p->httpCallback(connection, url, method, version, uploadData, uploadDataSize, conCls);
     };
 
-    Log()->info("Starting HTTP server on port {}", config.port);
+    Log()->info("Starting HTTP server on port {} in \"{}\"", config.port, config.wwwRoot);
 
     daemon =
         MHD_start_daemon(
