@@ -27,6 +27,8 @@ public:
 
     bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
+    void startRecordToClient(const std::string& uri, const rtsp::SessionId&) noexcept;
+
 protected:
     std::string nextSessionId();
 
@@ -43,6 +45,8 @@ protected:
     bool onPlayRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onRecordRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+
+    bool onRecordResponse(const rtsp::Request& request, const rtsp::Response& response) noexcept override;
 
 private:
     struct Private;

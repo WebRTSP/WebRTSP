@@ -16,6 +16,7 @@ struct MediaSession
     enum class Type {
         Describe,
         Record,
+        Subscribe,
     };
 
     MediaSession(MediaSession::Type type, const std::string& uri) :
@@ -67,6 +68,7 @@ struct ServerSession::Private
     void sendIceCandidates(const rtsp::SessionId&, MediaSession* mediaSession);
     void streamerPrepared(rtsp::CSeq describeRequestCSeq, const rtsp::SessionId&);
     void recorderPrepared(rtsp::CSeq recordRequestCSeq, const rtsp::SessionId&);
+    void recordToClientStreamerPrepared(const rtsp::SessionId&);
     void iceCandidate(
         const rtsp::SessionId&,
         unsigned, const std::string&);
@@ -180,6 +182,42 @@ void ServerSession::Private::recorderPrepared(
         owner->sendResponse(response);
 
         sendIceCandidates(session, &mediaSession);
+    }
+}
+
+void ServerSession::Private::recordToClientStreamerPrepared(const rtsp::SessionId& mediaSessionId)
+{
+    auto it = mediaSessions.find(mediaSessionId);
+    assert(mediaSessions.end() != it);
+    if(mediaSessions.end() == it) {
+        return;
+    }
+
+    MediaSession& mediaSession = *(it->second);
+    if(mediaSession.type != MediaSession::Type::Subscribe) {
+        assert(false);
+        return;
+    }
+
+    WebRTCPeer& localPeer = *mediaSession.localPeer;
+
+    mediaSession.prepared = true;
+
+    if(localPeer.sdp().empty()) {
+        assert(false);
+        owner->disconnect();
+    } else {
+        rtsp::Request& request =
+            *owner->createRequest(rtsp::Method::RECORD, mediaSession.uri);
+
+        request.headerFields.emplace("Session", mediaSessionId);
+        request.headerFields.emplace("Content-Type", "application/sdp");
+
+        request.body = localPeer.sdp();
+
+        owner->sendRequest(request);
+
+        sendIceCandidates(mediaSessionId, &mediaSession);
     }
 }
 
@@ -526,6 +564,74 @@ bool ServerSession::onTeardownRequest(
     sendOkResponse(requestPtr->cseq, session);
 
     _p->mediaSessions.erase(it);
+
+    return true;
+}
+
+void ServerSession::startRecordToClient(
+    const std::string& uri,
+    const rtsp::SessionId& mediaSessionId) noexcept
+{
+    std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(uri);
+    if(!peerPtr) {
+        onEos(); // FIXME! send TEARDOWN instead and remove Media Session
+        return;
+    }
+
+    auto emplacePair =
+        _p->mediaSessions.emplace(
+            mediaSessionId,
+            std::make_unique<MediaSession>(MediaSession::Type::Subscribe, uri));
+    if(!emplacePair.second) {
+        onEos(); // FIXME! send TEARDOWN instead and remove Media Session
+        return;
+    }
+
+    MediaSession& mediaSession = *(emplacePair.first->second);
+    mediaSession.localPeer = std::move(peerPtr);
+
+    mediaSession.localPeer->prepare(
+        _p->iceServers,
+        std::bind(
+            &ServerSession::Private::recordToClientStreamerPrepared,
+            _p.get(),
+            mediaSessionId),
+        std::bind(
+            &ServerSession::Private::iceCandidate,
+            _p.get(),
+            mediaSessionId,
+            std::placeholders::_1,
+            std::placeholders::_2),
+        std::bind(
+            &ServerSession::Private::eos,
+            _p.get(),
+            mediaSessionId));
+}
+
+bool ServerSession::onRecordResponse(const rtsp::Request& request, const rtsp::Response& response) noexcept
+{
+    if(rtsp::StatusCode::OK != response.statusCode)
+        return false;
+
+    const rtsp::SessionId mediaSessionId = RequestSession(request);
+    if(mediaSessionId.empty() || mediaSessionId != ResponseSession(response))
+        return false;
+
+    auto it = _p->mediaSessions.find(mediaSessionId);
+    if(it == _p->mediaSessions.end())
+        return false;
+
+    MediaSession& mediaSession = *it->second;
+    if(mediaSession.type != MediaSession::Type::Subscribe)
+        return false;
+
+    if(ResponseContentType(response) != "application/sdp")
+        return false;
+
+    WebRTCPeer& localPeer = *(mediaSession.localPeer);
+
+    localPeer.setRemoteSdp(response.body);
+    localPeer.play();
 
     return true;
 }
