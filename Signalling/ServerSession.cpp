@@ -13,8 +13,16 @@ namespace {
 
 struct MediaSession
 {
-    bool recorder = false;
-    std::string uri;
+    enum class Type {
+        Describe,
+        Record,
+    };
+
+    MediaSession(MediaSession::Type type, const std::string& uri) :
+        type(type), uri(uri) {}
+
+    const Type type;
+    const std::string uri;
     std::unique_ptr<WebRTCPeer> localPeer;
     std::deque<rtsp::IceCandidate> iceCandidates;
     bool prepared = false;
@@ -118,7 +126,7 @@ void ServerSession::Private::streamerPrepared(
     const rtsp::SessionId& session)
 {
     auto it = mediaSessions.find(session);
-    if(mediaSessions.end() == it || it->second->recorder) {
+    if(mediaSessions.end() == it || it->second->type != MediaSession::Type::Describe) {
         owner->disconnect();
         return;
     }
@@ -149,7 +157,7 @@ void ServerSession::Private::recorderPrepared(
     const rtsp::SessionId& session)
 {
     auto it = mediaSessions.find(session);
-    if(mediaSessions.end() == it || !it->second->recorder) {
+    if(mediaSessions.end() == it || it->second->type != MediaSession::Type::Record) {
         owner->disconnect();
         return;
     }
@@ -313,13 +321,11 @@ bool ServerSession::onDescribeRequest(
     auto emplacePair =
         _p->mediaSessions.emplace(
             session,
-            std::make_unique<MediaSession>());
+            std::make_unique<MediaSession>(MediaSession::Type::Describe, request.uri));
     if(!emplacePair.second)
         return false;
 
     MediaSession& mediaSession = *(emplacePair.first->second);
-    mediaSession.recorder = false;
-    mediaSession.uri = request.uri;
     mediaSession.localPeer = std::move(peerPtr);
 
     mediaSession.localPeer->prepare(
@@ -390,13 +396,11 @@ bool ServerSession::onRecordRequest(
     auto emplacePair =
         _p->mediaSessions.emplace(
             session,
-            std::make_unique<MediaSession>());
+            std::make_unique<MediaSession>(MediaSession::Type::Record, request.uri));
     if(!emplacePair.second)
         return false;
 
     MediaSession& mediaSession = *(emplacePair.first->second);
-    mediaSession.recorder = true;
-    mediaSession.uri = request.uri;
     mediaSession.localPeer = std::move(peerPtr);
     WebRTCPeer& localPeer = *(mediaSession.localPeer);
 
@@ -490,7 +494,7 @@ bool ServerSession::onPlayRequest(
         return false;
 
     MediaSession& mediaSession = *it->second;
-    if(mediaSession.recorder)
+    if(mediaSession.type != MediaSession::Type::Describe)
         return false;
 
     if(RequestContentType(*requestPtr) != "application/sdp")
