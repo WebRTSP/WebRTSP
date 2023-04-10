@@ -63,7 +63,7 @@ void ClientSession::Private::eos()
 {
     Log()->trace("Eos");
 
-    owner->onEos();
+    owner->onEos(); // FIXME! send TEARDOWN and remove Media Session instead
 }
 
 

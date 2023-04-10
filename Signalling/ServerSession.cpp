@@ -201,7 +201,7 @@ void ServerSession::Private::eos(const rtsp::SessionId& session)
 {
     Log()->trace("Eos. Session: {}", session);
 
-    owner->onEos();
+    owner->onEos(); // FIXME! send TEARDOWN and remove Media Session instead
 }
 
 
