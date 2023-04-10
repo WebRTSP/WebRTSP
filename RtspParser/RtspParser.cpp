@@ -288,7 +288,7 @@ static bool ParseMethodLine(const char* request, size_t* pos, size_t size, Reque
 
 bool ParseHeaderField(
     const char* buf, size_t* pos, size_t size,
-    std::map<std::string, std::string>* headerFields)
+    std::map<std::string, std::string, LessNoCase>* headerFields)
 {
     const Token name = GetToken(buf, pos, size);
     if(IsEmptyToken(name))
@@ -306,18 +306,10 @@ bool ParseHeaderField(
         if(SkipFolding(buf, pos, size))
             continue;
         else if(SkipEOL(buf, pos, size)) {
-            std::string lowerName(name.token, name.size);
-            std::transform(
-                lowerName.begin(), lowerName.end(),
-                lowerName.begin(),
-                [] (std::string::value_type c) {
-                    return std::tolower(static_cast<unsigned char>(c));
-                });
-
             const Token value { buf + valuePos, tmpPos - valuePos };
 
             headerFields->emplace(
-                lowerName,
+                std::string(name.token, name.size),
                 std::string(value.token, value.size));
 
             return true;

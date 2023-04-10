@@ -6,6 +6,7 @@
 #include "Common.h"
 #include "Methods.h"
 #include "Protocols.h"
+#include "LessNoCase.h"
 
 
 namespace rtsp {
@@ -16,7 +17,7 @@ struct Request {
     Protocol protocol;
     CSeq cseq;
 
-    std::map<std::string, std::string> headerFields;
+    std::map<std::string, std::string, LessNoCase> headerFields;
     std::string body;
 };
 
