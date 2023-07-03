@@ -164,9 +164,6 @@ bool ClientRecordSession::onTeardownResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
 {
-    if(ResponseSession(response) != _p->session)
-        return false;
-
     return true;
 }
 
@@ -267,6 +264,7 @@ void ClientRecordSession::stopRecord() noexcept
         assert(!_p->session.empty());
         if(!_p->session.empty()) {
             requestTeardown(_p->targetUri, _p->session);
+            _p->session.clear();
             _p->recordRequested = false;
         } else {
             // FIXME? didn't get response to RECORD request yet
