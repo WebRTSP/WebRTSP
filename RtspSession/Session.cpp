@@ -155,6 +155,7 @@ CSeq Session::requestSetup(
     const std::string& body) noexcept
 {
     assert(!uri.empty());
+    assert(!session.empty());
 
     Request& request =
         *createRequest(Method::SETUP, uri);
