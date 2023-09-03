@@ -28,6 +28,8 @@ typedef
 
 const char *const ConfigFile = "/Config.js";
 const char *const IndexFile = "/index.html";
+const char *const IndexFilePath = "/";
+const char *const IndexFilePrefix = "/v/";
 
 const char* AuthCookieName = "WebRTSP-Auth";
 const char* AuthCookieStaticAttributes = "; HttpOnly; SameSite=Strict; Secure; Path=/";
@@ -275,10 +277,10 @@ void MicroServer::Private::cleanupCookies()
 // running on worker thread!
 MHD_Result MicroServer::Private::httpCallback(
     struct MHD_Connection* connection,
-    const char* url,
-    const char* method,
-    const char* version,
-    const char* uploadData,
+    const char *const url,
+    const char *const method,
+    const char *const version,
+    const char *const uploadData,
     size_t* uploadDataSize,
     void ** conCls)
 {
@@ -291,19 +293,7 @@ MHD_Result MicroServer::Private::httpCallback(
         return MHD_YES;
     }
 
-    if(url[0] == '/' && url[1] == 0) {
-        Log()->debug("Routing \"/\" to \"{}\"...", IndexFile);
-        url = IndexFile;
-    } else {
-        Log()->debug("Serving \"{}\"...", url);
-    }
-
-    GCharPtr fullPathPtr(g_build_filename(wwwRootPath.c_str(), url, nullptr));
-    GCharPtr safePathPtr(g_canonicalize_filename(fullPathPtr.get(), nullptr));
-    if(!g_str_has_prefix(safePathPtr.get(), wwwRootPath.c_str())) {
-        Log()->error("Try to escape from WWW dir detected: {}\n", url);
-        return MHD_NO;
-    }
+    Log()->debug("Serving \"{}\"...", url);
 
     cleanupCookies();
 
@@ -392,6 +382,19 @@ MHD_Result MicroServer::Private::httpCallback(
         addAuthCookie = true;
 
         Log()->info("User \"{}\" authorized...", userName);
+    }
+
+    GCharPtr safePathPtr;
+    if(0 == strcmp(url, IndexFilePath) || g_str_has_prefix(url, IndexFilePrefix)) {
+        Log()->debug("Routing \"{}\" to \"{}\"...", url, IndexFile);
+        safePathPtr.reset(g_build_filename(wwwRootPath.c_str(), IndexFile, nullptr));
+    } else {
+        GCharPtr fullPathPtr(g_build_filename(wwwRootPath.c_str(), url, nullptr));
+        safePathPtr.reset(g_canonicalize_filename(fullPathPtr.get(), nullptr));
+        if(!g_str_has_prefix(safePathPtr.get(), wwwRootPath.c_str())) {
+            Log()->error("Try to escape from WWW dir detected: {}\n", url);
+            return MHD_NO;
+        }
     }
 
     MHD_Response* response = nullptr;
