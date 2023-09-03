@@ -26,6 +26,9 @@ typedef
         char,
         MHDFree> MHDCharPtr;
 
+const char *const ConfigFile = "/Config.js";
+const char *const IndexFile = "/index.html";
+
 const char* AuthCookieName = "WebRTSP-Auth";
 const char* AuthCookieStaticAttributes = "; HttpOnly; SameSite=Strict; Secure; Path=/";
 #ifdef NDEBUG
@@ -104,7 +107,7 @@ MicroServer::Private::Private(
     owner(owner),
     config(config),
     wwwRootPath(GCharPtr(g_canonicalize_filename(config.wwwRoot.c_str(), nullptr)).get()),
-    configJsPath(GCharPtr(g_build_filename(wwwRootPath.c_str(), "/Config.js", nullptr)).get()),
+    configJsPath(GCharPtr(g_build_filename(wwwRootPath.c_str(), ConfigFile, nullptr)).get()),
     configJsBuffer(configJs.begin(), configJs.end()),
     onNewAuthTokenCallback(onNewAuthTokenCallback),
     context(context)
@@ -289,8 +292,8 @@ MHD_Result MicroServer::Private::httpCallback(
     }
 
     if(url[0] == '/' && url[1] == 0) {
-        Log()->debug("Routing \"/\" to \"/index.html\"...");
-        url = "/index.html";
+        Log()->debug("Routing \"/\" to \"{}\"...", IndexFile);
+        url = IndexFile;
     } else {
         Log()->debug("Serving \"{}\"...", url);
     }
