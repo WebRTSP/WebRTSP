@@ -78,8 +78,10 @@ struct MicroServer::Private
     void cleanupCookies();
 
     MicroServer *const owner;
-    Config config;
-    std::string configJsPath;
+
+    const Config config;
+    const std::string wwwRootPath;
+    const std::string configJsPath;
     MHD_Daemon* daemon = nullptr;
     std::vector<uint8_t> configJsBuffer;
     const MicroServer::OnNewAuthToken onNewAuthTokenCallback;
@@ -101,15 +103,12 @@ MicroServer::Private::Private(
     GMainContext* context) :
     owner(owner),
     config(config),
+    wwwRootPath(GCharPtr(g_canonicalize_filename(config.wwwRoot.c_str(), nullptr)).get()),
+    configJsPath(GCharPtr(g_build_filename(wwwRootPath.c_str(), "/Config.js", nullptr)).get()),
     configJsBuffer(configJs.begin(), configJs.end()),
     onNewAuthTokenCallback(onNewAuthTokenCallback),
     context(context)
 {
-    GCharPtr wwwRootPtr(g_canonicalize_filename(config.wwwRoot.c_str(), nullptr));
-    this->config.wwwRoot = wwwRootPtr.get();
-
-    GCharPtr configJsPathPtr(g_build_filename(this->config.wwwRoot.c_str(), "/Config.js", nullptr));
-    configJsPath = configJsPathPtr.get();
 }
 
 bool MicroServer::Private::init()
@@ -131,7 +130,7 @@ bool MicroServer::Private::init()
         return p->httpCallback(connection, url, method, version, uploadData, uploadDataSize, conCls);
     };
 
-    Log()->info("Starting HTTP server on port {} in \"{}\"", config.port, config.wwwRoot);
+    Log()->info("Starting HTTP server on port {} in \"{}\"", config.port, wwwRootPath);
 
     daemon =
         MHD_start_daemon(
@@ -296,9 +295,9 @@ MHD_Result MicroServer::Private::httpCallback(
         Log()->debug("Serving \"{}\"...", url);
     }
 
-    GCharPtr fullPathPtr(g_build_filename(config.wwwRoot.c_str(), url, nullptr));
+    GCharPtr fullPathPtr(g_build_filename(wwwRootPath.c_str(), url, nullptr));
     GCharPtr safePathPtr(g_canonicalize_filename(fullPathPtr.get(), nullptr));
-    if(!g_str_has_prefix(safePathPtr.get(), config.wwwRoot.c_str())) {
+    if(!g_str_has_prefix(safePathPtr.get(), wwwRootPath.c_str())) {
         Log()->error("Try to escape from WWW dir detected: {}\n", url);
         return MHD_NO;
     }
