@@ -328,7 +328,7 @@ bool ServerSession::onOptionsRequest(
     prepareOkResponse(requestPtr->cseq, rtsp::SessionId(), &response);
 
     std::string options;
-    if(listEnabled())
+    if(listEnabled(requestPtr->uri))
         options += "LIST, ";
 
     options += "DESCRIBE, SETUP, PLAY, TEARDOWN";
