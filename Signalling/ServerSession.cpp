@@ -247,7 +247,21 @@ void ServerSession::Private::eos(const rtsp::SessionId& session)
 {
     Log()->trace("Eos. Session: {}", session);
 
-    owner->onEos(); // FIXME! send TEARDOWN and remove Media Session instead
+    auto it = mediaSessions.find(session);
+    if(mediaSessions.end() == it) {
+        owner->disconnect();
+        return;
+    }
+
+    MediaSession& mediaSession = *(it->second);
+    mediaSession.localPeer->stop();
+
+    rtsp::Request& request =
+        *owner->createRequest(rtsp::Method::TEARDOWN, mediaSession.uri, session);
+
+    mediaSessions.erase(it);
+
+    owner->sendRequest(request);
 }
 
 
