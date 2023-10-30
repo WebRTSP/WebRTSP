@@ -329,14 +329,25 @@ bool ServerSession::onOptionsRequest(
 
     std::string options;
     if(listEnabled(requestPtr->uri))
-        options += "LIST, ";
+        options = "LIST";
 
-    options += "DESCRIBE, SETUP, PLAY, TEARDOWN";
+    if(playEnabled(requestPtr->uri)) {
+        if(!options.empty())
+            options += ", ";
+        options += "DESCRIBE, SETUP, PLAY, TEARDOWN";
+    }
 
-    if(recordEnabled(requestPtr->uri) && _p->recordEnabled())
-        options += ", RECORD";
-    if(subscribeEnabled(requestPtr->uri))
-        options += ", SUBSCRIBE";
+    if(recordEnabled(requestPtr->uri) && _p->recordEnabled()) {
+        if(!options.empty())
+            options += ", ";
+        options += "RECORD";
+    }
+
+    if(subscribeEnabled(requestPtr->uri)) {
+        if(!options.empty())
+            options += ", ";
+        options += "SUBSCRIBE";
+    }
 
     response.headerFields.emplace("Public", options);
 
@@ -345,10 +356,20 @@ bool ServerSession::onOptionsRequest(
     return true;
 }
 
+bool ServerSession::playEnabled(const std::string&) noexcept
+{
+    return true;
+}
+
 bool ServerSession::onDescribeRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     const rtsp::Request& request = *requestPtr.get();
+
+    if(!playEnabled(request.uri)) {
+        Log()->error("Playback is not supported for \"{}\"", requestPtr->uri);
+        return false;
+    }
 
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(requestPtr->uri);
     if(!peerPtr)

@@ -33,6 +33,7 @@ protected:
     std::string nextSessionId();
 
     virtual bool listEnabled(const std::string& /*uri*/) noexcept { return false; }
+    virtual bool playEnabled(const std::string& uri) noexcept;
     virtual bool recordEnabled(const std::string& uri) noexcept;
     virtual bool subscribeEnabled(const std::string& uri) noexcept;
     virtual bool authorize(
