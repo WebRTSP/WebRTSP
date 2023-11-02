@@ -77,6 +77,10 @@ struct MicroServer::Private
     void addCookie(MHD_Response*);
     void refreshCookie(MHD_Response* response, const std::string& inCookie);
     void addExpiredCookie(MHD_Response*) const;
+    MHD_Result queueAccessDeniedResponse(
+        MHD_Connection* connection,
+        bool expireCookie,
+        bool isStale) const;
     void postToken(
         const std::string& token,
         std::chrono::steady_clock::time_point expiresAt) const;
@@ -258,6 +262,30 @@ void MicroServer::Private::addExpiredCookie(MHD_Response* response) const
     MHD_add_response_header(response, MHD_HTTP_HEADER_SET_COOKIE, cookie.c_str());
 }
 
+MHD_Result MicroServer::Private::queueAccessDeniedResponse(
+    MHD_Connection* connection,
+    bool expireCookie,
+    bool isStale) const
+{
+    MHD_Response* response =
+        MHD_create_response_from_buffer(
+            AccessDeniedResponse.size(),
+            (void*)AccessDeniedResponse.c_str(),
+            MHD_RESPMEM_PERSISTENT);
+    if(expireCookie) addExpiredCookie(response);
+    const MHD_Result queueResult =
+        MHD_queue_auth_fail_response2(
+            connection,
+            config.realm.c_str(),
+            config.opaque.c_str(),
+            response,
+            isStale ? MHD_YES : MHD_NO,
+            DigestAlgorithm);
+    MHD_destroy_response(response);
+
+    return queueResult;
+}
+
 void MicroServer::Private::cleanupCookies()
 {
     const auto now = std::chrono::steady_clock::now();
@@ -312,43 +340,13 @@ MHD_Result MicroServer::Private::httpCallback(
         const char* userName = userNamePtr.get();
         if(!userName) {
             Log()->debug("User name is missing");
-            MHD_Response* response =
-                MHD_create_response_from_buffer(
-                    AccessDeniedResponse.size(),
-                    (void*)AccessDeniedResponse.c_str(),
-                    MHD_RESPMEM_PERSISTENT);
-            if(inAuthCookie) addExpiredCookie(response);
-            const MHD_Result queueResult =
-                MHD_queue_auth_fail_response2(
-                    connection,
-                    config.realm.c_str(),
-                    config.opaque.c_str(),
-                    response,
-                    MHD_NO,
-                    DigestAlgorithm);
-            MHD_destroy_response(response);
-            return queueResult;
+            return queueAccessDeniedResponse(connection, inAuthCookie, false);
         }
 
         auto it = config.passwd.find(userName);
         if(it == config.passwd.end()) {
             Log()->error("User \"{}\" not allowed", userName);
-            MHD_Response* response =
-                MHD_create_response_from_buffer(
-                    AccessDeniedResponse.size(),
-                    (void*)AccessDeniedResponse.c_str(),
-                    MHD_RESPMEM_PERSISTENT);
-            if(inAuthCookie) addExpiredCookie(response);
-            const MHD_Result queueResult =
-                MHD_queue_auth_fail_response2(
-                    connection,
-                    config.realm.c_str(),
-                    config.opaque.c_str(),
-                    response,
-                    MHD_NO,
-                    DigestAlgorithm);
-            MHD_destroy_response(response);
-            return queueResult;
+            return queueAccessDeniedResponse(connection, inAuthCookie, false);
         }
 
         const int authCheckResult =
@@ -361,22 +359,7 @@ MHD_Result MicroServer::Private::httpCallback(
                 DigestAlgorithm);
         if(authCheckResult != MHD_YES) {
             Log()->error("User \"{}\" authentication failed for \"{}\"", userName, url);
-            MHD_Response* response =
-                MHD_create_response_from_buffer(
-                    AccessDeniedResponse.size(),
-                    (void*)AccessDeniedResponse.c_str(),
-                    MHD_RESPMEM_PERSISTENT);
-            if(inAuthCookie) addExpiredCookie(response);
-            const MHD_Result queueResult =
-                MHD_queue_auth_fail_response2(
-                    connection,
-                    config.realm.c_str(),
-                    config.opaque.c_str(),
-                    response,
-                    authCheckResult == MHD_INVALID_NONCE ? MHD_YES : MHD_NO,
-                    DigestAlgorithm);
-            MHD_destroy_response(response);
-            return queueResult;
+            return queueAccessDeniedResponse(connection, inAuthCookie, authCheckResult == MHD_INVALID_NONCE);
         }
 
         addAuthCookie = true;
