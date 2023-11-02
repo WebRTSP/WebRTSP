@@ -26,8 +26,6 @@ enum {
 enum {
     HTTP_PROTOCOL_ID,
     PROTOCOL_ID,
-    HTTPS_PROTOCOL_ID,
-    SECURE_PROTOCOL_ID,
 };
 
 const char* AuthCookieName = "WebRTSP-Auth";
@@ -225,19 +223,6 @@ bool WsServer::Private::init(lws_context* context)
         { nullptr, nullptr, 0, 0 }
     };
 
-    const lws_protocols secureProtocols[] = {
-        { "http", HttpCallback, 0, 0, HTTPS_PROTOCOL_ID },
-        {
-            "webrtsp",
-            WsCallback,
-            sizeof(SessionContextData),
-            RX_BUFFER_SIZE,
-            SECURE_PROTOCOL_ID,
-            nullptr
-        },
-        { nullptr, nullptr, 0, 0 }
-    };
-
     if(!context) {
         lws_context_creation_info wsInfo {};
         wsInfo.gid = -1;
@@ -271,27 +256,6 @@ bool WsServer::Private::init(lws_context* context)
 
         lws_vhost* vhost = lws_create_vhost(context, &vhostInfo);
         if(!vhost)
-             return false;
-    }
-
-    if(!config.serverName.empty() && config.securePort != 0 &&
-        !config.certificate.empty() && !config.key.empty())
-    {
-        Log()->info("Starting WSS server on port {}", config.securePort);
-
-        lws_context_creation_info secureVhostInfo {};
-        secureVhostInfo.port = config.securePort;
-        secureVhostInfo.protocols = secureProtocols;
-        secureVhostInfo.ssl_cert_filepath = config.certificate.c_str();
-        secureVhostInfo.ssl_private_key_filepath = config.key.c_str();
-        secureVhostInfo.vhost_name = config.serverName.c_str();
-        secureVhostInfo.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
-        secureVhostInfo.user = this;
-        if(config.secureBindToLoopbackOnly)
-            secureVhostInfo.iface = "lo";
-
-        lws_vhost* secureVhost = lws_create_vhost(context, &secureVhostInfo);
-        if(!secureVhost)
              return false;
     }
 
