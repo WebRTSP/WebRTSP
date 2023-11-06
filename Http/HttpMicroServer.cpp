@@ -28,8 +28,6 @@ typedef
 
 const char *const ConfigFile = "/Config.js";
 const char *const IndexFile = "/index.html";
-const char *const IndexFilePath = "/";
-const char *const IndexFilePrefix = "/v/";
 
 const char* AuthCookieName = "WebRTSP-Auth";
 const char* AuthCookieStaticAttributes = "; HttpOnly; SameSite=Strict; Secure; Path=/";
@@ -53,6 +51,7 @@ struct MicroServer::Private
 {
     static const std::string AccessDeniedResponse;
     static const std::string NotFoundResponse;
+    static const Config FixConfig(const Config&);
 
     Private(
         MicroServer*,
@@ -77,10 +76,13 @@ struct MicroServer::Private
     void addCookie(MHD_Response*);
     void refreshCookie(MHD_Response* response, const std::string& inCookie);
     void addExpiredCookie(MHD_Response*) const;
+
     MHD_Result queueAccessDeniedResponse(
         MHD_Connection* connection,
         bool expireCookie,
         bool isStale) const;
+    MHD_Result queueNotFoundResponse(MHD_Connection* connection) const;
+
     void postToken(
         const std::string& token,
         std::chrono::steady_clock::time_point expiresAt) const;
@@ -104,6 +106,17 @@ struct MicroServer::Private
 const std::string MicroServer::Private::AccessDeniedResponse = "Access denied";
 const std::string MicroServer::Private::NotFoundResponse = "Not found";
 
+const Config MicroServer::Private::FixConfig(const Config& config)
+{
+    if(config.indexPaths.empty()) {
+        Config tmpConfig = config;
+        tmpConfig.indexPaths.emplace("/", !config.passwd.empty());
+        return tmpConfig;
+    } else {
+        return config;
+    }
+}
+
 MicroServer::Private::Private(
     MicroServer* owner,
     const Config& config,
@@ -111,7 +124,7 @@ MicroServer::Private::Private(
     const OnNewAuthToken& onNewAuthTokenCallback,
     GMainContext* context) :
     owner(owner),
-    config(config),
+    config(FixConfig(config)),
     wwwRootPath(GCharPtr(g_canonicalize_filename(config.wwwRoot.c_str(), nullptr)).get()),
     configJsPath(GCharPtr(g_build_filename(wwwRootPath.c_str(), ConfigFile, nullptr)).get()),
     configJsBuffer(configJs.begin(), configJs.end()),
@@ -286,6 +299,19 @@ MHD_Result MicroServer::Private::queueAccessDeniedResponse(
     return queueResult;
 }
 
+MHD_Result MicroServer::Private::queueNotFoundResponse(MHD_Connection* connection) const
+{
+    MHD_Response* response =
+        MHD_create_response_from_buffer(
+            NotFoundResponse.size(),
+            (void*)NotFoundResponse.c_str(),
+            MHD_RESPMEM_PERSISTENT);
+    MHD_Result queueResult = MHD_queue_response(connection, MHD_HTTP_NOT_FOUND, response);
+    MHD_destroy_response(response);
+
+    return queueResult;
+}
+
 void MicroServer::Private::cleanupCookies()
 {
     const auto now = std::chrono::steady_clock::now();
@@ -323,6 +349,13 @@ MHD_Result MicroServer::Private::httpCallback(
 
     Log()->debug("Serving \"{}\"...", url);
 
+    g_autofree gchar* unescapedUrl = g_strdup(url);
+    MHD_http_unescape(unescapedUrl);
+
+    auto it = config.indexPaths.find(unescapedUrl);
+    const bool isIndexPath = it != config.indexPaths.end();
+    const bool pathAuthRequired = isIndexPath ? it->second : false;
+
     cleanupCookies();
 
     bool addAuthCookie = false;
@@ -335,40 +368,46 @@ MHD_Result MicroServer::Private::httpCallback(
         else
             Log()->debug("Got invalid auth cookie \"{}\"", inAuthCookie);
     }
-    if(!config.passwd.empty() && !authCookieValid) {
-        MHDCharPtr userNamePtr(MHD_digest_auth_get_username(connection));
-        const char* userName = userNamePtr.get();
-        if(!userName) {
-            Log()->debug("User name is missing");
-            return queueAccessDeniedResponse(connection, inAuthCookie, false);
+
+    MHDCharPtr userNamePtr(MHD_digest_auth_get_username(connection));
+    const char* userName = userNamePtr.get();
+    if((userName || pathAuthRequired) && !authCookieValid) {
+        if(!config.passwd.empty()) {
+            if(!userName) {
+                Log()->debug("User name is missing");
+                return queueAccessDeniedResponse(connection, inAuthCookie, false);
+            }
+
+            auto it = config.passwd.find(userName);
+            if(it == config.passwd.end()) {
+                Log()->error("User \"{}\" not allowed", userName);
+                return queueAccessDeniedResponse(connection, inAuthCookie, false);
+            }
+
+            const int authCheckResult =
+                MHD_digest_auth_check2(
+                    connection,
+                    config.realm.c_str(),
+                    it->first.c_str(),
+                    it->second.c_str(),
+                    300,
+                    DigestAlgorithm);
+            if(authCheckResult == MHD_YES) {
+                Log()->info("User \"{}\" authorized...", userName);
+                addAuthCookie = true;
+            } else if(pathAuthRequired || authCheckResult == MHD_INVALID_NONCE) {
+                Log()->error("User \"{}\" authentication failed for \"{}\"", userName, url);
+                return queueAccessDeniedResponse(connection, inAuthCookie, authCheckResult == MHD_INVALID_NONCE);
+            }
+        } else {
+            // don't expose protected paths without auth
+            Log()->debug("Ignored request to protectd path without auth");
+            return queueNotFoundResponse(connection);
         }
-
-        auto it = config.passwd.find(userName);
-        if(it == config.passwd.end()) {
-            Log()->error("User \"{}\" not allowed", userName);
-            return queueAccessDeniedResponse(connection, inAuthCookie, false);
-        }
-
-        const int authCheckResult =
-            MHD_digest_auth_check2(
-                connection,
-                config.realm.c_str(),
-                it->first.c_str(),
-                it->second.c_str(),
-                300,
-                DigestAlgorithm);
-        if(authCheckResult != MHD_YES) {
-            Log()->error("User \"{}\" authentication failed for \"{}\"", userName, url);
-            return queueAccessDeniedResponse(connection, inAuthCookie, authCheckResult == MHD_INVALID_NONCE);
-        }
-
-        addAuthCookie = true;
-
-        Log()->info("User \"{}\" authorized...", userName);
     }
 
     GCharPtr safePathPtr;
-    if(0 == strcmp(url, IndexFilePath) || g_str_has_prefix(url, IndexFilePrefix)) {
+    if(isIndexPath) {
         Log()->debug("Routing \"{}\" to \"{}\"...", url, IndexFile);
         safePathPtr.reset(g_build_filename(wwwRootPath.c_str(), IndexFile, nullptr));
     } else {
@@ -396,15 +435,7 @@ MHD_Result MicroServer::Private::httpCallback(
             return MHD_NO;
 
         if(fd == -1 || !S_ISREG(fileStat.st_mode)) {
-            MHD_Response* response =
-                MHD_create_response_from_buffer(
-                    NotFoundResponse.size(),
-                    (void*)NotFoundResponse.c_str(),
-                    MHD_RESPMEM_PERSISTENT);
-            MHD_Result queueResult = MHD_queue_response(connection, MHD_HTTP_NOT_FOUND, response);
-            MHD_destroy_response(response);
-
-            return queueResult;
+            return queueNotFoundResponse(connection);
         }
 
         response =  MHD_create_response_from_fd64(fileStat.st_size, fd);

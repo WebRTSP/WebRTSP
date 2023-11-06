@@ -16,6 +16,8 @@ struct Config
     std::map<std::string, std::string> passwd;
     std::string realm = "WebRTSP";
     std::string opaque = "WebRTSP";
+
+    std::map<std::string, bool> indexPaths; // path -> if auth required for path
 };
 
 }
