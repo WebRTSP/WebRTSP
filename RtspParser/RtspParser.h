@@ -32,4 +32,6 @@ std::set<rtsp::Method> ParseOptions(const Response&);
 
 std::pair<Authentication, std::string> ParseAuthentication(const Request&);
 
+std::pair<std::string, std::string> SplitUri(const std::string& uri);
+
 }

@@ -640,4 +640,16 @@ std::pair<Authentication, std::string> ParseAuthentication(const Request& reques
     return std::make_pair(authentication, std::string(buf + pos, size - pos));
 }
 
+std::pair<std::string, std::string> SplitUri(const std::string& uri)
+{
+    const std::string::size_type separatorPos = uri.find_first_of(rtsp::UriSeparator);
+    std::string streamerName = uri.substr(0, separatorPos);
+    std::string substreamName =
+        separatorPos == std::string::npos ?
+            std::string() :
+            uri.substr(separatorPos + 1);
+
+    return std::make_pair(streamerName, substreamName);
+}
+
 }
