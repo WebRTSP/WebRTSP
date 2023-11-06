@@ -30,15 +30,15 @@ public:
     void startRecordToClient(const std::string& uri, const rtsp::SessionId&) noexcept;
 
 protected:
+    const std::optional<std::string>& authCookie() const noexcept;
+
     std::string nextSessionId();
 
     virtual bool listEnabled(const std::string& /*uri*/) noexcept { return false; }
     virtual bool playEnabled(const std::string& uri) noexcept;
     virtual bool recordEnabled(const std::string& uri) noexcept;
     virtual bool subscribeEnabled(const std::string& uri) noexcept;
-    virtual bool authorize(
-        const std::unique_ptr<rtsp::Request>&,
-        const std::optional<std::string>& authCookie) noexcept;
+    virtual bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept;
 
     bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;

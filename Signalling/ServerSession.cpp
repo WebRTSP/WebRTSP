@@ -297,6 +297,11 @@ bool ServerSession::onConnected(const std::optional<std::string>& authCookie) no
     return true;
 }
 
+const std::optional<std::string>& ServerSession::authCookie() const noexcept
+{
+    return _p->authCookie;
+}
+
 std::string ServerSession::nextSessionId()
 {
     return _p->nextSessionId();
@@ -305,7 +310,7 @@ std::string ServerSession::nextSessionId()
 bool ServerSession::handleRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    if(requestPtr->method != rtsp::Method::RECORD && !authorize(requestPtr, _p->authCookie)) {
+    if(requestPtr->method != rtsp::Method::RECORD && !authorize(requestPtr)) {
         Log()->error("{} authorize failed for \"{}\"", rtsp::MethodName(requestPtr->method), requestPtr->uri);
 
         sendUnauthorizedResponse(requestPtr->cseq);
@@ -432,9 +437,7 @@ bool ServerSession::subscribeEnabled(const std::string&) noexcept
     return false;
 }
 
-bool ServerSession::authorize(
-    const std::unique_ptr<rtsp::Request>& requestPtr,
-    const std::optional<std::string>&) noexcept
+bool ServerSession::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     return requestPtr->method != rtsp::Method::RECORD;
 }
@@ -447,7 +450,7 @@ bool ServerSession::onRecordRequest(
     if(!recordEnabled(requestPtr->uri) || !_p->recordEnabled())
         return false;
 
-    if(!authorize(requestPtr, _p->authCookie)) {
+    if(!authorize(requestPtr)) {
         Log()->error("RECORD authorize failed for \"{}\"", requestPtr->uri);
         return false;
     }
