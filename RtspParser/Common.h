@@ -9,5 +9,6 @@ typedef unsigned CSeq;
 typedef std::string SessionId;
 
 const char UriSeparator = '/';
+const char *const WildcardUri = "*";
 
 }
