@@ -99,11 +99,24 @@ bool ClientSession::onOptionsResponse(
 
     _supportedMethods = rtsp::ParseOptions(response);
 
-    return
-        isSupported(Method::DESCRIBE) &&
-        isSupported(Method::SETUP) &&
-        isSupported(Method::PLAY) &&
-        isSupported(Method::TEARDOWN);
+    if(playSupportRequired(request.uri) &&
+        (!isSupported(Method::DESCRIBE) ||
+        !isSupported(Method::SETUP) ||
+        !isSupported(Method::PLAY) ||
+        !isSupported(Method::TEARDOWN)))
+    {
+        return false;
+    }
+
+    if(recordSupportRequired(request.uri) &&
+        (!isSupported(Method::RECORD) ||
+        !isSupported(Method::SETUP) ||
+        !isSupported(Method::TEARDOWN)))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 }

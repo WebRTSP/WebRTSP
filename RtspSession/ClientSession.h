@@ -20,6 +20,9 @@ struct ClientSession : public Session
 protected:
     using Session::Session;
 
+    virtual bool playSupportRequired(const std::string& /*uri*/) noexcept { return true; }
+    virtual bool recordSupportRequired(const std::string& /*uri*/) noexcept { return false; }
+
     CSeq requestOptions(const std::string& uri) noexcept;
     CSeq requestList() noexcept;
     CSeq requestDescribe(const std::string& uri) noexcept;
