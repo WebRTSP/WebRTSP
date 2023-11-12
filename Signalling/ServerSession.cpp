@@ -350,22 +350,29 @@ bool ServerSession::onOptionsRequest(
     if(listEnabled(requestPtr->uri))
         options = "LIST";
 
-    if(playEnabled(requestPtr->uri)) {
+    const bool playEnabled = this->playEnabled(requestPtr->uri);
+    if(playEnabled) {
         if(!options.empty())
             options += ", ";
-        options += "DESCRIBE, SETUP, PLAY, TEARDOWN";
+        options += "DESCRIBE, PLAY";
     }
 
-    if(recordEnabled(requestPtr->uri) && _p->recordEnabled()) {
+    const bool recordEnabled = this->recordEnabled(requestPtr->uri) && _p->recordEnabled();
+    if(recordEnabled) {
         if(!options.empty())
             options += ", ";
         options += "RECORD";
     }
 
-    if(subscribeEnabled(requestPtr->uri)) {
+    const bool subscribeEnabled = this->subscribeEnabled(requestPtr->uri);
+    if(subscribeEnabled) {
         if(!options.empty())
             options += ", ";
         options += "SUBSCRIBE";
+    }
+
+    if(playEnabled || recordEnabled || subscribeEnabled) {
+        options += ", SETUP, TEARDOWN";
     }
 
     response.headerFields.emplace("Public", options);
