@@ -371,7 +371,7 @@ MHD_Result MicroServer::Private::httpCallback(
 
     MHDCharPtr userNamePtr(MHD_digest_auth_get_username(connection));
     const char* userName = userNamePtr.get();
-    if((userName || pathAuthRequired) && !authCookieValid) {
+    if((userName || pathAuthRequired) && isIndexPath && !authCookieValid) {
         if(!config.passwd.empty()) {
             if(!userName) {
                 Log()->debug("User name is missing");
