@@ -71,7 +71,7 @@ void ClientRecordSession::Private::iceCandidate(
 
 void ClientRecordSession::Private::eos()
 {
-    Log()->trace("Eos");
+    Log()->trace("[{}] Eos", owner->sessionLogId);
 
     owner->onEos(); // FIXME! send TEARDOWN and remove Media Session instead
 }
@@ -200,7 +200,7 @@ bool ClientRecordSession::onSetupRequest(std::unique_ptr<rtsp::Request>& request
             if(candidate.empty())
                 return false;
 
-            Log()->trace("Adding ice candidate \"{}\"", candidate);
+            Log()->trace("[{}] Adding ice candidate \"{}\"", sessionLogId, candidate);
 
             _p->streamer->addIceCandidate(idx, candidate);
         } catch(...) {

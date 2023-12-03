@@ -27,6 +27,8 @@ struct Session
     virtual bool handleRequest(std::unique_ptr<Request>&) noexcept;
     bool handleResponse(std::unique_ptr<Response>& responsePtr) noexcept;
 
+    const std::string sessionLogId;
+
 protected:
     Session(
         const IceServers&,

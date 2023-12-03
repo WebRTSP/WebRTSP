@@ -245,7 +245,7 @@ void ServerSession::Private::iceCandidate(
 
 void ServerSession::Private::eos(const rtsp::SessionId& session)
 {
-    Log()->trace("Eos. Session: {}", session);
+    Log()->trace("[{}] Eos. Session: {}", owner->sessionLogId, session);
 
     auto it = mediaSessions.find(session);
     if(mediaSessions.end() == it) {
@@ -311,7 +311,7 @@ bool ServerSession::handleRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     if(requestPtr->method != rtsp::Method::RECORD && !authorize(requestPtr)) {
-        Log()->error("{} authorize failed for \"{}\"", rtsp::MethodName(requestPtr->method), requestPtr->uri);
+        Log()->error("[{}] {} authorize failed for \"{}\"", sessionLogId, rtsp::MethodName(requestPtr->method), requestPtr->uri);
 
         sendUnauthorizedResponse(requestPtr->cseq);
 
@@ -393,7 +393,7 @@ bool ServerSession::onDescribeRequest(
     const rtsp::Request& request = *requestPtr.get();
 
     if(!playEnabled(request.uri)) {
-        Log()->error("Playback is not supported for \"{}\"", requestPtr->uri);
+        Log()->error("[{}] Playback is not supported for \"{}\"", sessionLogId, requestPtr->uri);
         return false;
     }
 
@@ -458,7 +458,7 @@ bool ServerSession::onRecordRequest(
         return false;
 
     if(!authorize(requestPtr)) {
-        Log()->error("RECORD authorize failed for \"{}\"", requestPtr->uri);
+        Log()->error("[{}] RECORD authorize failed for \"{}\"", sessionLogId, requestPtr->uri);
         return false;
     }
 
@@ -551,7 +551,7 @@ bool ServerSession::onSetupRequest(
             if(candidate.empty())
                 return false;
 
-            Log()->trace("Adding ice candidate \"{}\"", candidate);
+            Log()->trace("[{}] Adding ice candidate \"{}\"", sessionLogId, candidate);
 
             localPeer.addIceCandidate(idx, candidate);
         } catch(...) {

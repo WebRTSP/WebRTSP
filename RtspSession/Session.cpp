@@ -2,6 +2,18 @@
 
 #include <cassert>
 
+#include <glib.h>
+
+
+namespace {
+
+std::string GenerateSessionLogId()
+{
+    g_autoptr(GRand) rand = g_rand_new();
+    return std::to_string(g_rand_int(rand));
+}
+
+}
 
 namespace rtsp {
 
@@ -9,6 +21,7 @@ Session::Session(
     const IceServers& iceServers,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
+    sessionLogId(GenerateSessionLogId()),
     _iceServers(iceServers),
     _sendRequest(sendRequest),
     _sendResponse(sendResponse)

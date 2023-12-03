@@ -296,13 +296,17 @@ bool WsServer::Private::onMessage(
             case rtsp::Method::RECORD:
             case rtsp::Method::SUBSCRIBE:
             case rtsp::Method::TEARDOWN:
-                Log()->info("Got {} request for \"{}\"", rtsp::MethodName(requestPtr->method), requestPtr->uri);
+                Log()->info(
+                    "[{}] Got {} request for \"{}\"",
+                    scd->data->rtspSession->sessionLogId,
+                    rtsp::MethodName(requestPtr->method), requestPtr->uri);
                 break;
         }
 
         if(!scd->data->rtspSession->handleRequest(requestPtr)) {
             Log()->debug(
-                "Fail handle request:\n{}\nForcing session disconnect...",
+                "[{}] Fail handle request:\n{}\nForcing session disconnect...",
+                scd->data->rtspSession->sessionLogId,
                 std::string(message.data(), message.size()));
             return false;
         }
@@ -311,14 +315,16 @@ bool WsServer::Private::onMessage(
             std::make_unique<rtsp::Response>();
         if(!rtsp::ParseResponse(message.data(), message.size(), responsePtr.get())) {
             Log()->error(
-                "Fail parse response:\n{}\nForcing session disconnect...",
+                "[{}] Fail parse response:\n{}\nForcing session disconnect...",
+                scd->data->rtspSession->sessionLogId,
                 std::string(message.data(), message.size()));
             return false;
         }
 
         if(!scd->data->rtspSession->handleResponse(responsePtr)) {
             Log()->error(
-                "Fail handle response:\n{}\nForcing session disconnect...",
+                "[{}] Fail handle response:\n{}\nForcing session disconnect...",
+                scd->data->rtspSession->sessionLogId,
                 std::string(message.data(), message.size()));
             return false;
         }
