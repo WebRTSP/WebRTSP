@@ -115,6 +115,11 @@ int WsServer::Private::wsCallback(
             if(!session)
                 return -1;
 
+            char address[INET6_ADDRSTRLEN];
+            lws_get_peer_simple(wsi, address, INET6_ADDRSTRLEN);
+
+            Log()->info("[{}] New client connected with IP {}", session->sessionLogId, address);
+
             scd->data =
                 new SessionData {
                     .terminateSession = false,
