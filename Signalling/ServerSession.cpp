@@ -42,16 +42,13 @@ struct ServerSession::Private
 
     Private(
         ServerSession* owner,
-        const IceServers& iceServers,
         const CreatePeer& createPeer);
     Private(
         ServerSession* owner,
-        const IceServers& iceServers,
         const CreatePeer& createPeer,
         const CreatePeer& createRecordPeer);
 
     ServerSession *const owner;
-    const std::deque<std::string> iceServers;
     CreatePeer createPeer;
     CreatePeer createRecordPeer;
 
@@ -80,21 +77,17 @@ private:
 
 ServerSession::Private::Private(
     ServerSession* owner,
-    const IceServers& iceServers,
     const CreatePeer& createPeer) :
     owner(owner),
-    iceServers(iceServers),
     createPeer(createPeer)
 {
 }
 
 ServerSession::Private::Private(
     ServerSession* owner,
-    const IceServers& iceServers,
     const CreatePeer& createPeer,
     const CreatePeer& createRecordPeer) :
     owner(owner),
-    iceServers(iceServers),
     createPeer(createPeer),
     createRecordPeer(createRecordPeer)
 {
@@ -271,7 +264,7 @@ ServerSession::ServerSession(
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
     rtsp::Session(iceServers, sendRequest, sendResponse),
-    _p(new Private(this, iceServers, createPeer))
+    _p(new Private(this, createPeer))
 {
 }
 
@@ -282,7 +275,7 @@ ServerSession::ServerSession(
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
     rtsp::Session(iceServers, sendRequest, sendResponse),
-    _p(new Private(this, iceServers, createPeer, createRecordPeer))
+    _p(new Private(this, createPeer, createRecordPeer))
 {
 }
 
@@ -414,7 +407,7 @@ bool ServerSession::onDescribeRequest(
     mediaSession.localPeer = std::move(peerPtr);
 
     mediaSession.localPeer->prepare(
-        _p->iceServers,
+        iceServers(),
         std::bind(
             &ServerSession::Private::streamerPrepared,
             _p.get(),
@@ -488,7 +481,7 @@ bool ServerSession::onRecordRequest(
     WebRTCPeer& localPeer = *(mediaSession.localPeer);
 
     localPeer.prepare(
-        _p->iceServers,
+        iceServers(),
         std::bind(
             &ServerSession::Private::recorderPrepared,
             _p.get(),
@@ -636,7 +629,7 @@ void ServerSession::startRecordToClient(
     mediaSession.localPeer = std::move(peerPtr);
 
     mediaSession.localPeer->prepare(
-        _p->iceServers,
+        iceServers(),
         std::bind(
             &ServerSession::Private::recordToClientStreamerPrepared,
             _p.get(),
