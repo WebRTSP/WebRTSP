@@ -64,8 +64,6 @@ struct WsServer::Private
     void sendRequest(SessionContextData*, const rtsp::Request*);
     void sendResponse(SessionContextData*, const rtsp::Response*);
 
-    bool onConnected(SessionContextData*, const std::optional<std::string>&);
-
     WsServer *const owner;
     Config config;
     GMainLoop* loop;
@@ -135,7 +133,7 @@ int WsServer::Private::wsCallback(
                 authCookie = std::string(cookieBuf, cookieSize);
             }
 
-            if(!onConnected(scd, authCookie))
+            if(!scd->data->rtspSession->onConnected(authCookie))
                 return -1;
 
             break;
@@ -265,13 +263,6 @@ bool WsServer::Private::init(lws_context* context)
     }
 
     return true;
-}
-
-bool WsServer::Private::onConnected(
-    SessionContextData* scd,
-    const std::optional<std::string>& authCookie)
-{
-    return scd->data->rtspSession->onConnected(authCookie);
 }
 
 bool WsServer::Private::onMessage(
