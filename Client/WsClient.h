@@ -6,7 +6,7 @@
 
 #include <glib.h>
 
-#include "RtspSession/ClientSession.h"
+#include "RtspSession/Session.h"
 
 #include "Config.h"
 
@@ -17,7 +17,7 @@ class WsClient
 {
 public:
     typedef std::function<
-        std::unique_ptr<rtsp::ClientSession> (
+        std::unique_ptr<rtsp::Session> (
             const rtsp::Session::SendRequest& sendRequest,
             const rtsp::Session::SendResponse& sendResponse)> CreateSession;
 
