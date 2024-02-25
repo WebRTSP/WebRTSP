@@ -17,6 +17,7 @@ namespace rtsp {
 
 struct Session
 {
+    typedef std::deque<std::string> IceServers;
     typedef std::function<void (const Request*)> SendRequest;
     typedef std::function<void (const Response*)> SendResponse;
 
