@@ -21,6 +21,7 @@ struct Session
 
     virtual ~Session() {}
 
+    virtual bool onConnected() noexcept { return true; }
 
     const IceServers& iceServers() const noexcept;
 

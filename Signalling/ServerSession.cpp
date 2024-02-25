@@ -287,7 +287,7 @@ bool ServerSession::onConnected(const std::optional<std::string>& authCookie) no
 {
     _p->authCookie = authCookie;
 
-    return true;
+    return rtsp::Session::onConnected();
 }
 
 const std::optional<std::string>& ServerSession::authCookie() const noexcept

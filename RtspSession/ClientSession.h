@@ -13,8 +13,6 @@ namespace rtsp {
 
 struct ClientSession : public Session
 {
-    virtual bool onConnected() noexcept { return true; }
-
     bool isSupported(Method);
 
 protected:
