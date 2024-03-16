@@ -26,16 +26,6 @@ CSeq ClientSession::requestOptions(const std::string& uri) noexcept
     return request.cseq;
 }
 
-CSeq ClientSession::requestList() noexcept
-{
-    Request& request =
-        *createRequest(rtsp::Method::LIST, "*");
-
-    sendRequest(request);
-
-    return request.cseq;
-}
-
 CSeq ClientSession::requestDescribe(const std::string& uri) noexcept
 {
     Request& request =
