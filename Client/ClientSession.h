@@ -10,12 +10,12 @@ public:
     typedef std::function<std::unique_ptr<WebRTCPeer> ()> CreatePeer;
     ClientSession(
         const std::string& uri,
-        const IceServers&,
+        const WebRTCConfigPtr&,
         const CreatePeer& createPeer,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
     ClientSession(
-        const IceServers&,
+        const WebRTCConfigPtr&,
         const CreatePeer& createPeer,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;

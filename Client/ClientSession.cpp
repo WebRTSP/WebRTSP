@@ -69,21 +69,21 @@ void ClientSession::Private::eos()
 
 ClientSession::ClientSession(
     const std::string& uri,
-    const IceServers& iceServers,
+    const WebRTCConfigPtr& webRTCConfig,
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    rtsp::ClientSession(iceServers, sendRequest, sendResponse),
+    rtsp::ClientSession(webRTCConfig, sendRequest, sendResponse),
     _p(new Private(this, uri, createPeer))
 {
 }
 
 ClientSession::ClientSession(
-    const IceServers& iceServers,
+    const WebRTCConfigPtr& webRTCConfig,
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    ClientSession(std::string(), iceServers, createPeer, sendRequest, sendResponse)
+    ClientSession(std::string(), webRTCConfig, createPeer, sendRequest, sendResponse)
 {
 }
 
@@ -134,7 +134,7 @@ bool ClientSession::onDescribeResponse(
         return false;
 
     _p->receiver->prepare(
-        WebRTCPeer::IceServers(),
+        webRTCConfig(),
         std::bind(
             &ClientSession::Private::receiverPrepared,
             _p.get()),

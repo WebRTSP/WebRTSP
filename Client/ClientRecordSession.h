@@ -12,7 +12,7 @@ public:
     ClientRecordSession(
         const std::string& targetUri,
         const std::string& recordToken,
-        const IceServers&,
+        const WebRTCConfigPtr&,
         const CreatePeer& createPeer,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;

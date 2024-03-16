@@ -18,19 +18,14 @@ std::string GenerateSessionLogId()
 namespace rtsp {
 
 Session::Session(
-    const IceServers& iceServers,
+    const WebRTCConfigPtr& webRTCConfig,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
     sessionLogId(GenerateSessionLogId()),
-    _iceServers(iceServers),
+    _webRTCConfig(webRTCConfig),
     _sendRequest(sendRequest),
     _sendResponse(sendResponse)
 {
-}
-
-const Session::IceServers& Session::iceServers() const noexcept
-{
-    return _iceServers;
 }
 
 Request* Session::createRequest(

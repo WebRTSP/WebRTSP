@@ -11,12 +11,12 @@ class ServerSession: public rtsp::Session
 public:
     typedef std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> CreatePeer;
     ServerSession(
-        const IceServers&,
+        const WebRTCConfigPtr&,
         const CreatePeer& createPeer,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
     ServerSession(
-        const IceServers&,
+        const WebRTCConfigPtr&,
         const CreatePeer& createPeer,
         const CreatePeer& createRecordPeer,
         const SendRequest& sendRequest,

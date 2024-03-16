@@ -10,6 +10,8 @@
 
 #include "StatusCode.h"
 
+#include "RtStreaming/WebRTCConfig.h"
+
 
 namespace rtsp {
 
@@ -20,9 +22,9 @@ struct Session
 
     virtual ~Session() {}
 
-    typedef std::deque<std::string> IceServers;
+    const WebRTCConfigPtr& webRTCConfig() const { return _webRTCConfig; }
 
-    const IceServers& iceServers() const noexcept;
+    virtual bool onConnected() noexcept { return true; }
 
     virtual bool handleRequest(std::unique_ptr<Request>&) noexcept;
     bool handleResponse(std::unique_ptr<Response>& responsePtr) noexcept;
@@ -31,7 +33,7 @@ struct Session
 
 protected:
     Session(
-        const IceServers&,
+        const WebRTCConfigPtr&,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
 
@@ -137,7 +139,8 @@ private:
         std::unique_ptr<Response>&) noexcept;
 
 private:
-    const IceServers _iceServers;
+    const WebRTCConfigPtr _webRTCConfig;
+
     const SendRequest _sendRequest;
     const SendResponse _sendResponse;
 
