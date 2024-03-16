@@ -22,7 +22,6 @@ protected:
     virtual bool recordSupportRequired(const std::string& /*uri*/) noexcept { return false; }
 
     CSeq requestOptions(const std::string& uri) noexcept;
-    CSeq requestList() noexcept;
     CSeq requestDescribe(const std::string& uri) noexcept;
     CSeq requestRecord(
         const std::string& uri,

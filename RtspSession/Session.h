@@ -76,6 +76,7 @@ protected:
     void sendResponse(const Response&) noexcept;
     void disconnect() noexcept;
 
+    CSeq requestList(const std::string& uri = "*") noexcept;
     CSeq requestSetup(
         const std::string& uri,
         const std::string& contentType,
