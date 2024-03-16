@@ -166,6 +166,26 @@ CSeq Session::requestList(const std::string& uri) noexcept
     return request.cseq;
 }
 
+CSeq Session::sendList(
+    const std::string& uri,
+    const std::string& list,
+    const std::string& token) noexcept
+{
+    Request& request =
+        *createRequest(Method::LIST, uri);
+
+    request.headerFields.emplace("Content-Type", "text/parameters");
+
+    if(!token.empty())
+        request.headerFields.emplace("Authorization", "Bearer " + token);
+
+    request.body = list;
+
+    sendRequest(request);
+
+    return request.cseq;
+}
+
 CSeq Session::requestSetup(
     const std::string& uri,
     const std::string& contentType,
