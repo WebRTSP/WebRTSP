@@ -98,6 +98,12 @@ Response* Session::prepareOkResponse(
     return prepareResponse(OK, "OK", cseq, session, out);
 }
 
+void Session::sendOkResponse(CSeq cseq)
+{
+    Response response;
+    sendResponse(*prepareOkResponse(cseq, &response));
+}
+
 void Session::sendOkResponse(
     CSeq cseq,
     const SessionId& session)

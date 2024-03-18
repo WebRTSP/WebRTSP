@@ -59,6 +59,7 @@ protected:
     static Response* prepareOkResponse(
         CSeq cseq,
         Response* out);
+    void sendOkResponse(CSeq);
     void sendOkResponse(CSeq, const SessionId&);
     void sendOkResponse(
         CSeq,
