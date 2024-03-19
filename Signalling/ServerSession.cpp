@@ -391,8 +391,10 @@ bool ServerSession::onDescribeRequest(
     }
 
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(requestPtr->uri);
-    if(!peerPtr)
+    if(!peerPtr) {
+        Log()->error("[{}] Failed to create peer for \"{}\"", sessionLogId, requestPtr->uri);
         return false;
+    }
 
     const rtsp::SessionId session = nextSessionId();
 
