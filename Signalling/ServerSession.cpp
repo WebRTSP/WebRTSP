@@ -312,26 +312,9 @@ bool ServerSession::handleRequest(
         return true;
     }
 
-    switch(requestPtr->method) {
-    case rtsp::Method::OPTIONS:
-        return onOptionsRequest(requestPtr);
-    case rtsp::Method::LIST:
-        return onListRequest(requestPtr);
-    case rtsp::Method::DESCRIBE:
-        return onDescribeRequest(requestPtr);
-    case rtsp::Method::SETUP:
-        return onSetupRequest(requestPtr);
-    case rtsp::Method::PLAY:
-        return onPlayRequest(requestPtr);
-    case rtsp::Method::SUBSCRIBE:
-        return onSubscribeRequest(requestPtr);
-    case rtsp::Method::RECORD:
-        return onRecordRequest(requestPtr);
-    case rtsp::Method::TEARDOWN:
-        return onTeardownRequest(requestPtr);
-    default:
-        return Session::handleRequest(requestPtr);
     }
+
+    return Session::handleRequest(requestPtr);
 }
 
 bool ServerSession::onOptionsRequest(
