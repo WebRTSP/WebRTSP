@@ -4,8 +4,12 @@
 
 #include <glib.h>
 
+#include "Log.h"
+
 
 namespace {
+
+const auto Log = RtspSessionLog;
 
 std::string GenerateSessionLogId()
 {
@@ -261,8 +265,13 @@ void Session::disconnect() noexcept
 bool Session::handleResponse(std::unique_ptr<Response>& responsePtr) noexcept
 {
     auto it = _sentRequests.find(responsePtr->cseq);
-    if(it == _sentRequests.end())
+    if(it == _sentRequests.end()) {
+        Log()->error(
+            "[{}] Failed to find sent request corresponding to response with CSeq = {}",
+            sessionLogId,
+            responsePtr->cseq);
         return false;
+    }
 
     const Request& request = it->second;
     const bool success = handleResponse(request, responsePtr);
