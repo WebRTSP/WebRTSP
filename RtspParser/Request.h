@@ -14,7 +14,7 @@ namespace rtsp {
 struct Request {
     Method method;
     std::string uri;
-    Protocol protocol;
+    Protocol protocol = Protocol::WEBRTSP_0_2;
     CSeq cseq;
 
     std::map<std::string, std::string, LessNoCase> headerFields;
