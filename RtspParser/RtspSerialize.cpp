@@ -1,5 +1,7 @@
 #include "RtspSerialize.h"
 
+#include <cassert>
+
 
 namespace rtsp {
 
@@ -56,6 +58,8 @@ void Serialize(const Request& request, std::string* out) noexcept
 
 std::string Serialize(const Request& request) noexcept
 {
+    assert(!request.uri.empty());
+
     std::string out;
     Serialize(request, &out);
     return out;
