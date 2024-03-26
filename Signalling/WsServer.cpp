@@ -151,7 +151,10 @@ int WsServer::Private::wsCallback(
                         scd->data->incomingMessage.data() + scd->data->incomingMessage.size(),
                         std::back_inserter(logMessage), '\r');
 
-                    Log()->trace("-> WsServer: {}", logMessage);
+                    Log()->trace(
+                        "[{}] -> WsServer: {}",
+                        scd->data->rtspSession->sessionLogId,
+                        logMessage);
                 }
 
                 if(!onMessage(scd, scd->data->incomingMessage))
@@ -169,7 +172,9 @@ int WsServer::Private::wsCallback(
             if(!scd->data->sendMessages.empty()) {
                 MessageBuffer& buffer = scd->data->sendMessages.front();
                 if(!buffer.writeAsText(wsi)) {
-                    Log()->error("write failed.");
+                    Log()->error(
+                        "[{}] write failed.",
+                        scd->data->rtspSession->sessionLogId);
                     return -1;
                 }
 
@@ -274,7 +279,8 @@ bool WsServer::Private::onMessage(
             std::make_unique<rtsp::Request>();
         if(!rtsp::ParseRequest(message.data(), message.size(), requestPtr.get())) {
             Log()->error(
-                "Fail parse request:\n{}\nForcing session disconnect...",
+                "[{}] Fail parse request:\n{}\nForcing session disconnect...",
+                scd->data->rtspSession->sessionLogId,
                 std::string(message.data(), message.size()));
             return false;
         }
@@ -358,7 +364,10 @@ void WsServer::Private::sendRequest(
                 serializedRequest.begin(),
                 serializedRequest.end(),
                 std::back_inserter(logMessage), '\r');
-            Log()->trace("WsServer -> : {}", logMessage);
+            Log()->trace(
+                "[{}] WsServer -> : {}",
+                scd->data->rtspSession->sessionLogId,
+                logMessage);
         }
 
         MessageBuffer requestMessage;
@@ -389,7 +398,10 @@ void WsServer::Private::sendResponse(
                 serializedResponse.begin(),
                 serializedResponse.end(),
                 std::back_inserter(logMessage), '\r');
-            Log()->trace("WsServer -> : {}", logMessage);
+            Log()->trace(
+                "[{}] WsServer -> : {}",
+                scd->data->rtspSession->sessionLogId,
+                logMessage);
         }
 
         MessageBuffer responseMessage;
