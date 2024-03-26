@@ -49,6 +49,9 @@ protected:
 
     bool onRecordResponse(const rtsp::Request& request, const rtsp::Response& response) noexcept override;
 
+    virtual bool isProxyRequest(const rtsp::Request&) noexcept { return false; }
+    virtual bool handleProxyRequest(std::unique_ptr<rtsp::Request>&) noexcept { return false; }
+
 private:
     struct Private;
     std::unique_ptr<Private> _p;

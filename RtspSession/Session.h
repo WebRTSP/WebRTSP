@@ -43,6 +43,8 @@ protected:
         Method,
         const std::string& uri,
         const std::string& session) noexcept;
+    Request* attachRequest(
+        const std::unique_ptr<rtsp::Request>& requestPtr) noexcept;
 
     static Response* prepareResponse(
         StatusCode statusCode,
@@ -115,6 +117,10 @@ protected:
     virtual bool onSetParameterRequest(std::unique_ptr<Request>&) noexcept
         { return false; }
 
+    virtual bool handleResponse(
+        const Request&,
+        std::unique_ptr<Response>&) noexcept;
+
     virtual bool onOptionsResponse(const Request& request, const Response& response) noexcept
         { return StatusCode::OK == response.statusCode; }
     virtual bool onListResponse(const Request& request, const Response& response) noexcept
@@ -137,11 +143,6 @@ protected:
         { return StatusCode::OK == response.statusCode; }
 
     virtual void onEos() noexcept;
-
-private:
-    bool handleResponse(
-        const Request&,
-        std::unique_ptr<Response>&) noexcept;
 
 private:
     const IceServers _iceServers;

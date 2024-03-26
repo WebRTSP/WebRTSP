@@ -311,6 +311,16 @@ bool ServerSession::handleRequest(
         return true;
     }
 
+    if(isProxyRequest(*requestPtr)) {
+        switch(requestPtr->method) {
+        case rtsp::Method::DESCRIBE:
+        case rtsp::Method::SETUP:
+        case rtsp::Method::PLAY:
+        case rtsp::Method::TEARDOWN:
+            return handleProxyRequest(requestPtr);
+        default:
+            break;
+        }
     }
 
     return Session::handleRequest(requestPtr);
