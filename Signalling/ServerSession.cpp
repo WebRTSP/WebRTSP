@@ -312,6 +312,16 @@ bool ServerSession::handleRequest(
         return true;
     }
 
+    if(isProxyRequest(*requestPtr)) {
+        switch(requestPtr->method) {
+        case rtsp::Method::DESCRIBE:
+        case rtsp::Method::SETUP:
+        case rtsp::Method::PLAY:
+        case rtsp::Method::TEARDOWN:
+            return handleProxyRequest(requestPtr);
+        default:
+            break;
+        }
     }
 
     return Session::handleRequest(requestPtr);
@@ -658,4 +668,14 @@ bool ServerSession::onRecordResponse(const rtsp::Request& request, const rtsp::R
     localPeer.play();
 
     return true;
+}
+
+void ServerSession::teardownMediaSession(const rtsp::SessionId& mediaSession) noexcept
+{
+    assert(!mediaSession.empty());
+    if(mediaSession.empty())
+        return;
+
+    const bool erased = _p->mediaSessions.erase(mediaSession) != 0;
+    assert(erased);
 }
