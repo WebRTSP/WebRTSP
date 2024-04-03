@@ -29,7 +29,7 @@ struct MediaSession
     bool prepared = false;
 };
 
-typedef std::map<rtsp::SessionId, std::unique_ptr<MediaSession>> MediaSessions;
+typedef std::map<rtsp::MediaSessionId, std::unique_ptr<MediaSession>> MediaSessions;
 
 const auto Log = ServerSessionLog;
 
@@ -63,14 +63,14 @@ struct ServerSession::Private
     std::string nextSessionId()
         { return std::to_string(_nextSessionId++); }
 
-    void sendIceCandidates(const rtsp::SessionId&, MediaSession* mediaSession);
-    void streamerPrepared(rtsp::CSeq describeRequestCSeq, const rtsp::SessionId&);
-    void recorderPrepared(rtsp::CSeq recordRequestCSeq, const rtsp::SessionId&);
-    void recordToClientStreamerPrepared(const rtsp::SessionId&);
+    void sendIceCandidates(const rtsp::MediaSessionId&, MediaSession* mediaSession);
+    void streamerPrepared(rtsp::CSeq describeRequestCSeq, const rtsp::MediaSessionId&);
+    void recorderPrepared(rtsp::CSeq recordRequestCSeq, const rtsp::MediaSessionId&);
+    void recordToClientStreamerPrepared(const rtsp::MediaSessionId&);
     void iceCandidate(
-        const rtsp::SessionId&,
+        const rtsp::MediaSessionId&,
         unsigned, const std::string&);
-    void eos(const rtsp::SessionId& session);
+    void eos(const rtsp::MediaSessionId& session);
 
 private:
     unsigned _nextSessionId = 1;
@@ -95,7 +95,7 @@ ServerSession::Private::Private(
 }
 
 void ServerSession::Private::sendIceCandidates(
-    const rtsp::SessionId& session,
+    const rtsp::MediaSessionId& session,
     MediaSession* mediaSession)
 {
     if(!mediaSession->iceCandidates.empty()) {
@@ -119,7 +119,7 @@ void ServerSession::Private::sendIceCandidates(
 
 void ServerSession::Private::streamerPrepared(
     rtsp::CSeq describeRequestCSeq,
-    const rtsp::SessionId& session)
+    const rtsp::MediaSessionId& session)
 {
     auto it = mediaSessions.find(session);
     if(mediaSessions.end() == it || it->second->type != MediaSession::Type::Describe) {
@@ -150,7 +150,7 @@ void ServerSession::Private::streamerPrepared(
 
 void ServerSession::Private::recorderPrepared(
     rtsp::CSeq recordRequestCSeq,
-    const rtsp::SessionId& session)
+    const rtsp::MediaSessionId& session)
 {
     auto it = mediaSessions.find(session);
     if(mediaSessions.end() == it || it->second->type != MediaSession::Type::Record) {
@@ -179,7 +179,7 @@ void ServerSession::Private::recorderPrepared(
     }
 }
 
-void ServerSession::Private::recordToClientStreamerPrepared(const rtsp::SessionId& mediaSessionId)
+void ServerSession::Private::recordToClientStreamerPrepared(const rtsp::MediaSessionId& mediaSessionId)
 {
     auto it = mediaSessions.find(mediaSessionId);
     assert(mediaSessions.end() != it);
@@ -216,7 +216,7 @@ void ServerSession::Private::recordToClientStreamerPrepared(const rtsp::SessionI
 }
 
 void ServerSession::Private::iceCandidate(
-    const rtsp::SessionId& session,
+    const rtsp::MediaSessionId& session,
     unsigned mlineIndex, const std::string& candidate)
 {
     auto it = mediaSessions.find(session);
@@ -237,7 +237,7 @@ void ServerSession::Private::iceCandidate(
     }
 }
 
-void ServerSession::Private::eos(const rtsp::SessionId& session)
+void ServerSession::Private::eos(const rtsp::MediaSessionId& session)
 {
     Log()->trace("[{}] Eos. Session: {}", owner->sessionLogId, session);
 
@@ -331,7 +331,7 @@ bool ServerSession::onOptionsRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     rtsp::Response response;
-    prepareOkResponse(requestPtr->cseq, rtsp::SessionId(), &response);
+    prepareOkResponse(requestPtr->cseq, rtsp::MediaSessionId(), &response);
 
     std::string options;
     if(listEnabled(requestPtr->uri))
@@ -390,7 +390,7 @@ bool ServerSession::onDescribeRequest(
         return false;
     }
 
-    const rtsp::SessionId session = nextSessionId();
+    const rtsp::MediaSessionId session = nextSessionId();
 
     auto emplacePair =
         _p->mediaSessions.emplace(
@@ -463,7 +463,7 @@ bool ServerSession::onRecordRequest(
     if(contentType != "application/sdp")
         return false;
 
-    const rtsp::SessionId session = nextSessionId();
+    const rtsp::MediaSessionId session = nextSessionId();
 
     auto emplacePair =
         _p->mediaSessions.emplace(
@@ -504,7 +504,7 @@ bool ServerSession::onRecordRequest(
 bool ServerSession::onSetupRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    const rtsp::SessionId session = RequestSession(*requestPtr);
+    const rtsp::MediaSessionId session = RequestSession(*requestPtr);
 
     auto it = _p->mediaSessions.find(session);
     if(it == _p->mediaSessions.end())
@@ -557,7 +557,7 @@ bool ServerSession::onSetupRequest(
 bool ServerSession::onPlayRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    const rtsp::SessionId session = RequestSession(*requestPtr);
+    const rtsp::MediaSessionId session = RequestSession(*requestPtr);
     if(session.empty())
         return false;
 
@@ -585,7 +585,7 @@ bool ServerSession::onPlayRequest(
 bool ServerSession::onTeardownRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    const rtsp::SessionId session = RequestSession(*requestPtr);
+    const rtsp::MediaSessionId session = RequestSession(*requestPtr);
 
     auto it = _p->mediaSessions.find(session);
     if(it == _p->mediaSessions.end())
@@ -604,7 +604,7 @@ bool ServerSession::onTeardownRequest(
 
 void ServerSession::startRecordToClient(
     const std::string& uri,
-    const rtsp::SessionId& mediaSessionId) noexcept
+    const rtsp::MediaSessionId& mediaSessionId) noexcept
 {
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(uri);
     if(!peerPtr) {
@@ -647,7 +647,7 @@ bool ServerSession::onRecordResponse(const rtsp::Request& request, const rtsp::R
     if(rtsp::StatusCode::OK != response.statusCode)
         return false;
 
-    const rtsp::SessionId mediaSessionId = RequestSession(request);
+    const rtsp::MediaSessionId mediaSessionId = RequestSession(request);
     if(mediaSessionId.empty() || mediaSessionId != ResponseSession(response))
         return false;
 
@@ -670,7 +670,7 @@ bool ServerSession::onRecordResponse(const rtsp::Request& request, const rtsp::R
     return true;
 }
 
-void ServerSession::teardownMediaSession(const rtsp::SessionId& mediaSession) noexcept
+void ServerSession::teardownMediaSession(const rtsp::MediaSessionId& mediaSession) noexcept
 {
     assert(!mediaSession.empty());
     if(mediaSession.empty())

@@ -6,7 +6,7 @@
 namespace rtsp {
 
 typedef unsigned CSeq;
-typedef std::string SessionId;
+typedef std::string MediaSessionId;
 
 const char UriSeparator = '/';
 const char *const WildcardUri = "*";

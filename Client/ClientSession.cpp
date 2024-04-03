@@ -20,7 +20,7 @@ struct ClientSession::Private
     std::string uri;
 
     std::unique_ptr<WebRTCPeer> receiver;
-    rtsp::SessionId session;
+    rtsp::MediaSessionId session;
 
     void receiverPrepared();
     void iceCandidate(unsigned, const std::string&);

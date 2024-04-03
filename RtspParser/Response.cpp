@@ -3,16 +3,16 @@
 
 namespace rtsp {
 
-SessionId ResponseSession(const Response& response)
+MediaSessionId ResponseSession(const Response& response)
 {
     auto it = response.headerFields.find("session");
     if(response.headerFields.end() == it)
-        return SessionId();
+        return MediaSessionId();
 
     return it->second;
 }
 
-void SetResponseSession(Response* response, const SessionId& session)
+void SetResponseSession(Response* response, const MediaSessionId& session)
 {
     response->headerFields["session"] = session;
 }

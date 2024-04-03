@@ -58,7 +58,7 @@ CSeq ClientSession::requestRecord(
 
 CSeq ClientSession::requestPlay(
     const std::string& uri,
-    const SessionId& session) noexcept
+    const MediaSessionId& session) noexcept
 {
     Request& request =
         *createRequest(Method::PLAY, uri, session);
@@ -70,7 +70,7 @@ CSeq ClientSession::requestPlay(
 
 CSeq ClientSession::requestTeardown(
     const std::string& uri,
-    const SessionId& session) noexcept
+    const MediaSessionId& session) noexcept
 {
     Request& request =
         *createRequest(Method::TEARDOWN, uri, session);

@@ -27,8 +27,8 @@ protected:
         const std::string& uri,
         const std::string& sdp,
         const std::string& token) noexcept;
-    CSeq requestPlay(const std::string& uri, const SessionId&) noexcept;
-    CSeq requestTeardown(const std::string& uri, const SessionId&) noexcept;
+    CSeq requestPlay(const std::string& uri, const MediaSessionId&) noexcept;
+    CSeq requestTeardown(const std::string& uri, const MediaSessionId&) noexcept;
 
     virtual bool onOptionsResponse(
         const Request&, const Response&) noexcept;

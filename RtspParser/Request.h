@@ -21,8 +21,8 @@ struct Request {
     std::string body;
 };
 
-SessionId RequestSession(const Request& request);
-void SetRequestSession(Request*, const SessionId&);
+MediaSessionId RequestSession(const Request& request);
+void SetRequestSession(Request*, const MediaSessionId&);
 std::string RequestContentType(const Request& request);
 
 }

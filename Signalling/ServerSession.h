@@ -27,7 +27,7 @@ public:
 
     bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
-    void startRecordToClient(const std::string& uri, const rtsp::SessionId&) noexcept;
+    void startRecordToClient(const std::string& uri, const rtsp::MediaSessionId&) noexcept;
 
 protected:
     const std::optional<std::string>& authCookie() const noexcept;
@@ -52,7 +52,7 @@ protected:
     virtual bool isProxyRequest(const rtsp::Request&) noexcept { return false; }
     virtual bool handleProxyRequest(std::unique_ptr<rtsp::Request>&) noexcept { return false; }
 
-    virtual void teardownMediaSession(const rtsp::SessionId&) noexcept;
+    virtual void teardownMediaSession(const rtsp::MediaSessionId&) noexcept;
 
 private:
     struct Private;

@@ -60,7 +60,7 @@ Request* Session::createRequest(
 Request* Session::createRequest(
     Method method,
     const std::string& uri,
-    const SessionId& session) noexcept
+    const MediaSessionId& session) noexcept
 {
     Request* request = createRequest(method, uri);
 
@@ -91,7 +91,7 @@ Response* Session::prepareResponse(
     StatusCode statusCode,
     const std::string::value_type* reasonPhrase,
     CSeq cseq,
-    const SessionId& session,
+    const MediaSessionId& session,
     Response* out)
 {
     out->protocol = Protocol::WEBRTSP_0_2;
@@ -114,7 +114,7 @@ Response* Session::prepareOkResponse(
 
 Response* Session::prepareOkResponse(
     CSeq cseq,
-    const SessionId& session,
+    const MediaSessionId& session,
     Response* out)
 {
     return prepareResponse(OK, "OK", cseq, session, out);
@@ -128,7 +128,7 @@ void Session::sendOkResponse(CSeq cseq)
 
 void Session::sendOkResponse(
     CSeq cseq,
-    const SessionId& session)
+    const MediaSessionId& session)
 {
     Response response;
     sendResponse(*prepareOkResponse(cseq, session, &response));
@@ -151,7 +151,7 @@ void Session::sendOkResponse(
 
 void Session::sendOkResponse(
     CSeq cseq,
-    const SessionId& session,
+    const MediaSessionId& session,
     const std::string& contentType,
     const std::string& body)
 {
@@ -217,7 +217,7 @@ CSeq Session::sendList(
 CSeq Session::requestSetup(
     const std::string& uri,
     const std::string& contentType,
-    const SessionId& session,
+    const MediaSessionId& session,
     const std::string& body) noexcept
 {
     assert(!uri.empty());

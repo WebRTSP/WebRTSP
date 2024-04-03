@@ -21,8 +21,8 @@ struct Response {
     std::string body;
 };
 
-SessionId ResponseSession(const Response&);
-void SetResponseSession(Response*, const SessionId&);
+MediaSessionId ResponseSession(const Response&);
+void SetResponseSession(Response*, const MediaSessionId&);
 std::string ResponseContentType(const Response& request);
 
 }

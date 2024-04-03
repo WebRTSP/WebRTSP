@@ -52,24 +52,24 @@ protected:
         StatusCode statusCode,
         const std::string::value_type* reasonPhrase,
         CSeq cseq,
-        const SessionId& session,
+        const MediaSessionId& session,
         Response* out);
     static Response* prepareOkResponse(
         CSeq cseq,
-        const SessionId& session,
+        const MediaSessionId& session,
         Response* out);
     static Response* prepareOkResponse(
         CSeq cseq,
         Response* out);
     void sendOkResponse(CSeq);
-    void sendOkResponse(CSeq, const SessionId&);
+    void sendOkResponse(CSeq, const MediaSessionId&);
     void sendOkResponse(
         CSeq,
         const std::string& contentType,
         const std::string& body);
     void sendOkResponse(
         CSeq,
-        const SessionId&,
+        const MediaSessionId&,
         const std::string& contentType,
         const std::string& body);
     void sendUnauthorizedResponse(CSeq);
@@ -87,7 +87,7 @@ protected:
     CSeq requestSetup(
         const std::string& uri,
         const std::string& contentType,
-        const SessionId& session,
+        const MediaSessionId& session,
         const std::string& body) noexcept;
     CSeq requestGetParameter(
         const std::string& uri,

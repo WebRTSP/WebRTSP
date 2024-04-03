@@ -28,7 +28,7 @@ struct ClientRecordSession::Private
     std::deque<rtsp::IceCandidate> iceCandidates;
 
     rtsp::CSeq recordRequested = false;
-    rtsp::SessionId session;
+    rtsp::MediaSessionId session;
 
     void streamerPrepared();
     void iceCandidate(unsigned, const std::string&);
@@ -110,7 +110,7 @@ bool ClientRecordSession::onRecordResponse(
     if(ResponseContentType(response) != "application/sdp")
         return false;
 
-    rtsp::SessionId session = ResponseSession(response);
+    rtsp::MediaSessionId session = ResponseSession(response);
     if(session.empty())
         return false;
 
