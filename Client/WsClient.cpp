@@ -19,6 +19,7 @@ namespace {
 enum {
     RX_BUFFER_SIZE = 512,
     PING_INTERVAL = 20,
+    INCOMING_MESSAGE_WAIT_INTERVAL = PING_INTERVAL + 5,
 };
 
 enum {
@@ -238,6 +239,7 @@ bool WsClient::Private::init()
 #else
     lws_retry_bo_t retryPolicy {};
     retryPolicy.secs_since_valid_ping = PING_INTERVAL;
+    retryPolicy.secs_since_valid_hangup = INCOMING_MESSAGE_WAIT_INTERVAL;
     wsInfo.retry_and_idle_policy = &retryPolicy;
 #endif
     wsInfo.user = this;
