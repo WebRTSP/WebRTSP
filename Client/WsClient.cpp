@@ -18,7 +18,7 @@ namespace {
 
 enum {
     RX_BUFFER_SIZE = 512,
-    PING_INTERVAL = 20,
+    PING_INTERVAL = 30,
     INCOMING_MESSAGE_WAIT_INTERVAL = PING_INTERVAL + 5,
 };
 
