@@ -339,6 +339,20 @@ bool ServerSession::handleRequest(
     return Session::handleRequest(requestPtr);
 }
 
+bool ServerSession::onGetParameterRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    const std::string& contentType = rtsp::RequestContentType(*requestPtr);
+    if(contentType.empty() && requestPtr->body.empty()) {
+        // PING/PONG case
+        sendOkResponse(requestPtr->cseq);
+    } else {
+        sendBadRequestResponse(requestPtr->cseq);
+    }
+
+    return true;
+}
+
 bool ServerSession::onOptionsRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {

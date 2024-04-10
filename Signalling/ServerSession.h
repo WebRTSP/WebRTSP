@@ -40,6 +40,7 @@ protected:
     virtual bool subscribeEnabled(const std::string& uri) noexcept;
     virtual bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept;
 
+    bool onGetParameterRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
