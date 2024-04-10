@@ -179,6 +179,13 @@ void Session::sendForbiddenResponse(CSeq cseq)
     sendResponse(response);
 }
 
+void Session::sendBadRequestResponse(CSeq cseq)
+{
+    Response response;
+    prepareResponse(BAD_REQUEST, "Bad Request", cseq, std::string(), &response);
+    sendResponse(response);
+}
+
 void Session::sendRequest(const Request& request) noexcept
 {
     _sendRequest(&request);

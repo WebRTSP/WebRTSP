@@ -74,6 +74,7 @@ protected:
         const std::string& body);
     void sendUnauthorizedResponse(CSeq);
     void sendForbiddenResponse(CSeq);
+    void sendBadRequestResponse(CSeq);
 
     void sendRequest(const Request&) noexcept;
     void sendResponse(const Response&) noexcept;
