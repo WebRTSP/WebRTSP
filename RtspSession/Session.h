@@ -21,7 +21,7 @@ struct Session
     typedef std::function<void (const Request*)> SendRequest;
     typedef std::function<void (const Response*)> SendResponse;
 
-    virtual ~Session() {}
+    virtual ~Session();
 
     const WebRTCConfigPtr& webRTCConfig() const { return _webRTCConfig; }
 

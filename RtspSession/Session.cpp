@@ -32,6 +32,11 @@ Session::Session(
 {
 }
 
+Session::~Session()
+{
+    Log()->info("[{}] Session destroyed", sessionLogId);
+}
+
 Request* Session::createRequest(
     Method method,
     const std::string& uri) noexcept
