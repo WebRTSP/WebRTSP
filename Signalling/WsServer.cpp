@@ -49,6 +49,46 @@ struct SessionContextData
 
 const auto Log = WsServerLog;
 
+void LogClientIp(lws* wsi, const std::string& sessionLogId) {
+    char clientIp[INET6_ADDRSTRLEN];
+    lws_get_peer_simple(wsi, clientIp, sizeof(clientIp));
+
+    char xRealIp[INET6_ADDRSTRLEN];
+    const bool xRealIpPresent =
+        lws_hdr_copy(wsi, xRealIp, sizeof(xRealIp), WSI_TOKEN_HTTP_X_REAL_IP) > 0;
+
+    const int xForwardedForlength = lws_hdr_total_length(wsi, WSI_TOKEN_X_FORWARDED_FOR);
+    if(xForwardedForlength > 0) {
+        char xForwardedFor[xForwardedForlength + 1];
+        lws_hdr_copy(wsi, xForwardedFor, sizeof(xForwardedFor), WSI_TOKEN_X_FORWARDED_FOR);
+        if(xRealIpPresent) {
+            Log()->info(
+                "[{}] New client connected. IP: {}, X-Real-IP: {}, X-Forwarded-For: {}",
+                sessionLogId,
+                clientIp,
+                xRealIp,
+                &xForwardedFor[0]);
+        } else {
+            Log()->info(
+                "[{}] New client connected. IP: {}, X-Forwarded-For: {}",
+                sessionLogId,
+                clientIp,
+                &xForwardedFor[0]);
+        }
+    } else if(xRealIpPresent) {
+        Log()->info(
+            "[{}] New client connected. IP: {}, X-Real-IP: {}",
+            sessionLogId,
+            clientIp,
+            xRealIp);
+    } else {
+        Log()->info(
+            "[{}] New client connected. IP: {}",
+            sessionLogId,
+            clientIp);
+    }
+}
+
 }
 
 
@@ -114,10 +154,7 @@ int WsServer::Private::wsCallback(
             if(!session)
                 return -1;
 
-            char address[INET6_ADDRSTRLEN];
-            lws_get_peer_simple(wsi, address, INET6_ADDRSTRLEN);
-
-            Log()->info("[{}] New client connected with IP {}", session->sessionLogId, address);
+            LogClientIp(wsi, session->sessionLogId);
 
             scd->data =
                 new SessionData {
