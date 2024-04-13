@@ -9,6 +9,7 @@ struct Config
 {
     std::string server;
     unsigned short serverPort;
+    bool useTls = true;
 };
 
 }

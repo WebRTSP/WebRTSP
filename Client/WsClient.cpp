@@ -275,6 +275,8 @@ void WsClient::Private::connect()
     connectInfo.path = "/";
     connectInfo.protocol = "webrtsp";
     connectInfo.host = hostAndPort;
+    if(config.useTls)
+        connectInfo.ssl_connection = LCCSCF_USE_SSL;
 
     connection = lws_client_connect_via_info(&connectInfo);
     connected = false;
