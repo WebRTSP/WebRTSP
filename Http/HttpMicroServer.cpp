@@ -175,6 +175,11 @@ void MicroServer::Private::postToken(
     const std::string& token,
     std::chrono::steady_clock::time_point expiresAt) const
 {
+    if(!onNewAuthTokenCallback) {
+        Log()->warn("Auth token callback is missing");
+        return;
+    }
+
     GSourcePtr idleSourcePtr(g_idle_source_new());
     GSource* idleSource = idleSourcePtr.get();
 
