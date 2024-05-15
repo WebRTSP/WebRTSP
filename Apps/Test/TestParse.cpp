@@ -144,7 +144,7 @@ void TestParse()
         if(request.headerFields.size() == 1) {
             auto it = request.headerFields.begin();
             assert(
-                it->first == "transport" &&
+                it->first == "Transport" &&
                 it->second == "RTP/AVP;unicast;client_port=8000-8001");
         }
     }
