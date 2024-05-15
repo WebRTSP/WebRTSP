@@ -58,14 +58,16 @@ CSeq ClientSession::requestRecord(
 
 CSeq ClientSession::requestPlay(
     const std::string& uri,
-    const MediaSessionId& session) noexcept
+    const MediaSessionId& session,
+    const std::string& sdp) noexcept
 {
-    Request& request =
-        *createRequest(Method::PLAY, uri, session);
+    Request* request = createRequest(Method::PLAY, uri, session);
+    rtsp::SetContentType(request, SdpContentType);
+    request->body = sdp;
 
-    sendRequest(request);
+    sendRequest(*request);
 
-    return request.cseq;
+    return request->cseq;
 }
 
 CSeq ClientSession::requestTeardown(

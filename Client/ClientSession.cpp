@@ -42,9 +42,8 @@ void ClientSession::Private::receiverPrepared()
         return;
     }
 
-    owner->requestSetup(
+    owner->requestPlay(
         uri,
-        "application/sdp",
         session,
         receiver->sdp());
 }
@@ -164,14 +163,6 @@ bool ClientSession::onSetupResponse(
         return false;
 
     if(ResponseSession(response) != _p->session)
-        return false;
-
-    const std::string contentType = RequestContentType(request);
-    if(contentType == "application/sdp")
-        requestPlay(_p->uri, _p->session);
-    else if(contentType == "application/x-ice-candidate")
-        ;
-    else
         return false;
 
     return true;
