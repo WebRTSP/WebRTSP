@@ -16,7 +16,7 @@ void TestSerialize() noexcept
     const std::string requestMessage = rtsp::Serialize(request);
 
     assert(requestMessage ==
-        "OPTIONS * WEBRTSP/0.1\r\n"
+        "OPTIONS * WEBRTSP/0.2\r\n"
         "CSeq: 1\r\n");
 
     rtsp::Response response;
@@ -29,7 +29,7 @@ void TestSerialize() noexcept
     const std::string responseMessage = rtsp::Serialize(response);
 
     assert(responseMessage ==
-        "WEBRTSP/0.1 200 OK\r\n"
+        "WEBRTSP/0.2 200 OK\r\n"
         "CSeq: 1\r\n"
         "Public: DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE\r\n");
 
