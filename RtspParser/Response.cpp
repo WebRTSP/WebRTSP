@@ -26,4 +26,9 @@ std::string ResponseContentType(const Response& response)
     return it->second;
 }
 
+void SetContentType(Response* response, const std::string& contentType)
+{
+    response->headerFields.emplace(ContentTypeFieldName, contentType);
+}
+
 }

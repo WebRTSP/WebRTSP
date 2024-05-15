@@ -24,5 +24,6 @@ struct Response {
 MediaSessionId ResponseSession(const Response&);
 void SetResponseSession(Response*, const MediaSessionId&);
 std::string ResponseContentType(const Response&);
+void SetContentType(Response*, const std::string&);
 
 }
