@@ -95,12 +95,13 @@ bool TestServerRecordSession::authorize(const std::unique_ptr<rtsp::Request>& re
     return authPair.second == RECORD_TOKEN;
 }
 
-static std::unique_ptr<rtsp::ServerSession> CreateServerSession (
-    const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
-    const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
+static std::unique_ptr<ServerSession> CreateServerSession (
+    const rtsp::Session::SendRequest& sendRequest,
+    const rtsp::Session::SendResponse& sendResponse) noexcept
 {
     return
         std::make_unique<TestServerRecordSession>(
+            std::make_shared<WebRTCConfig>(),
             CreateServerPeer,
             CreateServerRecordPeer,
             sendRequest,
@@ -144,18 +145,20 @@ static std::unique_ptr<WebRTCPeer> CreateClientPeer(const std::string& uri)
 }
 
 static std::unique_ptr<rtsp::ClientSession> CreateClientSession (
-    const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
-    const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
+    const rtsp::Session::SendRequest& sendRequest,
+    const rtsp::Session::SendResponse& sendResponse) noexcept
 {
     const std::string uri =
 #if USE_RESTREAMER
-        "rtsp://ipcam.stream:8554/bars";
+        "rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream";
 #else
         "Record";
 #endif
     return
         std::make_unique<TestRecordSession>(
             uri,
+            RECORD_TOKEN,
+            std::make_shared<WebRTCConfig>(),
             CreateClientPeer,
             sendRequest,
             sendResponse);
@@ -206,9 +209,11 @@ int main(int argc, char *argv[])
             InitWsClientLogger(spdlog::level::info);
             InitClientSessionLogger(spdlog::level::info);
 
-            client::Config config {};
-            config.server = SERVER_HOST;
-            config.serverPort = SERVER_PORT;
+            client::Config config {
+                .server = SERVER_HOST,
+                .serverPort = SERVER_PORT,
+                .useTls = false
+            };
 
             GMainContextPtr clientContextPtr(g_main_context_new());
             GMainContext* clientContext = clientContextPtr.get();
