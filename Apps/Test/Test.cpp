@@ -8,6 +8,8 @@
 #include "TestParse.h"
 #include "TestSerialize.h"
 
+#include "Helpers/LwsLog.h"
+
 #define ENABLE_SERVER 1
 #define ENABLE_CLIENT 1
 #define USE_RESTREAMER 1
@@ -45,17 +47,21 @@ enum {
 static std::unique_ptr<WebRTCPeer> CreateServerPeer(const std::string& uri)
 {
 #if USE_RESTREAMER
-    return std::make_unique<GstReStreamer>(uri);
+    return std::make_unique<GstReStreamer>(uri, std::string());
 #else
     return std::make_unique<GstTestStreamer>();
 #endif
 }
 
-static std::unique_ptr<rtsp::ServerSession> CreateServerSession (
-    const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
-    const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
+static std::unique_ptr<ServerSession> CreateServerSession (
+    const rtsp::Session::SendRequest& sendRequest,
+    const rtsp::Session::SendResponse& sendResponse) noexcept
 {
-    return std::make_unique<ServerSession>(CreateServerPeer, sendRequest, sendResponse);
+    return std::make_unique<ServerSession>(
+        std::make_shared<WebRTCConfig>(),
+        CreateServerPeer,
+        sendRequest,
+        sendResponse);
 }
 #endif
 
@@ -66,12 +72,12 @@ static std::unique_ptr<WebRTCPeer> CreateClientPeer()
 }
 
 static std::unique_ptr<rtsp::ClientSession> CreateClientSession (
-    const std::function<void (const rtsp::Request*) noexcept>& sendRequest,
-    const std::function<void (const rtsp::Response*) noexcept>& sendResponse) noexcept
+    const rtsp::Session::SendRequest& sendRequest,
+    const rtsp::Session::SendResponse& sendResponse) noexcept
 {
     const std::string url =
 #if USE_RESTREAMER
-        "rtsp://ipcam.stream:8554/bars";
+        "rtsp://stream.strba.sk:1935/strba/VYHLAD_JAZERO.stream";
 #elif ENABLE_SERVER
         "*";
 #else
@@ -80,6 +86,7 @@ static std::unique_ptr<rtsp::ClientSession> CreateClientSession (
     return
         std::make_unique<ClientSession>(
             url,
+            std::make_shared<WebRTCConfig>(),
             CreateClientPeer,
             sendRequest,
             sendResponse);
@@ -104,6 +111,8 @@ int main(int argc, char *argv[])
 
     TestParse();
     TestSerialize();
+
+    InitLwsLogger(spdlog::level::warn);
 
 #if ENABLE_SERVER
     std::thread signallingThread(
@@ -131,9 +140,11 @@ int main(int argc, char *argv[])
         [] () {
             InitWsClientLogger(spdlog::level::trace);
 
-            client::Config config {};
-            config.server = SERVER_HOST;
-            config.serverPort = SERVER_PORT;
+            client::Config config {
+                .server = SERVER_HOST,
+                .serverPort = SERVER_PORT,
+                .useTls = false,
+            };
 
             GMainContextPtr clientContextPtr(g_main_context_new());
             GMainContext* clientContext = clientContextPtr.get();
