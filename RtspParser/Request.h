@@ -24,5 +24,6 @@ struct Request {
 MediaSessionId RequestSession(const Request& request);
 void SetRequestSession(Request*, const MediaSessionId&);
 std::string RequestContentType(const Request& request);
+void SetContentType(Request*, const std::string&);
 
 }

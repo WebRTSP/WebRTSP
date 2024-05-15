@@ -26,4 +26,9 @@ std::string RequestContentType(const Request& request)
     return it->second;
 }
 
+void SetContentType(Request* request, const std::string& contentType)
+{
+    request->headerFields.emplace(ContentTypeFieldName, contentType);
+}
+
 }
