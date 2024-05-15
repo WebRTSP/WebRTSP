@@ -63,7 +63,7 @@ void ClientRecordSession::Private::iceCandidate(
     } else {
         owner->requestSetup(
             targetUri,
-            "application/x-ice-candidate",
+            rtsp::IceCandidateContentType,
             session,
             std::to_string(mlineIndex) + "/" + candidate + "\r\n");
     }
@@ -107,7 +107,7 @@ bool ClientRecordSession::onRecordResponse(
     if(response.statusCode != rtsp::StatusCode::OK)
         return false;
 
-    if(ResponseContentType(response) != "application/sdp")
+    if(ResponseContentType(response) != rtsp::SdpContentType)
         return false;
 
     rtsp::MediaSessionId session = ResponseSession(response);
@@ -128,7 +128,7 @@ bool ClientRecordSession::onRecordResponse(
         if(!iceCandidates.empty()) {
             requestSetup(
                 _p->targetUri,
-                "application/x-ice-candidate",
+                rtsp::IceCandidateContentType,
                 _p->session,
                 iceCandidates);
         }
@@ -152,7 +152,7 @@ bool ClientRecordSession::onSetupResponse(
         return false;
 
     const std::string contentType = RequestContentType(request);
-     if(contentType == "application/x-ice-candidate")
+     if(contentType == rtsp::IceCandidateContentType)
         ;
      else
          return false;
@@ -172,7 +172,7 @@ bool ClientRecordSession::onSetupRequest(std::unique_ptr<rtsp::Request>& request
     if(RequestSession(*requestPtr) != _p->session)
         return false;
 
-    if(RequestContentType(*requestPtr) != "application/x-ice-candidate")
+    if(RequestContentType(*requestPtr) != rtsp::IceCandidateContentType)
         return false;
 
     const std::string& ice = requestPtr->body;

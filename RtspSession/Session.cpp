@@ -69,7 +69,7 @@ Request* Session::createRequest(
 {
     Request* request = createRequest(method, uri);
 
-    request->headerFields.emplace("Session", session);
+    SetRequestSession(request, session);
 
     return request;
 }
@@ -105,7 +105,7 @@ Response* Session::prepareResponse(
     out->reasonPhrase = reasonPhrase;
 
     if(!session.empty())
-        out->headerFields.emplace("Session", session);
+        SetResponseSession(out, session);
 
     return out;
 }
@@ -147,7 +147,7 @@ void Session::sendOkResponse(
     Response response;
     prepareOkResponse(cseq, &response);
 
-    response.headerFields.emplace("content-type", contentType);
+    SetContentType(&response, contentType);
 
     response.body = body;
 
@@ -163,7 +163,7 @@ void Session::sendOkResponse(
     Response response;
     prepareOkResponse(cseq, session, &response);
 
-    response.headerFields.emplace("content-type", contentType);
+    SetContentType(&response, contentType);
 
     response.body = body;
 
@@ -214,7 +214,7 @@ CSeq Session::sendList(
     Request& request =
         *createRequest(Method::LIST, uri);
 
-    request.headerFields.emplace("Content-Type", TextParametersContentType);
+    SetContentType(&request, TextParametersContentType);
 
     if(!token.empty())
         request.headerFields.emplace("Authorization", "Bearer " + token);
@@ -238,8 +238,8 @@ CSeq Session::requestSetup(
     Request& request =
         *createRequest(Method::SETUP, uri);
 
-    request.headerFields.emplace("Session", session);
-    request.headerFields.emplace("content-type", contentType);
+    SetRequestSession(&request, session);
+    SetContentType(&request, contentType);
 
     request.body = body;
 
@@ -256,7 +256,7 @@ CSeq Session::requestGetParameter(
     Request& request =
         *createRequest(Method::GET_PARAMETER, uri);
 
-    request.headerFields.emplace("content-type", contentType);
+    SetContentType(&request, contentType);
 
     request.body = body;
 
@@ -273,7 +273,7 @@ CSeq Session::requestSetParameter(
     Request& request =
         *createRequest(Method::SET_PARAMETER, uri);
 
-    request.headerFields.emplace("content-type", contentType);
+    SetContentType(&request, contentType);
 
     request.body = body;
 

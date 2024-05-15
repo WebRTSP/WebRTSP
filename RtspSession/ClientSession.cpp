@@ -44,7 +44,7 @@ CSeq ClientSession::requestRecord(
     Request& request =
         *createRequest(Method::RECORD, uri);
 
-    request.headerFields.emplace("Content-Type", "application/sdp");
+    SetContentType(&request, rtsp::SdpContentType);
 
     if(!token.empty())
         request.headerFields.emplace("Authorization", "Bearer " + token);

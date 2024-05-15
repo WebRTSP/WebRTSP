@@ -109,7 +109,7 @@ void ServerSession::Private::sendIceCandidates(
         if(!mediaSession->iceCandidates.empty()) {
             owner->requestSetup(
                 mediaSession->uri,
-                "application/x-ice-candidate",
+                rtsp::IceCandidateContentType,
                 session,
                 iceCandidates);
         }
@@ -138,7 +138,7 @@ void ServerSession::Private::streamerPrepared(const rtsp::MediaSessionId& sessio
         rtsp::Response response;
         prepareOkResponse(describeRequestCSeq, session, &response);
 
-        response.headerFields.emplace("Content-Type", "application/sdp");
+        SetContentType(&response, rtsp::SdpContentType);
 
         response.body = localPeer.sdp();
 
@@ -168,7 +168,7 @@ void ServerSession::Private::recorderPrepared(const rtsp::MediaSessionId& sessio
         rtsp::Response response;
         prepareOkResponse(recordRequestCSeq, session, &response);
 
-        response.headerFields.emplace("Content-Type", "application/sdp");
+        SetContentType(&response, rtsp::SdpContentType);
 
         response.body = recorder.sdp();
 
@@ -203,8 +203,8 @@ void ServerSession::Private::recordToClientStreamerPrepared(const rtsp::MediaSes
         rtsp::Request& request =
             *owner->createRequest(rtsp::Method::RECORD, mediaSession.uri);
 
-        request.headerFields.emplace("Session", mediaSessionId);
-        request.headerFields.emplace("Content-Type", "application/sdp");
+        SetRequestSession(&request, mediaSessionId);
+        SetContentType(&request, rtsp::SdpContentType);
 
         request.body = localPeer.sdp();
 
@@ -228,7 +228,7 @@ void ServerSession::Private::iceCandidate(
     if(mediaSession.prepared) {
         owner->requestSetup(
             mediaSession.uri,
-            "application/x-ice-candidate",
+            rtsp::IceCandidateContentType,
             session,
             std::to_string(mlineIndex) + "/" + candidate + "\r\n");
     } else {
@@ -485,7 +485,7 @@ bool ServerSession::onRecordRequest(
         return false;
 
     const std::string contentType = RequestContentType(*requestPtr);
-    if(contentType != "application/sdp")
+    if(contentType != rtsp::SdpContentType)
         return false;
 
     const rtsp::MediaSessionId session = nextSessionId();
@@ -537,7 +537,7 @@ bool ServerSession::onSetupRequest(
 
     WebRTCPeer& localPeer = *it->second->localPeer;
 
-    if(RequestContentType(*requestPtr) != "application/x-ice-candidate")
+    if(RequestContentType(*requestPtr) != rtsp::IceCandidateContentType)
         return false;
 
     const std::string& ice = requestPtr->body;
@@ -594,7 +594,7 @@ bool ServerSession::onPlayRequest(
     if(mediaSession.type != MediaSession::Type::Describe)
         return false;
 
-    if(RequestContentType(*requestPtr) != "application/sdp")
+    if(RequestContentType(*requestPtr) != rtsp::SdpContentType)
         return false;
 
     WebRTCPeer& localPeer = *(mediaSession.localPeer);
@@ -685,7 +685,7 @@ bool ServerSession::onRecordResponse(const rtsp::Request& request, const rtsp::R
     if(mediaSession.type != MediaSession::Type::Subscribe)
         return false;
 
-    if(ResponseContentType(response) != "application/sdp")
+    if(ResponseContentType(response) != rtsp::SdpContentType)
         return false;
 
     WebRTCPeer& localPeer = *(mediaSession.localPeer);

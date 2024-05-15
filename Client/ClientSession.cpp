@@ -53,7 +53,7 @@ void ClientSession::Private::iceCandidate(
 {
     owner->requestSetup(
         uri,
-        "application/x-ice-candidate",
+        rtsp::IceCandidateContentType,
         session,
         std::to_string(mlineIndex) + "/" + candidate + "\r\n");
 }
@@ -198,7 +198,7 @@ bool ClientSession::onSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) n
     if(RequestSession(*requestPtr) != _p->session)
         return false;
 
-    if(RequestContentType(*requestPtr) != "application/x-ice-candidate")
+    if(RequestContentType(*requestPtr) != rtsp::IceCandidateContentType)
         return false;
 
     const std::string& ice = requestPtr->body;
