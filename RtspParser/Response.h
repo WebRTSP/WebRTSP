@@ -23,6 +23,6 @@ struct Response {
 
 MediaSessionId ResponseSession(const Response&);
 void SetResponseSession(Response*, const MediaSessionId&);
-std::string ResponseContentType(const Response& request);
+std::string ResponseContentType(const Response&);
 
 }
