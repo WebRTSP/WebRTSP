@@ -6,6 +6,8 @@
 
 namespace rtsp {
 
+void Serialize(const Parameters&, std::string* out) noexcept;
+
 void Serialize(const Request&, std::string* out) noexcept;
 std::string Serialize(const Request&) noexcept;
 

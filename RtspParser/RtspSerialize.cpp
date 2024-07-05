@@ -26,6 +26,18 @@ void SerializeStatusCode(unsigned statusCode, std::string* out)
 
 }
 
+void Serialize(const Parameters& parameters, std::string* out) noexcept
+{
+    out->clear();
+
+    for(const std::pair<std::string, std::string>& parameter: parameters) {
+        *out += parameter.first;
+        *out += ": ";
+        *out += parameter.second;
+        *out += "\r\n";
+    }
+}
+
 void Serialize(const Request& request, std::string* out) noexcept
 {
     try {

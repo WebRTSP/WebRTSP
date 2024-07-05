@@ -1,12 +1,17 @@
 #pragma once
 
 #include <string>
+#include <set>
+#include <map>
 
 
 namespace rtsp {
 
 typedef unsigned CSeq;
 typedef std::string MediaSessionId;
+
+typedef std::map<std::string, std::string> Parameters;
+typedef std::set<std::string> ParametersNames;
 
 const char UriSeparator = '/';
 const char *const WildcardUri = "*";
