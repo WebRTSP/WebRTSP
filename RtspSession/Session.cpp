@@ -217,7 +217,7 @@ CSeq Session::sendList(
     SetContentType(&request, TextParametersContentType);
 
     if(!token.empty())
-        request.headerFields.emplace("Authorization", "Bearer " + token);
+        SetBearerAuthorization(&request, token);
 
     request.body = list;
 

@@ -31,4 +31,9 @@ void SetContentType(Request* request, const std::string& contentType)
     request->headerFields.emplace(ContentTypeFieldName, contentType);
 }
 
+void SetBearerAuthorization(Request* request, const std::string& token)
+{
+    request->headerFields.emplace("Authorization", "Bearer " + token);
+}
+
 }

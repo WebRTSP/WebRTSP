@@ -25,5 +25,6 @@ MediaSessionId RequestSession(const Request& request);
 void SetRequestSession(Request*, const MediaSessionId&);
 std::string RequestContentType(const Request& request);
 void SetContentType(Request*, const std::string&);
+void SetBearerAuthorization(Request*, const std::string& token);
 
 }

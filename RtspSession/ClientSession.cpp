@@ -47,7 +47,7 @@ CSeq ClientSession::requestRecord(
     SetContentType(&request, rtsp::SdpContentType);
 
     if(!token.empty())
-        request.headerFields.emplace("Authorization", "Bearer " + token);
+        SetBearerAuthorization(&request, token);
 
     request.body.assign(sdp);
 
