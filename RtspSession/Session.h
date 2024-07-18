@@ -23,7 +23,7 @@ struct Session
 
     virtual ~Session();
 
-    const WebRTCConfigPtr& webRTCConfig() const { return _webRTCConfig; }
+    virtual const WebRTCConfigPtr& webRTCConfig() const { return _webRTCConfig; }
 
     virtual bool onConnected() noexcept { return true; }
 
