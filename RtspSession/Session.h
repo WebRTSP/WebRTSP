@@ -93,11 +93,13 @@ protected:
     CSeq requestGetParameter(
         const std::string& uri,
         const std::string& contentType,
-        const std::string& body) noexcept;
+        const std::string& body,
+        const std::optional<std::string>& token = {}) noexcept;
     CSeq requestSetParameter(
         const std::string& uri,
         const std::string& contentType,
-        const std::string& body) noexcept;
+        const std::string& body,
+        const std::optional<std::string>& token = {}) noexcept;
 
     virtual bool onOptionsRequest(std::unique_ptr<Request>&) noexcept
         { return false; }

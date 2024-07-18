@@ -251,7 +251,8 @@ CSeq Session::requestSetup(
 CSeq Session::requestGetParameter(
     const std::string& uri,
     const std::string& contentType,
-    const std::string& body) noexcept
+    const std::string& body,
+    const std::optional<std::string>& token) noexcept
 {
     Request& request =
         *createRequest(Method::GET_PARAMETER, uri);
@@ -259,6 +260,9 @@ CSeq Session::requestGetParameter(
     SetContentType(&request, contentType);
 
     request.body = body;
+
+    if(token)
+        SetBearerAuthorization(&request, token.value());
 
     sendRequest(request);
 
@@ -268,7 +272,8 @@ CSeq Session::requestGetParameter(
 CSeq Session::requestSetParameter(
     const std::string& uri,
     const std::string& contentType,
-    const std::string& body) noexcept
+    const std::string& body,
+    const std::optional<std::string>& token) noexcept
 {
     Request& request =
         *createRequest(Method::SET_PARAMETER, uri);
@@ -276,6 +281,9 @@ CSeq Session::requestSetParameter(
     SetContentType(&request, contentType);
 
     request.body = body;
+
+    if(token)
+        SetBearerAuthorization(&request, token.value());
 
     sendRequest(request);
 
