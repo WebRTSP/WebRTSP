@@ -209,15 +209,15 @@ CSeq Session::requestList(const std::string& uri) noexcept
 CSeq Session::sendList(
     const std::string& uri,
     const std::string& list,
-    const std::string& token) noexcept
+    const std::optional<std::string>& token) noexcept
 {
     Request& request =
         *createRequest(Method::LIST, uri);
 
     SetContentType(&request, TextParametersContentType);
 
-    if(!token.empty())
-        SetBearerAuthorization(&request, token);
+    if(token)
+        SetBearerAuthorization(&request, token.value());
 
     request.body = list;
 

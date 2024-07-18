@@ -26,7 +26,7 @@ protected:
     CSeq requestRecord(
         const std::string& uri,
         const std::string& sdp,
-        const std::string& token) noexcept;
+        const std::optional<std::string>& token = {}) noexcept;
     CSeq requestPlay(
         const std::string& uri,
         const MediaSessionId& session,

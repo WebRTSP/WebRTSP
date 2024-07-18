@@ -39,15 +39,15 @@ CSeq ClientSession::requestDescribe(const std::string& uri) noexcept
 CSeq ClientSession::requestRecord(
     const std::string& uri,
     const std::string& sdp,
-    const std::string& token) noexcept
+    const std::optional<std::string>& token) noexcept
 {
     Request& request =
         *createRequest(Method::RECORD, uri);
 
     SetContentType(&request, rtsp::SdpContentType);
 
-    if(!token.empty())
-        SetBearerAuthorization(&request, token);
+    if(token)
+        SetBearerAuthorization(&request, token.value());
 
     request.body.assign(sdp);
 

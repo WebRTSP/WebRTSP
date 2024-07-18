@@ -84,7 +84,7 @@ protected:
     CSeq sendList(
         const std::string& uri,
         const std::string& list,
-        const std::string& token) noexcept;
+        const std::optional<std::string>& token = {}) noexcept;
     CSeq requestSetup(
         const std::string& uri,
         const std::string& contentType,
