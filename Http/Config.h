@@ -6,10 +6,15 @@
 
 namespace http {
 
+enum {
+    DEFAULT_HTTP_PORT = 5080,
+    DEFAULT_HTTPS_PORT = 5443,
+};
+
 struct Config
 {
     bool bindToLoopbackOnly = true;
-    unsigned short port = 5080;
+    unsigned short port = DEFAULT_HTTP_PORT;
 
     std::string wwwRoot = "./www";
 
