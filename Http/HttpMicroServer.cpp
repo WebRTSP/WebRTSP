@@ -42,6 +42,10 @@ const unsigned AuthCookieCleanupInterval = 1; // seconds
 const MHD_DigestAuthAlgorithm DigestAlgorithm = MHD_DIGEST_ALG_MD5;
 //const MHD_DigestAuthAlgorithm DigestAlgorithm = MHD_DIGEST_ALG_AUTO;
 
+size_t NoUnescape(void*, struct MHD_Connection*, char* s) {
+    return strlen(s);
+}
+
 }
 
 
@@ -161,6 +165,9 @@ bool MicroServer::Private::init()
             nullptr, nullptr,
             callback, this,
             MHD_OPTION_NONCE_NC_SIZE, 1000,
+            MHD_OPTION_UNESCAPE_CALLBACK,
+            NoUnescape,
+            nullptr,
             MHD_OPTION_END);
 
     return daemon != nullptr;
@@ -354,10 +361,7 @@ MHD_Result MicroServer::Private::httpCallback(
 
     Log()->debug("Serving \"{}\"...", url);
 
-    g_autofree gchar* unescapedUrl = g_strdup(url);
-    MHD_http_unescape(unescapedUrl);
-
-    auto it = config.indexPaths.find(unescapedUrl);
+    auto it = config.indexPaths.find(url);
     const bool isIndexPath = it != config.indexPaths.end();
     const bool pathAuthRequired = isIndexPath ? it->second : false;
 
