@@ -62,6 +62,7 @@ struct MicroServer::Private
         const Config&,
         const std::string& configJsc,
         const MicroServer::OnNewAuthToken&,
+        const MicroServer::APIRequestHandler&,
         GMainContext* context);
     ~Private();
 
@@ -100,6 +101,7 @@ struct MicroServer::Private
     MHD_Daemon* daemon = nullptr;
     std::vector<uint8_t> configJsBuffer;
     const MicroServer::OnNewAuthToken onNewAuthTokenCallback;
+    const MicroServer::APIRequestHandler apiRequestHandler;
     GMainContext* context;
 
     std::unordered_map<std::string, const MicroServer::AuthCookieData> authCookies;
@@ -112,13 +114,22 @@ const std::string MicroServer::Private::NotFoundResponse = "Not found";
 
 const Config MicroServer::Private::FixConfig(const Config& config)
 {
-    if(config.indexPaths.empty()) {
-        Config tmpConfig = config;
+    Config tmpConfig = config;
+
+    if(tmpConfig.indexPaths.empty()) {
         tmpConfig.indexPaths.emplace("/", !config.passwd.empty());
-        return tmpConfig;
-    } else {
-        return config;
     }
+
+    if(tmpConfig.apiPrefix) {
+        const std::string& apiPrefix = tmpConfig.apiPrefix.value();
+
+        if(apiPrefix.empty() || apiPrefix.size() < 2 || *apiPrefix.cbegin() != '/' || *apiPrefix.crbegin() == '/') {
+            Log()->warn("Invalid apiPrefix. Ignoring...");
+            tmpConfig.apiPrefix.reset();
+        }
+    }
+
+    return tmpConfig;
 }
 
 MicroServer::Private::Private(
@@ -126,6 +137,7 @@ MicroServer::Private::Private(
     const Config& config,
     const std::string& configJs,
     const OnNewAuthToken& onNewAuthTokenCallback,
+    const APIRequestHandler& apiRequestHandler,
     GMainContext* context) :
     owner(owner),
     config(FixConfig(config)),
@@ -133,6 +145,7 @@ MicroServer::Private::Private(
     configJsPath(GCharPtr(g_build_filename(wwwRootPath.c_str(), ConfigFile, nullptr)).get()),
     configJsBuffer(configJs.begin(), configJs.end()),
     onNewAuthTokenCallback(onNewAuthTokenCallback),
+    apiRequestHandler(apiRequestHandler),
     context(context)
 {
 }
@@ -350,9 +363,6 @@ MHD_Result MicroServer::Private::httpCallback(
     size_t* uploadDataSize,
     void ** conCls)
 {
-    if(0 != strcmp(method, MHD_HTTP_METHOD_GET))
-      return MHD_NO;
-
     if(*conCls == nullptr) {
         // first phase, skipping
         *conCls = GINT_TO_POINTER(TRUE);
@@ -361,9 +371,15 @@ MHD_Result MicroServer::Private::httpCallback(
 
     Log()->debug("Serving \"{}\"...", url);
 
-    auto it = config.indexPaths.find(url);
+    const bool isApiPath = config.apiPrefix ?
+        g_str_has_prefix(url, config.apiPrefix.value().c_str()) :
+        false;
+    auto it = !isApiPath ? config.indexPaths.find(url) : config.indexPaths.end();
     const bool isIndexPath = it != config.indexPaths.end();
     const bool pathAuthRequired = isIndexPath ? it->second : false;
+
+    if(!isApiPath && 0 != strcmp(method, MHD_HTTP_METHOD_GET))
+      return MHD_NO;
 
     cleanupCookies();
 
@@ -429,12 +445,8 @@ MHD_Result MicroServer::Private::httpCallback(
     }
 
     MHD_Response* response = nullptr;
-    if(configJsPath == safePathPtr.get()) {
-        response =
-            MHD_create_response_from_buffer(
-                configJsBuffer.size(),
-                configJsBuffer.data(),
-                MHD_RESPMEM_PERSISTENT);
+    if(isApiPath) {
+        response = apiRequestHandler(method, url);
     } else {
         const int fd = open(safePathPtr.get(), O_RDONLY);
         FDAutoClose fdAutoClose(fd);
@@ -447,21 +459,21 @@ MHD_Result MicroServer::Private::httpCallback(
             return queueNotFoundResponse(connection);
         }
 
-        response =  MHD_create_response_from_fd64(fileStat.st_size, fd);
-        if(!response)
-            return MHD_NO;
-
+        response = MHD_create_response_from_fd64(fileStat.st_size, fd);
         fdAutoClose.cancel();
+
+        if(g_str_has_suffix(safePathPtr.get(), ".js") || g_str_has_suffix(safePathPtr.get(), ".mjs"))
+            MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, "text/javascript");
     }
+
+    if(!response)
+        return MHD_NO;
 
     if(addAuthCookie) {
         addCookie(response);
     } else if(authCookieValid) {
         refreshCookie(response, inAuthCookie);
     }
-
-    if(g_str_has_suffix(safePathPtr.get(), ".js") || g_str_has_suffix(safePathPtr.get(), ".mjs"))
-        MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, "text/javascript");
 
     MHD_Result queueResult = MHD_queue_response(connection, MHD_HTTP_OK, response);
     MHD_destroy_response(response);
@@ -474,8 +486,15 @@ MicroServer::MicroServer(
     const Config& config,
     const std::string& configJs,
     const OnNewAuthToken& onNewAuthTokenCallback,
+    const APIRequestHandler& apiRequestHandler,
     GMainContext* context) noexcept :
-    _p(std::make_unique<Private>(this, config, configJs, onNewAuthTokenCallback, context))
+    _p(std::make_unique<Private>(
+        this,
+        config,
+        configJs,
+        onNewAuthTokenCallback,
+        apiRequestHandler,
+        context))
 {
 }
 

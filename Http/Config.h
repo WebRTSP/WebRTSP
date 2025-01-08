@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <map>
 
@@ -21,6 +22,8 @@ struct Config
     std::map<std::string, std::string> passwd;
     std::string realm = "WebRTSP";
     std::string opaque = "WebRTSP";
+
+    std::optional<std::string> apiPrefix;
 
     std::map<std::string, bool> indexPaths; // path -> if auth required for path
 };
