@@ -18,6 +18,7 @@ const auto Log = HttpServerLog;
 
 typedef char* MHD_char_ptr;
 G_DEFINE_AUTO_CLEANUP_FREE_FUNC(MHD_char_ptr, MHD_free, nullptr)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(MHD_Response, MHD_destroy_response)
 
 const char *const ConfigFile = "/Config.js";
 const char *const IndexFile = "/index.html";
@@ -436,7 +437,7 @@ MHD_Result MicroServer::Private::httpCallback(
         }
     }
 
-    MHD_Response* response = nullptr;
+    g_autoptr(MHD_Response) response = nullptr;
     if(isApiPath) {
         response = apiRequestHandler(method, url);
     } else {
@@ -467,10 +468,7 @@ MHD_Result MicroServer::Private::httpCallback(
         refreshCookie(response, inAuthCookie);
     }
 
-    MHD_Result queueResult = MHD_queue_response(connection, MHD_HTTP_OK, response);
-    MHD_destroy_response(response);
-
-    return queueResult;
+    return MHD_queue_response(connection, MHD_HTTP_OK, response);
 }
 
 
