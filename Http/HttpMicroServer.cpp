@@ -354,12 +354,30 @@ void MicroServer::Private::cleanupCookies()
 MHD_Result MicroServer::Private::httpCallback(
     struct MHD_Connection* connection,
     const char *const url,
-    const char *const method,
+    const char *const methodString,
     const char *const version,
     const char *const uploadData,
     size_t* uploadDataSize,
     void ** conCls)
 {
+    Method method;
+    if(strcmp(methodString, MHD_HTTP_METHOD_GET) == STRCMP_EQUAL) {
+        method = Method::GET;
+    } else if(strcmp(methodString, MHD_HTTP_METHOD_POST) == STRCMP_EQUAL) {
+        method = Method::POST;
+    } else if(strcmp(methodString, MHD_HTTP_METHOD_PUT) == STRCMP_EQUAL) {
+        method = Method::PUT;
+    } else if(strcmp(methodString, MHD_HTTP_METHOD_DELETE) == STRCMP_EQUAL) {
+        method = Method::DELETE;
+    } else if(strcmp(methodString, MHD_HTTP_METHOD_OPTIONS) == STRCMP_EQUAL) {
+        method = Method::OPTIONS;
+    } else if(strcmp(methodString, MHD_HTTP_METHOD_PATCH) == STRCMP_EQUAL) {
+        method = Method::PATCH;
+    } else {
+        Log()->error("Got not supported method {} for \"{}\"", methodString, url);
+        return MHD_NO;
+    }
+
     if(*conCls == nullptr) {
         // first phase, skipping
         *conCls = GINT_TO_POINTER(TRUE);
@@ -375,7 +393,7 @@ MHD_Result MicroServer::Private::httpCallback(
     const bool isIndexPath = it != config.indexPaths.end();
     const bool pathAuthRequired = isIndexPath ? it->second : false;
 
-    if(!isApiPath && STRCMP_EQUAL != strcmp(method, MHD_HTTP_METHOD_GET))
+    if(!isApiPath && method != Method::GET)
       return MHD_NO;
 
     cleanupCookies();

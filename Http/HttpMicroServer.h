@@ -14,6 +14,16 @@ struct MHD_Response;
 
 namespace http {
 
+enum class Method
+{
+    GET,
+    POST,
+    PUT,
+    DELETE,
+    OPTIONS,
+    PATCH,
+};
+
 class MicroServer
 {
 public:
@@ -25,7 +35,7 @@ public:
         const std::string& token,
         std::chrono::steady_clock::time_point expiresAt)> OnNewAuthToken;
     typedef std::function<std::pair<unsigned, MHD_Response*> (
-        const char* method,
+        Method method,
         const char* uri)> APIRequestHandler;
 
     MicroServer(
