@@ -504,7 +504,7 @@ MHD_Result MicroServer::Private::httpCallback(
     g_autoptr(MHD_Response) response = nullptr;
     unsigned responseCode = 0;
     if(isApiPath) {
-        std::tie(responseCode, response) = apiRequestHandler(method, url);
+        std::tie(responseCode, response) = apiRequestHandler(method, url, body);
     } else {
         const int fd = open(safePathPtr.get(), O_RDONLY);
         FDAutoClose fdAutoClose(fd);
