@@ -17,6 +17,7 @@ const auto Log = HttpServerLog;
 
 enum {
     STRCMP_EQUAL = 0,
+    MAX_UPLOAD_SIZE = 1 << 14, // 16k
 };
 
 typedef char* MHD_char_ptr;
@@ -42,6 +43,10 @@ const MHD_DigestAuthAlgorithm DigestAlgorithm = MHD_DIGEST_ALG_MD5;
 size_t NoUnescape(void*, struct MHD_Connection*, char* s) {
     return strlen(s);
 }
+
+struct UploadContext {
+    std::string data;
+};
 
 }
 
@@ -379,12 +384,50 @@ MHD_Result MicroServer::Private::httpCallback(
     }
 
     if(*conCls == nullptr) {
-        // first phase, skipping
-        *conCls = GINT_TO_POINTER(TRUE);
+        // first phase, only headers are available
+
+        if(method == Method::POST || method == Method::PATCH) {
+            const char* contentLength = MHD_lookup_connection_value(connection, MHD_HEADER_KIND, MHD_HTTP_HEADER_CONTENT_LENGTH);
+            if(!contentLength) {
+                Log()->error("Missing \"Content-Length\" header in {} for \"{}\"", methodString, url);
+                return MHD_NO;
+            }
+
+            if(strtol(contentLength, NULL, 10) > MAX_UPLOAD_SIZE) {
+                Log()->error("Too big {} body declared for \"{}\"", methodString, url);
+                return MHD_NO;
+            }
+
+            *conCls = new UploadContext();
+        } else {
+            *conCls = GINT_TO_POINTER(TRUE);
+        }
+
         return MHD_YES;
     }
 
-    Log()->debug("Serving \"{}\"...", url);
+    std::unique_ptr<UploadContext> uploadContext;
+    std::string_view body;
+    if(method == Method::POST || method == Method::PATCH) {
+        uploadContext.reset(reinterpret_cast<UploadContext*>(*conCls));
+
+        if(uploadContext->data.size() + *uploadDataSize > MAX_UPLOAD_SIZE) {
+            Log()->error("Too big {} body for \"{}\"", methodString, url);
+            return MHD_NO;
+        }
+
+        if(*uploadDataSize) {
+            uploadContext.release()->data.append(uploadData, *uploadDataSize);
+            *uploadDataSize = 0;
+            return MHD_YES;
+        }
+
+        body = uploadContext->data;
+    } else {
+        body = std::string_view(uploadData, *uploadDataSize);
+    }
+
+    Log()->debug("Serving {} request for \"{}\"...", methodString, url);
 
     const bool isApiPath = config.apiPrefix ?
         g_str_has_prefix(url, config.apiPrefix.value().c_str()) :
