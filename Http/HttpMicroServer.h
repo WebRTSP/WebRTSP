@@ -24,7 +24,7 @@ public:
     typedef std::function<void (
         const std::string& token,
         std::chrono::steady_clock::time_point expiresAt)> OnNewAuthToken;
-    typedef std::function<MHD_Response* (
+    typedef std::function<std::pair<unsigned, MHD_Response*> (
         const char* method,
         const char* uri)> APIRequestHandler;
 

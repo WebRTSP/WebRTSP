@@ -441,8 +441,9 @@ MHD_Result MicroServer::Private::httpCallback(
     }
 
     g_autoptr(MHD_Response) response = nullptr;
+    unsigned responseCode = 0;
     if(isApiPath) {
-        response = apiRequestHandler(method, url);
+        std::tie(responseCode, response) = apiRequestHandler(method, url);
     } else {
         const int fd = open(safePathPtr.get(), O_RDONLY);
         FDAutoClose fdAutoClose(fd);
@@ -456,13 +457,14 @@ MHD_Result MicroServer::Private::httpCallback(
         }
 
         response = MHD_create_response_from_fd64(fileStat.st_size, fd);
+        responseCode = MHD_HTTP_OK;
         fdAutoClose.cancel();
 
         if(g_str_has_suffix(safePathPtr.get(), ".js") || g_str_has_suffix(safePathPtr.get(), ".mjs"))
             MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, "text/javascript");
     }
 
-    if(!response)
+    if(!responseCode || !response)
         return MHD_NO;
 
     if(addAuthCookie) {
@@ -471,7 +473,7 @@ MHD_Result MicroServer::Private::httpCallback(
         refreshCookie(response, inAuthCookie);
     }
 
-    return MHD_queue_response(connection, MHD_HTTP_OK, response);
+    return MHD_queue_response(connection, responseCode, response);
 }
 
 
