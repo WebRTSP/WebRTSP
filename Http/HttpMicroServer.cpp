@@ -15,16 +15,9 @@ namespace {
 
 const auto Log = HttpServerLog;
 
-struct MHDFree
-{
-    void operator() (char* str)
-        { MHD_free(str); }
-};
 
-typedef
-    std::unique_ptr<
-        char,
-        MHDFree> MHDCharPtr;
+typedef char* MHD_char_ptr;
+G_DEFINE_AUTO_CLEANUP_FREE_FUNC(MHD_char_ptr, MHD_free, nullptr)
 
 const char *const ConfigFile = "/Config.js";
 const char *const IndexFile = "/index.html";
@@ -394,8 +387,7 @@ MHD_Result MicroServer::Private::httpCallback(
             Log()->debug("Got invalid auth cookie \"{}\"", inAuthCookie);
     }
 
-    MHDCharPtr userNamePtr(MHD_digest_auth_get_username(connection));
-    const char* userName = userNamePtr.get();
+    g_auto(MHD_char_ptr) userName = MHD_digest_auth_get_username(connection);
     if((userName || pathAuthRequired) && isIndexPath && !authCookieValid) {
         if(!config.passwd.empty()) {
             if(!userName) {
