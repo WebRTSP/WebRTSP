@@ -15,6 +15,9 @@ namespace {
 
 const auto Log = HttpServerLog;
 
+enum {
+    STRCMP_EQUAL = 0,
+};
 
 typedef char* MHD_char_ptr;
 G_DEFINE_AUTO_CLEANUP_FREE_FUNC(MHD_char_ptr, MHD_free, nullptr)
@@ -372,7 +375,7 @@ MHD_Result MicroServer::Private::httpCallback(
     const bool isIndexPath = it != config.indexPaths.end();
     const bool pathAuthRequired = isIndexPath ? it->second : false;
 
-    if(!isApiPath && 0 != strcmp(method, MHD_HTTP_METHOD_GET))
+    if(!isApiPath && STRCMP_EQUAL != strcmp(method, MHD_HTTP_METHOD_GET))
       return MHD_NO;
 
     cleanupCookies();
