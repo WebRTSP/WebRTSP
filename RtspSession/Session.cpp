@@ -191,6 +191,13 @@ void Session::sendBadRequestResponse(CSeq cseq)
     sendResponse(response);
 }
 
+void Session::sendNotFoundResponse(CSeq cseq)
+{
+    Response response;
+    prepareResponse(NOT_FOUND, "Not Found", cseq, std::string(), &response);
+    sendResponse(response);
+}
+
 void Session::sendRequest(const Request& request) noexcept
 {
     _sendRequest(&request);

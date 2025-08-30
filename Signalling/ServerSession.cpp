@@ -407,7 +407,8 @@ bool ServerSession::onDescribeRequest(
 
     if(!playEnabled(request.uri)) {
         Log()->error("[{}] Playback is not supported for \"{}\"", sessionLogId, requestPtr->uri);
-        return false;
+        sendNotFoundResponse(request.cseq);
+        return true;
     }
 
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(requestPtr->uri);
