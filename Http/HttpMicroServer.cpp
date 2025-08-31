@@ -505,6 +505,14 @@ MHD_Result MicroServer::Private::httpCallback(
     unsigned responseCode = 0;
     if(isApiPath) {
         std::tie(responseCode, response) = apiRequestHandler(method, url, body);
+    } else if(configJsPath == safePathPtr.get()) {
+        response =
+            MHD_create_response_from_buffer(
+                configJsBuffer.size(),
+                configJsBuffer.data(),
+                MHD_RESPMEM_PERSISTENT);
+        responseCode = MHD_HTTP_OK;
+        MHD_add_response_header(response, MHD_HTTP_HEADER_CONTENT_TYPE, "text/javascript");
     } else {
         const int fd = open(safePathPtr.get(), O_RDONLY);
         FDAutoClose fdAutoClose(fd);
