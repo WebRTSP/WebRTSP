@@ -76,6 +76,7 @@ protected:
     void sendForbiddenResponse(CSeq);
     void sendBadRequestResponse(CSeq);
     void sendNotFoundResponse(CSeq);
+    void sendServiceUnavailableResponse(CSeq);
 
     void sendRequest(const Request&) noexcept;
     void sendResponse(const Response&) noexcept;

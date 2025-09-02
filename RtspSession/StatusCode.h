@@ -10,6 +10,7 @@ enum StatusCode {
     FORBIDDEN = 403,
     NOT_FOUND = 404,
     BAD_GATEWAY = 502,
+    SERVICE_UNAVAILABLE = 503,
 };
 
 }

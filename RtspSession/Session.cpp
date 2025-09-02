@@ -198,6 +198,13 @@ void Session::sendNotFoundResponse(CSeq cseq)
     sendResponse(response);
 }
 
+void Session::sendServiceUnavailableResponse(CSeq cseq)
+{
+    Response response;
+    prepareResponse(SERVICE_UNAVAILABLE, "Service Unavailable", cseq, std::string(), &response);
+    sendResponse(response);
+}
+
 void Session::sendRequest(const Request& request) noexcept
 {
     _sendRequest(&request);
