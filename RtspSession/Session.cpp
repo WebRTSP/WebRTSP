@@ -184,17 +184,17 @@ void Session::sendForbiddenResponse(CSeq cseq)
     sendResponse(response);
 }
 
-void Session::sendBadRequestResponse(CSeq cseq)
-{
-    Response response;
-    prepareResponse(BAD_REQUEST, "Bad Request", cseq, std::string(), &response);
-    sendResponse(response);
-}
-
 void Session::sendNotFoundResponse(CSeq cseq)
 {
     Response response;
     prepareResponse(NOT_FOUND, "Not Found", cseq, std::string(), &response);
+    sendResponse(response);
+}
+
+void Session::sendBadGatewayResponse(CSeq cseq, const MediaSessionId& sessionId)
+{
+    Response response;
+    prepareResponse(BAD_GATEWAY, "Bad Gateway", cseq, sessionId, &response);
     sendResponse(response);
 }
 
@@ -212,8 +212,7 @@ void Session::sendRequest(const Request& request) noexcept
 
 CSeq Session::requestList(const std::string& uri) noexcept
 {
-    Request& request =
-        *createRequest(Method::LIST, uri);
+    Request& request = *createRequest(Method::LIST, uri);
 
     sendRequest(request);
 
@@ -225,8 +224,7 @@ CSeq Session::sendList(
     const std::string& list,
     const std::optional<std::string>& token) noexcept
 {
-    Request& request =
-        *createRequest(Method::LIST, uri);
+    Request& request = *createRequest(Method::LIST, uri);
 
     SetContentType(&request, TextParametersContentType);
 
@@ -249,8 +247,7 @@ CSeq Session::requestSetup(
     assert(!uri.empty());
     assert(!session.empty());
 
-    Request& request =
-        *createRequest(Method::SETUP, uri);
+    Request& request = *createRequest(Method::SETUP, uri);
 
     SetRequestSession(&request, session);
     SetContentType(&request, contentType);
@@ -268,8 +265,7 @@ CSeq Session::requestGetParameter(
     const std::string& body,
     const std::optional<std::string>& token) noexcept
 {
-    Request& request =
-        *createRequest(Method::GET_PARAMETER, uri);
+    Request& request = *createRequest(Method::GET_PARAMETER, uri);
 
     SetContentType(&request, contentType);
 
@@ -289,8 +285,7 @@ CSeq Session::requestSetParameter(
     const std::string& body,
     const std::optional<std::string>& token) noexcept
 {
-    Request& request =
-        *createRequest(Method::SET_PARAMETER, uri);
+    Request& request = *createRequest(Method::SET_PARAMETER, uri);
 
     SetContentType(&request, contentType);
 

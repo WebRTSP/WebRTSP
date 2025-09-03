@@ -61,6 +61,7 @@ protected:
     static Response* prepareOkResponse(
         CSeq cseq,
         Response* out);
+
     void sendOkResponse(CSeq);
     void sendOkResponse(CSeq, const MediaSessionId&);
     void sendOkResponse(
@@ -72,14 +73,16 @@ protected:
         const MediaSessionId&,
         const std::string& contentType,
         const std::string& body);
+
+    void sendBadRequestResponse(CSeq);
     void sendUnauthorizedResponse(CSeq);
     void sendForbiddenResponse(CSeq);
-    void sendBadRequestResponse(CSeq);
     void sendNotFoundResponse(CSeq);
     void sendServiceUnavailableResponse(CSeq);
 
     void sendRequest(const Request&) noexcept;
     void sendResponse(const Response&) noexcept;
+
     void disconnect() noexcept;
 
     CSeq requestList(const std::string& uri = "*") noexcept;
