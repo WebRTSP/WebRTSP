@@ -1,10 +1,10 @@
 #pragma once
 
 #include "RtStreaming/WebRTCPeer.h"
-#include "RtspSession/ClientSession.h"
+#include "RtspSession/Session.h"
 
 
-class ClientSession : public rtsp::ClientSession
+class ClientSession : public rtsp::Session
 {
 public:
     typedef std::function<std::unique_ptr<WebRTCPeer> ()> CreatePeer;
@@ -25,6 +25,11 @@ public:
 
 protected:
     void setUri(const std::string&);
+
+    bool isSupported(rtsp::Method) const noexcept;
+
+    virtual bool playSupportRequired(const std::string& /*uri*/) noexcept { return true; }
+    virtual bool recordSupportRequired(const std::string& /*uri*/) noexcept { return false; }
 
     rtsp::CSeq requestDescribe() noexcept;
 

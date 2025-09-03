@@ -86,16 +86,29 @@ protected:
 
     void disconnect() noexcept;
 
+    CSeq requestOptions(const std::string& uri) noexcept;
     CSeq requestList(const std::string& uri = "*") noexcept;
     CSeq sendList(
         const std::string& uri,
         const std::string& list,
         const std::optional<std::string>& token = {}) noexcept;
+    CSeq requestDescribe(const std::string& uri) noexcept;
     CSeq requestSetup(
         const std::string& uri,
         const std::string& contentType,
         const MediaSessionId& session,
         const std::string& body) noexcept;
+    CSeq requestPlay(
+        const std::string& uri,
+        const MediaSessionId& session,
+        const std::string& sdp) noexcept;
+    CSeq requestRecord(
+        const std::string& uri,
+        const std::string& sdp,
+        const std::optional<std::string>& token = {}) noexcept;
+    CSeq requestTeardown(
+        const std::string& uri,
+        const MediaSessionId&) noexcept;
     CSeq requestGetParameter(
         const std::string& uri,
         const std::string& contentType,

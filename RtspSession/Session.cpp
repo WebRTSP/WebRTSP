@@ -217,6 +217,19 @@ void Session::sendRequest(const Request& request) noexcept
     _sendRequest(&request);
 }
 
+CSeq Session::requestOptions(const std::string& uri) noexcept
+{
+    assert(!uri.empty());
+    if(uri.empty())
+        return 0;
+
+    Request& request = *createRequest(Method::OPTIONS, uri);
+
+    sendRequest(request);
+
+    return request.cseq;
+}
+
 CSeq Session::requestList(const std::string& uri) noexcept
 {
     Request& request = *createRequest(Method::LIST, uri);
@@ -245,6 +258,15 @@ CSeq Session::sendList(
     return request.cseq;
 }
 
+CSeq Session::requestDescribe(const std::string& uri) noexcept
+{
+    Request& request = *createRequest(Method::DESCRIBE, uri);
+
+    sendRequest(request);
+
+    return request.cseq;
+}
+
 CSeq Session::requestSetup(
     const std::string& uri,
     const std::string& contentType,
@@ -260,6 +282,50 @@ CSeq Session::requestSetup(
     SetContentType(&request, contentType);
 
     request.body = body;
+
+    sendRequest(request);
+
+    return request.cseq;
+}
+
+CSeq Session::requestPlay(
+    const std::string& uri,
+    const MediaSessionId& session,
+    const std::string& sdp) noexcept
+{
+    Request* request = createRequest(Method::PLAY, uri, session);
+    rtsp::SetContentType(request, SdpContentType);
+    request->body = sdp;
+
+    sendRequest(*request);
+
+    return request->cseq;
+}
+
+CSeq Session::requestRecord(
+    const std::string& uri,
+    const std::string& sdp,
+    const std::optional<std::string>& token) noexcept
+{
+    Request& request = *createRequest(Method::RECORD, uri);
+
+    SetContentType(&request, rtsp::SdpContentType);
+
+    if(token)
+        SetBearerAuthorization(&request, token.value());
+
+    request.body.assign(sdp);
+
+    sendRequest(request);
+
+    return request.cseq;
+}
+
+CSeq Session::requestTeardown(
+    const std::string& uri,
+    const MediaSessionId& session) noexcept
+{
+    Request& request = *createRequest(Method::TEARDOWN, uri, session);
 
     sendRequest(request);
 

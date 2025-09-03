@@ -1,10 +1,10 @@
 #pragma once
 
 #include "RtStreaming/WebRTCPeer.h"
-#include "RtspSession/ClientSession.h"
+#include "RtspSession/Session.h"
 
 
-class ClientRecordSession : public rtsp::ClientSession
+class ClientRecordSession : public rtsp::Session
 {
 public:
     typedef std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> CreatePeer;

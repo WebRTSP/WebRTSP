@@ -1,5 +1,9 @@
 #include "ClientSession.h"
 
+#include <set>
+
+#include "RtspParser/RtspParser.h"
+
 #include "RtspSession/StatusCode.h"
 
 #include "Log.h"
@@ -18,6 +22,8 @@ struct ClientSession::Private
     ClientSession* owner;
 
     std::string uri;
+
+    std::set<rtsp::Method> supportedMethods;
 
     std::unique_ptr<WebRTCPeer> receiver;
     rtsp::MediaSessionId session;
@@ -72,7 +78,7 @@ ClientSession::ClientSession(
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    rtsp::ClientSession(webRTCConfig, sendRequest, sendResponse),
+    rtsp::Session(webRTCConfig, sendRequest, sendResponse),
     _p(new Private(this, uri, createPeer))
 {
 }
@@ -95,6 +101,11 @@ void ClientSession::setUri(const std::string& uri)
     _p->uri = uri;
 }
 
+bool ClientSession::isSupported(rtsp::Method method) const noexcept
+{
+    return _p->supportedMethods.find(method) != _p->supportedMethods.end();
+}
+
 bool ClientSession::onConnected() noexcept
 {
     requestOptions(!_p->uri.empty() ? _p->uri : "*");
@@ -105,15 +116,34 @@ bool ClientSession::onConnected() noexcept
 rtsp::CSeq ClientSession::requestDescribe() noexcept
 {
     assert(!_p->uri.empty());
-    return rtsp::ClientSession::requestDescribe(_p->uri);
+    return rtsp::Session::requestDescribe(_p->uri);
 }
 
 bool ClientSession::onOptionsResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
 {
-    if(!rtsp::ClientSession::onOptionsResponse(request, response))
+    if(rtsp::StatusCode::OK != response.statusCode)
         return false;
+
+    _p->supportedMethods = rtsp::ParseOptions(response);
+
+    if(playSupportRequired(request.uri) &&
+        (!isSupported(rtsp::Method::DESCRIBE) ||
+        !isSupported(rtsp::Method::SETUP) ||
+        !isSupported(rtsp::Method::PLAY) ||
+        !isSupported(rtsp::Method::TEARDOWN)))
+    {
+        return false;
+    }
+
+    if(recordSupportRequired(request.uri) &&
+        (!isSupported(rtsp::Method::RECORD) ||
+        !isSupported(rtsp::Method::SETUP) ||
+        !isSupported(rtsp::Method::TEARDOWN)))
+    {
+        return false;
+    }
 
     if(!_p->uri.empty())
         requestDescribe();

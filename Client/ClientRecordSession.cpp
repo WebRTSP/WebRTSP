@@ -84,7 +84,7 @@ ClientRecordSession::ClientRecordSession(
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    rtsp::ClientSession(webRTCConfig, sendRequest, sendResponse),
+    rtsp::Session(webRTCConfig, sendRequest, sendResponse),
     _p(new Private(this, targetUri, recordToken, createPeer))
 {
 }
