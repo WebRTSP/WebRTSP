@@ -170,6 +170,13 @@ void Session::sendOkResponse(
     sendResponse(response);
 }
 
+void Session::sendBadRequestResponse(CSeq cseq)
+{
+    Response response;
+    prepareResponse(BAD_REQUEST, "Bad Request", cseq, std::string(), &response);
+    sendResponse(response);
+}
+
 void Session::sendUnauthorizedResponse(CSeq cseq)
 {
     Response response;

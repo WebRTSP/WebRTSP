@@ -78,6 +78,7 @@ protected:
     void sendUnauthorizedResponse(CSeq);
     void sendForbiddenResponse(CSeq);
     void sendNotFoundResponse(CSeq);
+    void sendBadGatewayResponse(CSeq, const MediaSessionId&);
     void sendServiceUnavailableResponse(CSeq);
 
     void sendRequest(const Request&) noexcept;

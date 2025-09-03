@@ -256,15 +256,7 @@ void ServerSession::Private::eos(const rtsp::MediaSessionId& session)
 
         owner->sendRequest(request);
     } else {
-        rtsp::Response response;
-        prepareResponse(
-            rtsp::StatusCode::BAD_GATEWAY,
-            "Bad Gateway",
-            describeRequestCSeq,
-            session,
-            &response);
-
-        owner->sendResponse(response);
+        owner->sendBadGatewayResponse(describeRequestCSeq, session);
     }
 
     mediaSessions.erase(it);
