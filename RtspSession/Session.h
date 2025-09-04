@@ -102,6 +102,7 @@ protected:
         const std::string& uri,
         const MediaSessionId& session,
         const std::string& sdp) noexcept;
+    CSeq requestSubscribe(const std::string& uri) noexcept;
     CSeq requestRecord(
         const std::string& uri,
         const std::string& sdp,

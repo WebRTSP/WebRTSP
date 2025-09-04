@@ -302,6 +302,15 @@ CSeq Session::requestPlay(
     return request->cseq;
 }
 
+CSeq Session::requestSubscribe(const std::string& uri) noexcept
+{
+    Request& request = *createRequest(Method::SUBSCRIBE, uri);
+
+    sendRequest(request);
+
+    return request.cseq;
+}
+
 CSeq Session::requestRecord(
     const std::string& uri,
     const std::string& sdp,
