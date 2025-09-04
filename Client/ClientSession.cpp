@@ -132,6 +132,10 @@ bool ClientSession::onDescribeResponse(
     if(_p->session.empty())
         return false;
 
+    const std::string& sdp = response.body;
+    if(sdp.empty())
+        return false;
+
     _p->receiver->prepare(
         webRTCConfig(),
         std::bind(
@@ -146,9 +150,6 @@ bool ClientSession::onDescribeResponse(
             &ClientSession::Private::eos,
             _p.get()));
 
-    const std::string& sdp = response.body;
-    if(sdp.empty())
-        return false;
 
     _p->receiver->setRemoteSdp(sdp);
 
