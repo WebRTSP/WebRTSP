@@ -27,6 +27,7 @@ struct ClientSession::Private
 
     std::unique_ptr<WebRTCPeer> receiver;
     rtsp::MediaSessionId session;
+    rtsp::CSeq recordRequestCSeq = rtsp::InvalidCSeq;
 
     void receiverPrepared();
     void iceCandidate(unsigned, const std::string&);
@@ -48,10 +49,21 @@ void ClientSession::Private::receiverPrepared()
         return;
     }
 
-    owner->requestPlay(
-        uri,
-        session,
-        receiver->sdp());
+    if(recordRequestCSeq != rtsp::InvalidCSeq) {
+        owner->sendOkResponse(
+            recordRequestCSeq,
+            session,
+            rtsp::SdpContentType,
+            receiver->sdp());
+
+        receiver->play();
+        recordRequestCSeq = rtsp::InvalidCSeq;
+    } else {
+        owner->requestPlay(
+            uri,
+            session,
+            receiver->sdp());
+    }
 }
 
 void ClientSession::Private::iceCandidate(
@@ -106,6 +118,23 @@ bool ClientSession::isSupported(rtsp::Method method) const noexcept
     return _p->supportedMethods.find(method) != _p->supportedMethods.end();
 }
 
+bool ClientSession::isPlaySupported() const noexcept
+{
+    return
+        isSupported(rtsp::Method::DESCRIBE) &&
+        isSupported(rtsp::Method::SETUP) &&
+        isSupported(rtsp::Method::PLAY) &&
+        isSupported(rtsp::Method::TEARDOWN);
+}
+
+bool ClientSession::isSubscribeSupported() const noexcept
+{
+    return
+        isSupported(rtsp::Method::SUBSCRIBE) &&
+        isSupported(rtsp::Method::SETUP) &&
+        isSupported(rtsp::Method::TEARDOWN);
+}
+
 bool ClientSession::onConnected() noexcept
 {
     requestOptions(!_p->uri.empty() ? _p->uri : "*");
@@ -119,6 +148,12 @@ rtsp::CSeq ClientSession::requestDescribe() noexcept
     return rtsp::Session::requestDescribe(_p->uri);
 }
 
+rtsp::CSeq ClientSession::requestSubscribe() noexcept
+{
+    assert(!_p->uri.empty());
+    return rtsp::Session::requestSubscribe(_p->uri);
+}
+
 bool ClientSession::onOptionsResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
@@ -128,27 +163,34 @@ bool ClientSession::onOptionsResponse(
 
     _p->supportedMethods = rtsp::ParseOptions(response);
 
-    if(playSupportRequired(request.uri) &&
-        (!isSupported(rtsp::Method::DESCRIBE) ||
-        !isSupported(rtsp::Method::SETUP) ||
-        !isSupported(rtsp::Method::PLAY) ||
-        !isSupported(rtsp::Method::TEARDOWN)))
+    if(playSupportState(request.uri) == FeatureState::Required  &&
+        !isPlaySupported())
     {
         return false;
     }
 
-    if(recordSupportRequired(request.uri) &&
-        (!isSupported(rtsp::Method::RECORD) ||
-        !isSupported(rtsp::Method::SETUP) ||
-        !isSupported(rtsp::Method::TEARDOWN)))
+    if(subscribeSupportState(request.uri) == FeatureState::Required &&
+        !isSubscribeSupported())
     {
         return false;
     }
 
-    if(!_p->uri.empty())
+    if(_p->uri.empty())
+        return true;
+
+    if(subscribeSupportState(request.uri) != FeatureState::Disabled &&
+        isSubscribeSupported())
+    {
+        requestSubscribe();
+        return true;
+    } else if(playSupportState(request.uri) != FeatureState::Disabled &&
+        isPlaySupported())
+    {
         requestDescribe();
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 bool ClientSession::onDescribeResponse(
@@ -157,6 +199,8 @@ bool ClientSession::onDescribeResponse(
 {
     if(rtsp::StatusCode::OK != response.statusCode)
         return false;
+
+    assert(_p->session.empty());
 
     _p->session = ResponseSession(response);
     if(_p->session.empty())
@@ -179,7 +223,6 @@ bool ClientSession::onDescribeResponse(
         std::bind(
             &ClientSession::Private::eos,
             _p.get()));
-
 
     _p->receiver->setRemoteSdp(sdp);
 
@@ -214,6 +257,22 @@ bool ClientSession::onPlayResponse(
     return true;
 }
 
+bool ClientSession::onSubscribeResponse(
+    const rtsp::Request& request,
+    const rtsp::Response& response) noexcept
+{
+    if(rtsp::StatusCode::OK != response.statusCode)
+        return false;
+
+    assert(_p->session.empty());
+
+    _p->session = ResponseSession(response);
+    if(_p->session.empty())
+        return false;
+
+    return true;
+}
+
 bool ClientSession::onTeardownResponse(
     const rtsp::Request& request,
     const rtsp::Response& response) noexcept
@@ -222,6 +281,38 @@ bool ClientSession::onTeardownResponse(
         return false;
 
     return false;
+}
+
+bool ClientSession::onRecordRequest(std::unique_ptr<rtsp::Request>& request) noexcept
+{
+    rtsp::MediaSessionId recordSession = RequestSession(*request);
+    if(_p->session != recordSession)
+        return false;
+
+    _p->recordRequestCSeq = request->cseq;
+
+    const std::string& sdp = request->body;
+    if(sdp.empty())
+        return false;
+
+    _p->receiver->prepare(
+        webRTCConfig(),
+        std::bind(
+            &ClientSession::Private::receiverPrepared,
+            _p.get()),
+        std::bind(
+            &ClientSession::Private::iceCandidate,
+            _p.get(),
+            std::placeholders::_1,
+            std::placeholders::_2),
+        std::bind(
+            &ClientSession::Private::eos,
+            _p.get()));
+
+    _p->receiver->setRemoteSdp(sdp);
+
+    return true;
+
 }
 
 bool ClientSession::onSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept

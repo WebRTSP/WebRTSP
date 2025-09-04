@@ -27,11 +27,21 @@ protected:
     void setUri(const std::string&);
 
     bool isSupported(rtsp::Method) const noexcept;
+    bool isPlaySupported() const noexcept;
+    bool isSubscribeSupported() const noexcept;
 
-    virtual bool playSupportRequired(const std::string& /*uri*/) noexcept { return true; }
-    virtual bool recordSupportRequired(const std::string& /*uri*/) noexcept { return false; }
+    enum class FeatureState {
+        Disabled,
+        Enabled,
+        Required,
+    };
+    virtual FeatureState playSupportState(const std::string& /*uri*/) noexcept
+        { return FeatureState::Required; }
+    virtual FeatureState subscribeSupportState(const std::string& /*uri*/) noexcept
+        { return FeatureState::Disabled; }
 
     rtsp::CSeq requestDescribe() noexcept;
+    rtsp::CSeq requestSubscribe() noexcept;
 
     bool onOptionsResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept override;
@@ -41,9 +51,12 @@ protected:
         const rtsp::Request&, const rtsp::Response&) noexcept override;
     bool onPlayResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept override;
+    bool onSubscribeResponse(
+        const rtsp::Request&, const rtsp::Response&) noexcept override;
     bool onTeardownResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept override;
 
+    bool onRecordRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 private:
