@@ -8,6 +8,8 @@
 namespace rtsp {
 
 typedef unsigned CSeq;
+constexpr CSeq InvalidCSeq = 0;
+
 typedef std::string MediaSessionId;
 
 typedef std::map<std::string, std::string> Parameters;
