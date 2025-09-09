@@ -1,9 +1,12 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.22)
 
 project(RtspSession)
 
-find_package(PkgConfig REQUIRED)
-pkg_search_module(SPDLOG REQUIRED spdlog)
+if(WIN32)
+else()
+	find_package(PkgConfig REQUIRED)
+	pkg_search_module(SPDLOG REQUIRED spdlog)
+endif()
 
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.cpp
@@ -12,13 +15,25 @@ file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 
 add_library(${PROJECT_NAME} ${SOURCES})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
-target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../
-    ${SPDLOG_INCLUDE_DIRS})
+
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME}
+        spdlog
+    )
+else()
+	target_include_directories(${PROJECT_NAME} PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}/../
+		${SPDLOG_INCLUDE_DIRS}
+	)
+	target_link_libraries(${PROJECT_NAME}
+		${SPDLOG_LDFLAGS}
+	)
+endif()
+
 target_link_libraries(${PROJECT_NAME}
-    RtspParser
-    Helpers
-    ${SPDLOG_LDFLAGS})
+	RtspParser
+	Helpers
+)
 
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})

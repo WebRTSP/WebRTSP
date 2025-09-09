@@ -1,9 +1,12 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.22)
 
 project(Signalling)
 
-find_package(PkgConfig REQUIRED)
-pkg_search_module(WS REQUIRED libwebsockets)
+if(WIN32)
+else()
+	find_package(PkgConfig REQUIRED)
+	pkg_search_module(WS REQUIRED libwebsockets)
+endif()
 
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.cpp
@@ -11,14 +14,23 @@ file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.cmake)
 
 add_library(${PROJECT_NAME} ${SOURCES})
-target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../
-    ${WS_INCLUDE_DIRS})
+
+if(WIN32)
+else()
+	target_include_directories(${PROJECT_NAME} PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}/../
+		${WS_INCLUDE_DIRS}
+	)
+	target_link_libraries(${PROJECT_NAME}
+		${WS_LDFLAGS}
+	)
+endif()
+
 target_link_libraries(${PROJECT_NAME}
-    ${WS_LDFLAGS}
-    RtspSession
-    Helpers
-    CxxPtr)
+	RtspSession
+	Helpers
+	CxxPtr
+)
 
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})
