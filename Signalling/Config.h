@@ -1,11 +1,12 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 
 namespace signalling {
 
-enum {
+enum: uint16_t {
     DEFAULT_WS_PORT = 5554,
     DEFAULT_WSS_PORT = 5555,
 };
