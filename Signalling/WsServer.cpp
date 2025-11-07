@@ -224,7 +224,18 @@ int WsServer::Private::wsCallback(
 
             break;
         }
+        case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE: {
+            Log()->debug(
+                "[{}] client initiated connection close",
+                scd->data && scd->data->rtspSession ? scd->data->rtspSession->sessionLogId : "?");
+
+            break;
+        }
         case LWS_CALLBACK_CLOSED: {
+            Log()->debug(
+                "[{}] connection closed",
+                scd->data && scd->data->rtspSession ? scd->data->rtspSession->sessionLogId : "?");
+
             delete scd->data;
             scd->data = nullptr;
 
