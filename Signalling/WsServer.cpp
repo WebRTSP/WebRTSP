@@ -151,8 +151,10 @@ int WsServer::Private::wsCallback(
                 createSession(
                     std::bind(&Private::sendRequest, this, scd, std::placeholders::_1),
                     std::bind(&Private::sendResponse, this, scd, std::placeholders::_1));
-            if(!session)
+            if(!session) {
+                Log()->error("failed to create websocket session. Requesting connection close...");
                 return -1;
+            }
 
             LogClientIp(wsi, session->sessionLogId);
 
