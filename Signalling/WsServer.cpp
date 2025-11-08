@@ -208,8 +208,12 @@ int WsServer::Private::wsCallback(
             break;
         }
         case LWS_CALLBACK_SERVER_WRITEABLE: {
-            if(scd->data->terminateSession)
+            if(scd->data->terminateSession) {
+                Log()->debug(
+                    "[{}] websocket session requested connection close",
+                    scd->data->rtspSession->sessionLogId);
                 return -1;
+            }
 
             if(!scd->data->sendMessages.empty()) {
                 MessageBuffer& buffer = scd->data->sendMessages.front();
