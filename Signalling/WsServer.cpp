@@ -195,8 +195,12 @@ int WsServer::Private::wsCallback(
                         logMessage);
                 }
 
-                if(!onMessage(scd, scd->data->incomingMessage))
+                if(!onMessage(scd, scd->data->incomingMessage)) {
+                    Log()->error(
+                        "[{}] message handler requested connection close",
+                        scd->data->rtspSession->sessionLogId);
                     return -1;
+                }
 
                 scd->data->incomingMessage.clear();
             }
