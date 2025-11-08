@@ -173,8 +173,12 @@ int WsServer::Private::wsCallback(
                 authCookie = std::string(cookieBuf, cookieSize);
             }
 
-            if(!scd->data->rtspSession->onConnected(authCookie))
+            if(!scd->data->rtspSession->onConnected(authCookie)) {
+                Log()->error(
+                    "[{}] websocket session requested connection close in onConnected handler",
+                    scd->data->rtspSession->sessionLogId);
                 return -1;
+            }
 
             break;
         }
