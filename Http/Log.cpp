@@ -9,21 +9,25 @@ static std::shared_ptr<spdlog::logger> HttpServerLogger;
 
 void InitHttpServerLogger(spdlog::level::level_enum level)
 {
-    spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
-
-    HttpServerLogger = std::make_shared<spdlog::logger>("HttpServer", sink);
+    if(!HttpServerLogger) {
+        HttpServerLogger = spdlog::stdout_logger_st("HttpServer");
+#ifdef SNAPCRAFT_BUILD
+        HttpServerLogger->set_pattern("[%n] [%l] %v");
+#endif
+    }
 
     HttpServerLogger->set_level(level);
 }
 
 const std::shared_ptr<spdlog::logger>& HttpServerLog()
 {
-    if(!HttpServerLogger)
-#ifndef NDEBUG
-        InitHttpServerLogger(spdlog::level::debug);
-#else
+    if(!HttpServerLogger) {
+#ifdef NDEBUG
         InitHttpServerLogger(spdlog::level::info);
+#else
+        InitHttpServerLogger(spdlog::level::debug);
 #endif
+    }
 
     return HttpServerLogger;
 }

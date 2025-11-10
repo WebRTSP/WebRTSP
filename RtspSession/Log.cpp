@@ -9,21 +9,25 @@ static std::shared_ptr<spdlog::logger> RtspSessionLogger;
 
 void InitRtspSessionLogger(spdlog::level::level_enum level)
 {
-    spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
-
-    RtspSessionLogger = std::make_shared<spdlog::logger>("rtsp::Session", sink);
+    if(!RtspSessionLogger) {
+        RtspSessionLogger = spdlog::stdout_logger_st("rtsp::Session");
+#ifdef SNAPCRAFT_BUILD
+        RtspSessionLogger->set_pattern("[%n] [%l] %v");
+#endif
+    }
 
     RtspSessionLogger->set_level(level);
 }
 
 const std::shared_ptr<spdlog::logger>& RtspSessionLog()
 {
-    if(!RtspSessionLogger)
-#ifndef NDEBUG
-        InitRtspSessionLogger(spdlog::level::debug);
-#else
+    if(!RtspSessionLogger) {
+#ifdef NDEBUG
         InitRtspSessionLogger(spdlog::level::info);
+#else
+        InitRtspSessionLogger(spdlog::level::debug);
 #endif
+    }
 
     return RtspSessionLogger;
 }

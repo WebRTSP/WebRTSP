@@ -10,42 +10,50 @@ static std::shared_ptr<spdlog::logger> ClientSessionLogger;
 
 void InitWsClientLogger(spdlog::level::level_enum level)
 {
-    spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
-
-    WsClientLogger = std::make_shared<spdlog::logger>("WsClient", sink);
+    if(!WsClientLogger) {
+        WsClientLogger = spdlog::stdout_logger_st("WsClient");
+#ifdef SNAPCRAFT_BUILD
+        WsClientLogger->set_pattern("[%n] [%l] %v");
+#endif
+    }
 
     WsClientLogger->set_level(level);
 }
 
 const std::shared_ptr<spdlog::logger>& WsClientLog()
 {
-    if(!WsClientLogger)
-#ifndef NDEBUG
-        InitWsClientLogger(spdlog::level::debug);
-#else
+    if(!WsClientLogger) {
+#ifdef NDEBUG
         InitWsClientLogger(spdlog::level::info);
+#else
+        InitWsClientLogger(spdlog::level::debug);
 #endif
+    }
 
     return WsClientLogger;
 }
 
 void InitClientSessionLogger(spdlog::level::level_enum level)
 {
-    spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_sink_st>();
-
-    ClientSessionLogger = std::make_shared<spdlog::logger>("ClientSession", sink);
+    if(!ClientSessionLogger) {
+        ClientSessionLogger = spdlog::stdout_logger_st("ClientSession");
+#ifdef SNAPCRAFT_BUILD
+        ClientSessionLogger->set_pattern("[%n] [%l] %v");
+#endif
+    }
 
     ClientSessionLogger->set_level(level);
 }
 
 const std::shared_ptr<spdlog::logger>& ClientSessionLog()
 {
-    if(!ClientSessionLogger)
-#ifndef NDEBUG
-        InitClientSessionLogger(spdlog::level::debug);
-#else
+    if(!ClientSessionLogger) {
+#ifdef NDEBUG
         InitClientSessionLogger(spdlog::level::info);
+#else
+        InitClientSessionLogger(spdlog::level::debug);
 #endif
+    }
 
     return ClientSessionLogger;
 }
