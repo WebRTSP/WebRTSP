@@ -2,6 +2,8 @@
 
 #include <optional>
 
+#include <spdlog/spdlog.h>
+
 #include "RtStreaming/WebRTCPeer.h"
 #include "RtspSession/Session.h"
 
@@ -22,6 +24,9 @@ public:
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
     ~ServerSession();
+
+    const std::shared_ptr<spdlog::logger>& log() const
+        { return _log; }
 
     virtual bool onConnected(const std::optional<std::string>& authCookie) noexcept;
 
@@ -58,4 +63,6 @@ protected:
 private:
     struct Private;
     std::unique_ptr<Private> _p;
+
+    const std::shared_ptr<spdlog::logger> _log;
 };

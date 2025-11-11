@@ -222,7 +222,8 @@ bool ClientSession::onDescribeResponse(
             std::placeholders::_2),
         std::bind(
             &ClientSession::Private::eos,
-            _p.get()));
+            _p.get()),
+        sessionLogId);
 
     _p->receiver->setRemoteSdp(sdp);
 
@@ -307,7 +308,8 @@ bool ClientSession::onRecordRequest(std::unique_ptr<rtsp::Request>& request) noe
             std::placeholders::_2),
         std::bind(
             &ClientSession::Private::eos,
-            _p.get()));
+            _p.get()),
+        sessionLogId);
 
     _p->receiver->setRemoteSdp(sdp);
 

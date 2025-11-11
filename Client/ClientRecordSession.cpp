@@ -247,7 +247,8 @@ void ClientRecordSession::startRecord(const std::string& sourceUri) noexcept
             std::placeholders::_2),
         std::bind(
             &ClientRecordSession::Private::eos,
-            _p.get()));
+            _p.get()),
+        sessionLogId);
 }
 
 void ClientRecordSession::stopRecord() noexcept

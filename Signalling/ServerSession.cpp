@@ -32,8 +32,6 @@ struct MediaSession
 
 typedef std::map<rtsp::MediaSessionId, std::unique_ptr<MediaSession>> MediaSessions;
 
-const auto Log = ServerSessionLog;
-
 }
 
 struct ServerSession::Private
@@ -238,7 +236,7 @@ void ServerSession::Private::iceCandidate(
 
 void ServerSession::Private::eos(const rtsp::MediaSessionId& session)
 {
-    Log()->trace("[{}] Eos. Session: {}", owner->sessionLogId, session);
+    owner->log()->trace("Eos. Session: {}", owner->sessionLogId, session);
 
     auto it = mediaSessions.find(session);
     if(mediaSessions.end() == it) {
@@ -280,7 +278,8 @@ ServerSession::ServerSession(
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
     rtsp::Session(webRTCConfig, sendRequest, sendResponse),
-    _p(new Private(this, createPeer, createRecordPeer))
+    _p(new Private(this, createPeer, createRecordPeer)),
+    _log(MakeServerSessionLogger(sessionLogId))
 {
 }
 
@@ -309,7 +308,7 @@ bool ServerSession::handleRequest(
     std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     if(requestPtr->method != rtsp::Method::RECORD && !authorize(requestPtr)) {
-        Log()->error("[{}] {} authorize failed for \"{}\"", sessionLogId, rtsp::MethodName(requestPtr->method), requestPtr->uri);
+        log()->error("{} authorize failed for \"{}\"", rtsp::MethodName(requestPtr->method), requestPtr->uri);
 
         sendUnauthorizedResponse(requestPtr->cseq);
 
@@ -398,14 +397,14 @@ bool ServerSession::onDescribeRequest(
     const rtsp::Request& request = *requestPtr.get();
 
     if(!playEnabled(request.uri)) {
-        Log()->error("[{}] Playback is not supported for \"{}\"", sessionLogId, requestPtr->uri);
+        log()->error("Playback is not supported for \"{}\"", requestPtr->uri);
         sendNotFoundResponse(request.cseq);
         return true;
     }
 
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(requestPtr->uri);
     if(!peerPtr) {
-        Log()->error("[{}] Failed to create peer for \"{}\"", sessionLogId, requestPtr->uri);
+        log()->error("Failed to create peer for \"{}\"", requestPtr->uri);
         sendServiceUnavailableResponse(request.cseq);
         return true;
     }
@@ -437,7 +436,8 @@ bool ServerSession::onDescribeRequest(
         std::bind(
             &ServerSession::Private::eos,
             _p.get(),
-            session));
+            session),
+        sessionLogId);
 
     return true;
 }
@@ -466,7 +466,7 @@ bool ServerSession::onRecordRequest(
         return false;
 
     if(!authorize(requestPtr)) {
-        Log()->error("[{}] RECORD authorize failed for \"{}\"", sessionLogId, requestPtr->uri);
+        log()->error("RECORD authorize failed for \"{}\"", requestPtr->uri);
         return false;
     }
 
@@ -511,7 +511,8 @@ bool ServerSession::onRecordRequest(
         std::bind(
             &ServerSession::Private::eos,
             _p.get(),
-            session));
+            session),
+        sessionLogId);
 
     localPeer.setRemoteSdp(sdp);
 
@@ -559,7 +560,7 @@ bool ServerSession::onSetupRequest(
             if(candidate.empty())
                 return false;
 
-            Log()->trace("[{}] Adding ice candidate \"{}\"", sessionLogId, candidate);
+            log()->trace("Adding ice candidate \"{}\"", sessionLogId, candidate);
 
             localPeer.addIceCandidate(idx, candidate);
         } catch(...) {
@@ -659,7 +660,8 @@ void ServerSession::startRecordToClient(
         std::bind(
             &ServerSession::Private::eos,
             _p.get(),
-            mediaSessionId));
+            mediaSessionId),
+        sessionLogId);
 }
 
 bool ServerSession::onRecordResponse(const rtsp::Request& request, const rtsp::Response& response) noexcept

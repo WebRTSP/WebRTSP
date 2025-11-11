@@ -49,7 +49,7 @@ struct SessionContextData
 
 const auto Log = WsServerLog;
 
-void LogClientIp(lws* wsi, const std::string& sessionLogId) {
+void LogClientIp(lws* wsi, const std::unique_ptr<ServerSession>& session) {
     char clientIp[INET6_ADDRSTRLEN];
     lws_get_peer_simple(wsi, clientIp, sizeof(clientIp));
 
@@ -62,29 +62,25 @@ void LogClientIp(lws* wsi, const std::string& sessionLogId) {
         char xForwardedFor[xForwardedForlength + 1];
         lws_hdr_copy(wsi, xForwardedFor, sizeof(xForwardedFor), WSI_TOKEN_X_FORWARDED_FOR);
         if(xRealIpPresent) {
-            Log()->info(
-                "[{}] New client connected. IP: {}, X-Real-IP: {}, X-Forwarded-For: {}",
-                sessionLogId,
+            session->log()->info(
+                "New client connected. IP: {}, X-Real-IP: {}, X-Forwarded-For: {}",
                 clientIp,
                 xRealIp,
                 &xForwardedFor[0]);
         } else {
-            Log()->info(
-                "[{}] New client connected. IP: {}, X-Forwarded-For: {}",
-                sessionLogId,
+            session->log()->info(
+                "New client connected. IP: {}, X-Forwarded-For: {}",
                 clientIp,
                 &xForwardedFor[0]);
         }
     } else if(xRealIpPresent) {
-        Log()->info(
-            "[{}] New client connected. IP: {}, X-Real-IP: {}",
-            sessionLogId,
+        session->log()->info(
+            "New client connected. IP: {}, X-Real-IP: {}",
             clientIp,
             xRealIp);
     } else {
-        Log()->info(
-            "[{}] New client connected. IP: {}",
-            sessionLogId,
+        session->log()->info(
+            "New client connected. IP: {}",
             clientIp);
     }
 }
@@ -156,7 +152,7 @@ int WsServer::Private::wsCallback(
                 return -1;
             }
 
-            LogClientIp(wsi, session->sessionLogId);
+            LogClientIp(wsi, session);
 
             scd->data =
                 new SessionData {
@@ -174,9 +170,8 @@ int WsServer::Private::wsCallback(
             }
 
             if(!scd->data->rtspSession->onConnected(authCookie)) {
-                Log()->error(
-                    "[{}] websocket session requested connection close in onConnected handler",
-                    scd->data->rtspSession->sessionLogId);
+                scd->data->rtspSession->log()->error(
+                    "websocket session requested connection close in onConnected handler");
                 return -1;
             }
 
@@ -187,7 +182,9 @@ int WsServer::Private::wsCallback(
             break;
         case LWS_CALLBACK_RECEIVE: {
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
-                if(Log()->level() <= spdlog::level::trace) {
+                const ServerSession *const session = scd->data->rtspSession.get();
+
+                if(session->log()->level() <= spdlog::level::trace) {
                     std::string logMessage;
                     logMessage.reserve(scd->data->incomingMessage.size());
                     std::remove_copy(
@@ -195,21 +192,18 @@ int WsServer::Private::wsCallback(
                         scd->data->incomingMessage.data() + scd->data->incomingMessage.size(),
                         std::back_inserter(logMessage), '\r');
 
-                    Log()->trace(
-                        "[{}] -> WsServer: {}",
-                        scd->data->rtspSession->sessionLogId,
+                    session->log()->trace(
+                        "-> WsServer: {}",
                         logMessage);
                 }
 
                 if(!onMessage(scd, scd->data->incomingMessage)) {
-                    Log()->error(
-                        "[{}] message handler requested connection close",
-                        scd->data->rtspSession->sessionLogId);
+                    session->log()->error(
+                        "message handler requested connection close");
                     return -1;
                 } else {
-                    Log()->trace(
-                        "[{}] message handled",
-                        scd->data->rtspSession->sessionLogId);
+                    session->log()->trace(
+                        "message handled");
                 }
 
                 scd->data->incomingMessage.clear();
@@ -218,19 +212,17 @@ int WsServer::Private::wsCallback(
             break;
         }
         case LWS_CALLBACK_SERVER_WRITEABLE: {
+            const ServerSession *const session = scd->data->rtspSession.get();
+
             if(scd->data->terminateSession) {
-                Log()->debug(
-                    "[{}] websocket session requested connection close",
-                    scd->data->rtspSession->sessionLogId);
+                session->log()->debug("websocket session requested connection close");
                 return -1;
             }
 
             if(!scd->data->sendMessages.empty()) {
                 MessageBuffer& buffer = scd->data->sendMessages.front();
                 if(!buffer.writeAsText(wsi)) {
-                    Log()->error(
-                        "[{}] write failed.",
-                        scd->data->rtspSession->sessionLogId);
+                    session->log()->error("write failed.");
                     return -1;
                 }
 
@@ -243,16 +235,12 @@ int WsServer::Private::wsCallback(
             break;
         }
         case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE: {
-            Log()->debug(
-                "[{}] client initiated connection close",
-                scd->data && scd->data->rtspSession ? scd->data->rtspSession->sessionLogId : "?");
+            scd->data->rtspSession->log()->debug("client initiated connection close");
 
             break;
         }
         case LWS_CALLBACK_CLOSED: {
-            Log()->debug(
-                "[{}] connection closed",
-                scd->data && scd->data->rtspSession ? scd->data->rtspSession->sessionLogId : "?");
+            scd->data->rtspSession->log()->debug("connection closed");
 
             delete scd->data;
             scd->data = nullptr;
@@ -342,13 +330,14 @@ bool WsServer::Private::onMessage(
     SessionContextData* scd,
     const MessageBuffer& message)
 {
+    ServerSession *const session = scd->data->rtspSession.get();
+
     if(rtsp::IsRequest(message.data(), message.size())) {
         std::unique_ptr<rtsp::Request> requestPtr =
             std::make_unique<rtsp::Request>();
         if(!rtsp::ParseRequest(message.data(), message.size(), requestPtr.get())) {
-            Log()->error(
-                "[{}] Fail parse request:\n{}\nForcing session disconnect...",
-                scd->data->rtspSession->sessionLogId,
+            session->log()->error(
+                "Fail parse request:\n{}\nForcing session disconnect...",
                 std::string(message.data(), message.size()));
             return false;
         }
@@ -366,17 +355,15 @@ bool WsServer::Private::onMessage(
             case rtsp::Method::RECORD:
             case rtsp::Method::SUBSCRIBE:
             case rtsp::Method::TEARDOWN:
-                Log()->info(
-                    "[{}] Got {} request for \"{}\"",
-                    scd->data->rtspSession->sessionLogId,
+                session->log()->info(
+                    "Got {} request for \"{}\"",
                     rtsp::MethodName(requestPtr->method), requestPtr->uri);
                 break;
         }
 
-        if(!scd->data->rtspSession->handleRequest(requestPtr)) {
-            Log()->debug(
-                "[{}] Fail handle request:\n{}\nForcing session disconnect...",
-                scd->data->rtspSession->sessionLogId,
+        if(!session->handleRequest(requestPtr)) {
+            session->log()->debug(
+                "Fail handle request:\n{}\nForcing session disconnect...",
                 std::string(message.data(), message.size()));
             return false;
         }
@@ -384,17 +371,15 @@ bool WsServer::Private::onMessage(
         std::unique_ptr<rtsp::Response> responsePtr =
             std::make_unique<rtsp::Response>();
         if(!rtsp::ParseResponse(message.data(), message.size(), responsePtr.get())) {
-            Log()->error(
-                "[{}] Fail parse response:\n{}\nForcing session disconnect...",
-                scd->data->rtspSession->sessionLogId,
+            session->log()->error(
+                "Failed parse response:\n{}\nForcing session disconnect...",
                 std::string(message.data(), message.size()));
             return false;
         }
 
-        if(!scd->data->rtspSession->handleResponse(responsePtr)) {
+        if(!session->handleResponse(responsePtr)) {
             Log()->error(
-                "[{}] Fail handle response:\n{}\nForcing session disconnect...",
-                scd->data->rtspSession->sessionLogId,
+                "Failed handle response:\n{}\nForcing session disconnect...",
                 std::string(message.data(), message.size()));
             return false;
         }
@@ -432,9 +417,8 @@ void WsServer::Private::sendRequest(
                 serializedRequest.begin(),
                 serializedRequest.end(),
                 std::back_inserter(logMessage), '\r');
-            Log()->trace(
-                "[{}] WsServer -> : {}",
-                scd->data->rtspSession->sessionLogId,
+            scd->data->rtspSession->log()->trace(
+                "WsServer -> : {}",
                 logMessage);
         }
 
@@ -466,9 +450,8 @@ void WsServer::Private::sendResponse(
                 serializedResponse.begin(),
                 serializedResponse.end(),
                 std::back_inserter(logMessage), '\r');
-            Log()->trace(
-                "[{}] WsServer -> : {}",
-                scd->data->rtspSession->sessionLogId,
+            scd->data->rtspSession->log()->trace(
+                "WsServer -> : {}",
                 logMessage);
         }
 
