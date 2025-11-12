@@ -6,8 +6,6 @@
 #include "Log.h"
 
 
-static const auto Log = ClientSessionLog;
-
 struct ClientRecordSession::Private
 {
     Private(
@@ -71,7 +69,7 @@ void ClientRecordSession::Private::iceCandidate(
 
 void ClientRecordSession::Private::eos()
 {
-    Log()->trace("[{}] Eos", owner->sessionLogId);
+    owner->log()->trace("Eos");
 
     owner->onEos(); // FIXME! send TEARDOWN and remove Media Session instead
 }
@@ -85,7 +83,8 @@ ClientRecordSession::ClientRecordSession(
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
     rtsp::Session(webRTCConfig, sendRequest, sendResponse),
-    _p(new Private(this, targetUri, recordToken, createPeer))
+    _p(new Private(this, targetUri, recordToken, createPeer)),
+    _log(MakeClientSessionLogger(sessionLogId))
 {
 }
 
@@ -200,7 +199,7 @@ bool ClientRecordSession::onSetupRequest(std::unique_ptr<rtsp::Request>& request
             if(candidate.empty())
                 return false;
 
-            Log()->trace("[{}] Adding ice candidate \"{}\"", sessionLogId, candidate);
+            log()->trace("Adding ice candidate \"{}\"", candidate);
 
             _p->streamer->addIceCandidate(idx, candidate);
         } catch(...) {

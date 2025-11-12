@@ -18,6 +18,9 @@ public:
         const SendResponse& sendResponse) noexcept;
     ~ClientRecordSession();
 
+    const std::shared_ptr<spdlog::logger>& log() const
+        { return _log; }
+
     bool onConnected() noexcept override;
 
     bool isStreaming() const noexcept;
@@ -35,6 +38,8 @@ protected:
     bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 private:
+    const std::shared_ptr<spdlog::logger> _log;
+
     struct Private;
     std::unique_ptr<Private> _p;
 };

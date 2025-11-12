@@ -6,11 +6,6 @@
 
 #include "RtspSession/StatusCode.h"
 
-#include "Log.h"
-
-
-static const auto Log = ClientSessionLog;
-
 
 struct ClientSession::Private
 {
@@ -78,7 +73,7 @@ void ClientSession::Private::iceCandidate(
 
 void ClientSession::Private::eos()
 {
-    Log()->trace("[{}] Eos", owner->sessionLogId);
+    owner->log()->trace("Eos");
 
     owner->onEos(); // FIXME! send TEARDOWN and remove Media Session instead
 }
@@ -350,7 +345,7 @@ bool ClientSession::onSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) n
             if(candidate.empty())
                 return false;
 
-            Log()->trace("[{}] Adding ice candidate \"{}\"", sessionLogId, candidate);
+            log()->trace("Adding ice candidate \"{}\"", candidate);
 
             _p->receiver->addIceCandidate(idx, candidate);
         } catch(...) {
