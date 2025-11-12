@@ -61,8 +61,8 @@ protected:
     virtual void teardownMediaSession(const rtsp::MediaSessionId&) noexcept;
 
 private:
+    const std::shared_ptr<spdlog::logger> _log;
+
     struct Private;
     std::unique_ptr<Private> _p;
-
-    const std::shared_ptr<spdlog::logger> _log;
 };
