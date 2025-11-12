@@ -5,6 +5,8 @@
 #include <map>
 #include <deque>
 
+#include <spdlog/spdlog.h>
+
 #include "RtspParser/Request.h"
 #include "RtspParser/Response.h"
 
@@ -22,6 +24,9 @@ struct Session
     typedef std::function<void (const Response*)> SendResponse;
 
     virtual ~Session();
+
+    const std::shared_ptr<spdlog::logger>& log() const
+        { return _log; }
 
     virtual const WebRTCConfigPtr& webRTCConfig() const { return _webRTCConfig; }
 
@@ -170,6 +175,8 @@ protected:
     virtual void onEos() noexcept;
 
 private:
+    const std::shared_ptr<spdlog::logger> _log;
+
     const WebRTCConfigPtr _webRTCConfig;
 
     const SendRequest _sendRequest;

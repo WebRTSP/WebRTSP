@@ -9,8 +9,6 @@
 
 namespace {
 
-const auto Log = RtspSessionLog;
-
 std::string GenerateSessionLogId()
 {
     g_autoptr(GRand) rand = g_rand_new();
@@ -28,13 +26,14 @@ Session::Session(
     sessionLogId(GenerateSessionLogId()),
     _webRTCConfig(webRTCConfig),
     _sendRequest(sendRequest),
-    _sendResponse(sendResponse)
+    _sendResponse(sendResponse),
+    _log(MakeRtspSessionLogger(sessionLogId))
 {
 }
 
 Session::~Session()
 {
-    Log()->info("[{}] Session destroyed", sessionLogId);
+    log()->info("Session destroyed");
 }
 
 Request* Session::createRequest(
@@ -395,9 +394,8 @@ bool Session::handleResponse(std::unique_ptr<Response>& responsePtr) noexcept
 {
     auto it = _sentRequests.find(responsePtr->cseq);
     if(it == _sentRequests.end()) {
-        Log()->error(
-            "[{}] Failed to find sent request corresponding to response with CSeq = {}",
-            sessionLogId,
+        log()->error(
+            "Failed to find sent request corresponding to response with CSeq = {}",
             responsePtr->cseq);
         return false;
     }
