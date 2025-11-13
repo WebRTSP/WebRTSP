@@ -28,9 +28,9 @@ public:
     void stopRecord() noexcept;
 
 protected:
-    bool onSetupResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept override;
     bool onRecordResponse(
+        const rtsp::Request&, const rtsp::Response&) noexcept override;
+    bool onSetupResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept override;
     bool onTeardownResponse(
         const rtsp::Request&, const rtsp::Response&) noexcept override;
