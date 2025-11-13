@@ -1,10 +1,31 @@
 #include "ClientRecordSession.h"
 
+#include "RtspParser/RtspParser.h"
+
 #include "RtspSession/StatusCode.h"
 #include "RtspSession/IceCandidate.h"
 
 #include "Log.h"
 
+
+namespace {
+
+inline bool IsMethodSupported(
+    const std::set<rtsp::Method>& supportedMethods,
+    rtsp::Method method) noexcept
+{
+    return supportedMethods.find(method) != supportedMethods.end();
+}
+
+bool IsRecordSupported(const std::set<rtsp::Method>& supportedMethods) noexcept
+{
+    return
+        IsMethodSupported(supportedMethods, rtsp::Method::RECORD) &&
+        IsMethodSupported(supportedMethods, rtsp::Method::SETUP) &&
+        IsMethodSupported(supportedMethods, rtsp::Method::TEARDOWN);
+}
+
+}
 
 struct ClientRecordSession::Private
 {
@@ -97,6 +118,18 @@ bool ClientRecordSession::onConnected() noexcept
     requestOptions(!_p->targetUri.empty() ? _p->targetUri : "*");
 
     return true;
+}
+
+bool ClientRecordSession::onOptionsResponse(
+    const rtsp::Request& request,
+    const rtsp::Response& response) noexcept
+{
+    if(rtsp::StatusCode::OK != response.statusCode)
+        return false;
+
+    const std::set<rtsp::Method> supportedMethods = rtsp::ParseOptions(response);
+
+    return IsRecordSupported(supportedMethods);
 }
 
 bool ClientRecordSession::onRecordResponse(
