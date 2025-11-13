@@ -136,7 +136,8 @@ void ClientSession::setUri(const std::string& uri)
 
 bool ClientSession::onConnected() noexcept
 {
-    requestOptions(!_p->uri.empty() ? _p->uri : "*");
+    if(!_p->uri.empty())
+        requestOptions(_p->uri);
 
     return true;
 }
@@ -160,31 +161,21 @@ bool ClientSession::onOptionsResponse(
     if(rtsp::StatusCode::OK != response.statusCode)
         return false;
 
+    const FeatureState playSupport = playSupportState(request.uri);
+    const FeatureState subscribeSupport = subscribeSupportState(request.uri);
+
     const std::set<rtsp::Method> supportedMethods = rtsp::ParseOptions(response);
 
-    if(playSupportState(request.uri) == FeatureState::Required &&
-        !IsPlaySupported(supportedMethods))
-    {
+    if(playSupport == FeatureState::Required && !IsPlaySupported(supportedMethods))
         return false;
-    }
 
-    if(subscribeSupportState(request.uri) == FeatureState::Required &&
-        !IsSubscribeSupported(supportedMethods))
-    {
+    if(subscribeSupport == FeatureState::Required && !IsSubscribeSupported(supportedMethods))
         return false;
-    }
 
-    if(_p->uri.empty())
-        return true;
-
-    if(subscribeSupportState(request.uri) != FeatureState::Disabled &&
-        IsSubscribeSupported(supportedMethods))
-    {
+    if(subscribeSupport != FeatureState::Disabled && IsSubscribeSupported(supportedMethods)) {
         requestSubscribe();
         return true;
-    } else if(playSupportState(request.uri) != FeatureState::Disabled &&
-        IsPlaySupported(supportedMethods))
-    {
+    } else if(playSupport != FeatureState::Disabled && IsPlaySupported(supportedMethods)) {
         requestDescribe();
         return true;
     }
