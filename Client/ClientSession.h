@@ -26,10 +26,6 @@ public:
 protected:
     void setUri(const std::string&);
 
-    bool isSupported(rtsp::Method) const noexcept;
-    bool isPlaySupported() const noexcept;
-    bool isSubscribeSupported() const noexcept;
-
     enum class FeatureState {
         Disabled,
         Enabled,

@@ -7,6 +7,34 @@
 #include "RtspSession/StatusCode.h"
 
 
+namespace {
+
+inline bool IsMethodSupported(
+    const std::set<rtsp::Method>& supportedMethods,
+    rtsp::Method method) noexcept
+{
+    return supportedMethods.find(method) != supportedMethods.end();
+}
+
+bool IsPlaySupported(const std::set<rtsp::Method>& supportedMethods) noexcept
+{
+    return
+        IsMethodSupported(supportedMethods, rtsp::Method::DESCRIBE) &&
+        IsMethodSupported(supportedMethods, rtsp::Method::SETUP) &&
+        IsMethodSupported(supportedMethods, rtsp::Method::PLAY) &&
+        IsMethodSupported(supportedMethods, rtsp::Method::TEARDOWN);
+}
+
+bool IsSubscribeSupported(const std::set<rtsp::Method>& supportedMethods) noexcept
+{
+    return
+        IsMethodSupported(supportedMethods, rtsp::Method::SUBSCRIBE) &&
+        IsMethodSupported(supportedMethods, rtsp::Method::SETUP) &&
+        IsMethodSupported(supportedMethods, rtsp::Method::TEARDOWN);
+}
+
+}
+
 struct ClientSession::Private
 {
     Private(
@@ -17,8 +45,6 @@ struct ClientSession::Private
     ClientSession* owner;
 
     std::string uri;
-
-    std::set<rtsp::Method> supportedMethods;
 
     std::unique_ptr<WebRTCPeer> receiver;
     rtsp::MediaSessionId session;
@@ -108,28 +134,6 @@ void ClientSession::setUri(const std::string& uri)
     _p->uri = uri;
 }
 
-bool ClientSession::isSupported(rtsp::Method method) const noexcept
-{
-    return _p->supportedMethods.find(method) != _p->supportedMethods.end();
-}
-
-bool ClientSession::isPlaySupported() const noexcept
-{
-    return
-        isSupported(rtsp::Method::DESCRIBE) &&
-        isSupported(rtsp::Method::SETUP) &&
-        isSupported(rtsp::Method::PLAY) &&
-        isSupported(rtsp::Method::TEARDOWN);
-}
-
-bool ClientSession::isSubscribeSupported() const noexcept
-{
-    return
-        isSupported(rtsp::Method::SUBSCRIBE) &&
-        isSupported(rtsp::Method::SETUP) &&
-        isSupported(rtsp::Method::TEARDOWN);
-}
-
 bool ClientSession::onConnected() noexcept
 {
     requestOptions(!_p->uri.empty() ? _p->uri : "*");
@@ -156,16 +160,16 @@ bool ClientSession::onOptionsResponse(
     if(rtsp::StatusCode::OK != response.statusCode)
         return false;
 
-    _p->supportedMethods = rtsp::ParseOptions(response);
+    const std::set<rtsp::Method> supportedMethods = rtsp::ParseOptions(response);
 
-    if(playSupportState(request.uri) == FeatureState::Required  &&
-        !isPlaySupported())
+    if(playSupportState(request.uri) == FeatureState::Required &&
+        !IsPlaySupported(supportedMethods))
     {
         return false;
     }
 
     if(subscribeSupportState(request.uri) == FeatureState::Required &&
-        !isSubscribeSupported())
+        !IsSubscribeSupported(supportedMethods))
     {
         return false;
     }
@@ -174,12 +178,12 @@ bool ClientSession::onOptionsResponse(
         return true;
 
     if(subscribeSupportState(request.uri) != FeatureState::Disabled &&
-        isSubscribeSupported())
+        IsSubscribeSupported(supportedMethods))
     {
         requestSubscribe();
         return true;
     } else if(playSupportState(request.uri) != FeatureState::Disabled &&
-        isPlaySupported())
+        IsPlaySupported(supportedMethods))
     {
         requestDescribe();
         return true;
