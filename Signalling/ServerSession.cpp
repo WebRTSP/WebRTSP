@@ -267,7 +267,8 @@ ServerSession::ServerSession(
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
     rtsp::Session(webRTCConfig, sendRequest, sendResponse),
-    _p(new Private(this, createPeer))
+    _p(new Private(this, createPeer)),
+    _log(MakeServerSessionLogger(sessionLogId))
 {
 }
 
