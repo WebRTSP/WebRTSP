@@ -4,6 +4,7 @@ project(WebRTSP)
 
 option(BUILD_TEST_APPS "Build test applications" OFF)
 option(BUILD_BASIC_SERVER "Build basic server application" OFF)
+option(HTTP_SUPPORT "HTTP server support" ON)
 
 if(DEFINED ENV{SNAPCRAFT_BUILD_ENVIRONMENT})
     add_definitions(-DSNAPCRAFT_BUILD=1)
@@ -24,7 +25,9 @@ add_subdirectory(RtspSession)
 add_subdirectory(RtStreaming)
 add_subdirectory(Signalling)
 add_subdirectory(Client)
-add_subdirectory(Http)
+if(HTTP_SUPPORT)
+    add_subdirectory(Http)
+endif()
 
 if(BUILD_TEST_APPS)
     add_subdirectory(Apps/Test)
