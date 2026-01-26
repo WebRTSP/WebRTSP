@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "Common.h"
 #include "Request.h"
 #include "Response.h"
@@ -24,6 +26,7 @@ bool ParseParametersNames(
     ParametersNames*) noexcept;
 
 std::set<rtsp::Method> ParseOptions(const Response&);
+std::optional<std::pair<unsigned, std::string>> ParseIceCandidate(const std::string& iceCandidate);
 
 std::pair<Authentication, std::string> ParseAuthentication(const Request&);
 

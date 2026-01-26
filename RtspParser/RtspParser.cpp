@@ -616,6 +616,41 @@ std::set<rtsp::Method> ParseOptions(const Response& response)
     return returnOptions;
 }
 
+std::optional<std::pair<unsigned, std::string>> ParseIceCandidate(const std::string& iceCandidate)
+{
+    std::string::size_type pos = 0;
+    while(pos < iceCandidate.size()) {
+        const std::string::size_type lineEndPos = iceCandidate.find("\r\n", pos);
+        if(lineEndPos == std::string::npos)
+            return {};
+
+        const std::string line = iceCandidate.substr(pos, lineEndPos - pos);
+
+        const std::string::size_type delimiterPos = line.find("/");
+        if(delimiterPos == std::string::npos || 0 == delimiterPos)
+            return {};
+
+        try {
+            const int idx = std::stoi(line.substr(0, delimiterPos));
+            if(idx < 0)
+                return {};
+
+            const std::string candidate = line.substr(delimiterPos + 1);
+
+            if(candidate.empty())
+                return {};
+
+            return std::make_pair(idx, candidate);
+        } catch(...) {
+            return {};
+        }
+
+        pos = lineEndPos + 2;
+    }
+
+    return {};
+}
+
 std::pair<Authentication, std::string> ParseAuthentication(const Request& request)
 {
     auto it = request.headerFields.find("authorization");
