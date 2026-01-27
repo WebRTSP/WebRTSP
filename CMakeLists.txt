@@ -7,6 +7,7 @@ option(BUILD_BASIC_SERVER "Build basic server application" OFF)
 option(HTTP_SUPPORT "HTTP server support" ON)
 option(WS_SERVER_SUPPORT "libwebsockets based server implementation" ON)
 option(WS_CLIENT_SUPPORT "libwebsockets based client implementation" ON)
+option(QML_SUPPORT "QML support" OFF)
 
 if(DEFINED ENV{SNAPCRAFT_BUILD_ENVIRONMENT})
     add_definitions(-DSNAPCRAFT_BUILD=1)
@@ -34,6 +35,8 @@ endif()
 if(HTTP_SUPPORT)
     add_subdirectory(Http)
 endif()
+
+add_subdirectory(Qt)
 
 if(BUILD_TEST_APPS)
     add_subdirectory(Apps/Test)

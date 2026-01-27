@@ -1,0 +1,414 @@
+#include "Connection.h"
+
+#include <QtWebSockets/QWebSocketHandshakeOptions>
+
+#include "RtspParser/RtspSerialize.h"
+#include "RtspParser/RtspParser.h"
+
+#include "UriInfo.h"
+#include "Player.h"
+
+
+using namespace webrtsp::qml;
+
+enum {
+    RECONNECT_INTERVAL_MIN = 1, // seconds
+    RECONNECT_INTERVAL_MAX = 5, // seconds
+    PING_INTERVAL = 60, // seconds
+};
+
+Connection::Connection(QObject* parent) noexcept :
+    QObject{parent},
+    rtsp::Session(
+        std::make_shared<WebRTCConfig>(),
+        [this] (const rtsp::Request* request) { sendRequest(request); },
+        [this] (const rtsp::Response* response) { sendResponse(response); })
+{
+    _pingTimer.setInterval(PING_INTERVAL * 1000);
+    QObject::connect(&_pingTimer, &QTimer::timeout, this, &Connection::sendPing);
+    _reconnectTimer.setSingleShot(true);
+    QObject::connect(&_reconnectTimer, &QTimer::timeout, this, &Connection::open);
+}
+
+void Connection::registerClient(Client* client) noexcept
+{
+    _clients.insert(client);
+}
+
+void Connection::unregisterClient(Client* client) noexcept
+{
+    _clients.erase(client);
+
+    for(auto it = _sentRequests.begin(); it != _sentRequests.end();) {
+        if(it->second.owner == client) {
+            it = _sentRequests.erase(it);
+        } else {
+            ++it;
+       }
+    }
+
+    for(auto it = _mediaSessions.begin(); it != _mediaSessions.end();) {
+        if(it->second.owner == client) {
+            requestTeardown(nullptr, it->second.encodedUri, it->first);
+            it = _mediaSessions.erase(it);
+        } else {
+            ++it;
+       }
+    }
+}
+
+void Connection::open() noexcept
+{
+    if(_webSocket) {
+        qWarning() << "WebRTSP connection already opened.";
+        return;
+    }
+    Q_ASSERT(!_webSocket);
+
+    qDebug() << "Connecting to" << _serverUrl.toString();
+
+    _reconnectTimer.stop();
+
+    _webSocket = new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this);
+    QObject::connect(_webSocket, &QWebSocket::connected,
+        this, [this] () {
+            qDebug() << "Connected";
+
+            _isOpen = true;
+
+            _pingTimer.start();
+
+            for(Client* client: _clients) {
+                client->onConnected();
+            }
+
+            emit connected();
+        });
+    QObject::connect(_webSocket, &QWebSocket::disconnected,
+        this, [this] () {
+            qDebug() << "Disconnected";
+
+            QObject* webSocket = sender();
+
+            if(_webSocket == webSocket) {
+                close(true);
+            }
+
+            webSocket->deleteLater();
+        });
+    QObject::connect(_webSocket, &QWebSocket::textMessageReceived,
+        this, &Connection::messageReceived);
+
+    QWebSocketHandshakeOptions options;
+    options.setSubprotocols({ "webrtsp" });
+    _webSocket->open(_serverUrl, options);
+}
+
+void Connection::close(bool reconnect) noexcept
+{
+    _isOpen = false;
+
+    _pingTimer.stop();
+
+    _reconnect = reconnect;
+
+    if(_webSocket) {
+        _webSocket->disconnect(this);
+        if(QAbstractSocket::UnconnectedState != _webSocket->state())
+            _webSocket->close();
+        _webSocket = nullptr;
+    }
+
+    for(Client* client: _clients)
+        client->onDisconnected();
+
+    _sentRequests.clear();
+    _mediaSessions.clear();
+
+    if(_reconnect) {
+        const int delay = QRandomGenerator::global()->bounded(
+                RECONNECT_INTERVAL_MIN * 1000,
+                RECONNECT_INTERVAL_MAX * 1000);
+        qDebug() << "Scheduled reconnect in" << delay << "ms";
+        _reconnectTimer.start(delay);
+    } else {
+        _serverUrl.clear();
+        _reconnectTimer.stop();
+    }
+}
+
+void Connection::setServerUrl(const QUrl& url) noexcept
+{
+    if(_serverUrl == url)
+        return;
+
+    close();
+
+    _serverUrl = url;
+}
+
+void Connection::sendRequest(const rtsp::Request* request) noexcept
+{
+    if(!_webSocket)
+        return;
+
+    if(!request) {
+        close(true);
+        return;
+    }
+
+    const std::string serializedRequest = rtsp::Serialize(*request);
+    if(serializedRequest.empty()) {
+        close(true);
+        return;
+    }
+
+    qDebug() << "WebRTSPClient ->" << serializedRequest;
+
+    _webSocket->sendTextMessage(QString::fromStdString(serializedRequest));
+}
+
+void Connection::sendResponse(const rtsp::Response* response) noexcept
+{
+    if(!_webSocket)
+        return;
+
+    if(!response) {
+        close(true);
+        return;
+    }
+
+    const std::string serializedResponse = rtsp::Serialize(*response);
+    if(serializedResponse.empty()) {
+        close(true);
+        return;
+    }
+
+    qDebug() << "WebRTSPClient ->" << serializedResponse;
+
+    _webSocket->sendTextMessage(QString::fromStdString(serializedResponse));
+}
+
+void Connection::messageReceived(const QString& message) noexcept
+{
+    qDebug() << "WebRTSPClient <-" << message;
+
+    const std::string tmpMessage = message.toStdString();
+    if(rtsp::IsRequest(tmpMessage.data(), tmpMessage.size())) {
+        std::unique_ptr<rtsp::Request> requestPtr = std::make_unique<rtsp::Request>();
+        if(!rtsp::ParseRequest(tmpMessage.data(), tmpMessage.size(), requestPtr.get())) {
+            qWarning()
+                << "Failed to parse request:" << Qt::endl
+                << message << Qt::endl
+                << "Forcing disconnect...";
+
+            close(true);
+            return;
+        }
+
+        if(!handleRequest(requestPtr)) {
+            qWarning()
+                << "Failed to handle request:" << Qt::endl
+                << message << Qt::endl
+                << "Forcing disconnect...";
+
+            close(true);
+            return;
+        }
+    } else {
+        std::unique_ptr<rtsp::Response> responsePtr = std::make_unique<rtsp::Response>();
+        if(!rtsp::ParseResponse(tmpMessage.data(), tmpMessage.size(), responsePtr.get())) {
+            qWarning()
+                << "Failed to parse response:" << Qt::endl
+                << message << Qt::endl
+                << "Forcing disconnect...";
+
+            close(true);
+            return;
+        }
+
+        if(!rtsp::Session::handleResponse(responsePtr)) {
+            qWarning()
+                << "Failed to handle response:" << Qt::endl
+                << message << Qt::endl
+                << "Forcing disconnect...";
+
+            close(true);
+            return;
+        }
+    }
+}
+
+bool Connection::handleRequest(
+    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    const rtsp::MediaSessionId mediaSession = rtsp::RequestSession(*requestPtr);
+
+    if(mediaSession.empty()) {
+        qWarning() << "Can't handle request without media session id. Forcing disconnect..." << Qt::endl;
+        return false;
+    }
+
+    const auto it = _mediaSessions.find(mediaSession);
+    if(it == _mediaSessions.end()) {
+        qWarning() << "Can't handle request with unknown media session id. Forcing disconnect..." << Qt::endl;
+        return false;
+    }
+
+    Client* mediaSessionOwner = it->second.owner;
+
+    if(requestPtr->method == rtsp::Method::TEARDOWN)
+        _mediaSessions.erase(mediaSession);
+
+    return mediaSessionOwner->handleRequest(requestPtr);
+}
+
+bool Connection::handleResponse(
+    const rtsp::Request& request,
+    std::unique_ptr<rtsp::Response>& responsePtr) noexcept
+{
+    if(auto it = _sentRequests.find(responsePtr->cseq); it != _sentRequests.end()) {
+        Client* target = it->second.owner;
+        _sentRequests.erase(it);
+        if(target) { // sender may not care about response
+            const bool handled = target->handleResponse(request, responsePtr);
+            if(handled && request.method == rtsp::Method::DESCRIBE) {
+                const rtsp::MediaSessionId mediaSession = rtsp::ResponseSession(*responsePtr);
+                _mediaSessions.emplace(mediaSession, MediaSessionData { request.uri, target });
+            }
+            return handled;
+        } else {
+            return true;
+        }
+    }
+
+    const bool isPing =
+        request.method == rtsp::Method::GET_PARAMETER &&
+        request.headerFields.empty() &&
+        request.body.empty();
+
+    return isPing; // ping answer is never hendled
+}
+
+rtsp::CSeq Connection::requestOptions(Client* source, const std::string& encodedUri) noexcept
+{
+    if(!_isOpen) {
+        Q_ASSERT(false);
+        return rtsp::InvalidCSeq;
+    }
+
+    const rtsp::CSeq cseq = rtsp::Session::requestOptions(encodedUri);
+
+    _sentRequests.emplace(cseq, RequestData { source });
+
+    return cseq;
+}
+
+rtsp::CSeq Connection::requestList(Client* source, const std::string& encodedUri) noexcept
+{
+    if(!_isOpen) {
+        Q_ASSERT(false);
+        return rtsp::InvalidCSeq;
+    }
+
+    const rtsp::CSeq cseq = rtsp::Session::requestList(encodedUri);
+
+    _sentRequests.emplace(cseq, RequestData { source });
+
+    return cseq;
+}
+
+rtsp::CSeq Connection::requestDescribe(Client* source, const std::string& encodedUri) noexcept
+{
+    if(!_isOpen) {
+        Q_ASSERT(false);
+        return rtsp::InvalidCSeq;
+    }
+
+    const rtsp::CSeq cseq = rtsp::Session::requestDescribe(encodedUri);
+
+    _sentRequests.emplace(cseq, RequestData { source });
+
+    return cseq;
+}
+
+rtsp::CSeq Connection::requestPlay(
+    Client* source,
+    const std::string& encodedUri,
+    const rtsp::MediaSessionId& mediaSession,
+    const std::string& sdp) noexcept
+{
+    if(!_isOpen) {
+        Q_ASSERT(false);
+        return rtsp::InvalidCSeq;
+    }
+
+    const rtsp::CSeq cseq = rtsp::Session::requestPlay(
+        encodedUri,
+        mediaSession,
+        sdp);
+
+    _sentRequests.emplace(cseq, RequestData { source });
+
+    return cseq;
+}
+
+rtsp::CSeq Connection::requestSetup(
+    Client* source,
+    const std::string& encodedUri,
+    const rtsp::MediaSessionId& mediaSession,
+    unsigned mlineIndex,
+    const std::string& candidate) noexcept
+{
+    if(!_isOpen) {
+        Q_ASSERT(false);
+        return rtsp::InvalidCSeq;
+    }
+
+    const rtsp::CSeq cseq = rtsp::Session::requestSetup(
+        encodedUri,
+        rtsp::IceCandidateContentType,
+        mediaSession,
+        std::to_string(mlineIndex) + "/" + candidate + "\r\n");
+
+    _sentRequests.emplace(cseq, RequestData { source });
+
+    return cseq;
+}
+
+rtsp::CSeq Connection::requestTeardown(
+    Client* source,
+    const std::string& encodedUri,
+    const rtsp::MediaSessionId& mediaSession) noexcept
+{
+    if(!_isOpen) {
+        Q_ASSERT(false);
+        return rtsp::InvalidCSeq;
+    }
+
+    const rtsp::CSeq cseq = rtsp::Session::requestTeardown(encodedUri, mediaSession);
+
+    _sentRequests.emplace(cseq, RequestData { source });
+
+    return cseq;
+}
+
+void Connection::sendPing() noexcept
+{
+    if(!_isOpen) {
+        Q_ASSERT(false);
+        return;
+    }
+
+    rtsp::Session::requestGetParameter("*", std::string(), std::string());
+}
+
+UriInfo* Connection::uriInfo(const QString& uri)
+{
+    return new UriInfo(this, uri);
+}
+
+Player* Connection::player(const QString& uri, QQuickItem* view)
+{
+    return new Player(this, uri, view);
+}
