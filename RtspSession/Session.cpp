@@ -348,7 +348,8 @@ CSeq Session::requestGetParameter(
 {
     Request& request = *createRequest(Method::GET_PARAMETER, uri);
 
-    SetContentType(&request, contentType);
+    if(!contentType.empty())
+        SetContentType(&request, contentType);
 
     request.body = body;
 
