@@ -1,10 +1,12 @@
 #pragma once
 
 #include "RtStreaming/WebRTCPeer.h"
-#include "RtspSession/Session.h"
+#include "Session.h"
 
 
-class ClientSession : public rtsp::Session
+namespace rtsp {
+
+class ClientSession : public Session
 {
 public:
     typedef std::function<std::unique_ptr<WebRTCPeer> ()> CreatePeer;
@@ -36,26 +38,28 @@ protected:
     virtual FeatureState subscribeSupportState(const std::string& /*uri*/) noexcept
         { return FeatureState::Disabled; }
 
-    rtsp::CSeq requestDescribe() noexcept;
-    rtsp::CSeq requestSubscribe() noexcept;
+    CSeq requestDescribe() noexcept;
+    CSeq requestSubscribe() noexcept;
 
     bool onOptionsResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept override;
+        const Request&, const Response&) noexcept override;
     bool onDescribeResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept override;
+        const Request&, const Response&) noexcept override;
     bool onSetupResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept override;
+        const Request&, const Response&) noexcept override;
     bool onPlayResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept override;
+        const Request&, const Response&) noexcept override;
     bool onSubscribeResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept override;
+        const Request&, const Response&) noexcept override;
     bool onTeardownResponse(
-        const rtsp::Request&, const rtsp::Response&) noexcept override;
+        const Request&, const Response&) noexcept override;
 
-    bool onRecordRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onRecordRequest(std::unique_ptr<Request>&) noexcept override;
+    bool onSetupRequest(std::unique_ptr<Request>&) noexcept override;
 
 private:
     struct Private;
     std::unique_ptr<Private> _p;
 };
+
+}

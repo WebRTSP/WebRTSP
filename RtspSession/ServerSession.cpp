@@ -9,6 +9,8 @@
 #include "Log.h"
 
 
+namespace rtsp {
+
 namespace {
 
 struct MediaSession
@@ -19,18 +21,18 @@ struct MediaSession
         Subscribe,
     };
 
-    MediaSession(MediaSession::Type type, const std::string& uri, rtsp::CSeq initialRequestCSeq) :
+    MediaSession(MediaSession::Type type, const std::string& uri, CSeq initialRequestCSeq) :
         type(type), uri(uri), initialRequestCSeq(initialRequestCSeq) {}
 
     const Type type;
     const std::string uri;
-    const rtsp::CSeq initialRequestCSeq;
+    const CSeq initialRequestCSeq;
     std::unique_ptr<WebRTCPeer> localPeer;
-    std::deque<rtsp::IceCandidate> iceCandidates;
+    std::deque<IceCandidate> iceCandidates;
     bool prepared = false;
 };
 
-typedef std::map<rtsp::MediaSessionId, std::unique_ptr<MediaSession>> MediaSessions;
+typedef std::map<MediaSessionId, std::unique_ptr<MediaSession>> MediaSessions;
 
 }
 
@@ -62,14 +64,14 @@ struct ServerSession::Private
     std::string nextSessionId()
         { return std::to_string(_nextSessionId++); }
 
-    void sendIceCandidates(const rtsp::MediaSessionId&, MediaSession* mediaSession);
-    void streamerPrepared(const rtsp::MediaSessionId&);
-    void recorderPrepared(const rtsp::MediaSessionId&);
-    void recordToClientStreamerPrepared(const rtsp::MediaSessionId&);
+    void sendIceCandidates(const MediaSessionId&, MediaSession* mediaSession);
+    void streamerPrepared(const MediaSessionId&);
+    void recorderPrepared(const MediaSessionId&);
+    void recordToClientStreamerPrepared(const MediaSessionId&);
     void iceCandidate(
-        const rtsp::MediaSessionId&,
+        const MediaSessionId&,
         unsigned, const std::string&);
-    void eos(const rtsp::MediaSessionId& session);
+    void eos(const MediaSessionId& session);
 
 private:
     unsigned _nextSessionId = 1;
@@ -94,12 +96,12 @@ ServerSession::Private::Private(
 }
 
 void ServerSession::Private::sendIceCandidates(
-    const rtsp::MediaSessionId& session,
+    const MediaSessionId& session,
     MediaSession* mediaSession)
 {
     if(!mediaSession->iceCandidates.empty()) {
         std::string iceCandidates;
-        for(const rtsp::IceCandidate& c : mediaSession->iceCandidates) {
+        for(const IceCandidate& c : mediaSession->iceCandidates) {
             iceCandidates +=
                 std::to_string(c.mlineIndex) + "/" + c.candidate + "\r\n";
         }
@@ -107,7 +109,7 @@ void ServerSession::Private::sendIceCandidates(
         if(!mediaSession->iceCandidates.empty()) {
             owner->requestSetup(
                 mediaSession->uri,
-                rtsp::IceCandidateContentType,
+                IceCandidateContentType,
                 session,
                 iceCandidates);
         }
@@ -116,7 +118,7 @@ void ServerSession::Private::sendIceCandidates(
     }
 }
 
-void ServerSession::Private::streamerPrepared(const rtsp::MediaSessionId& session)
+void ServerSession::Private::streamerPrepared(const MediaSessionId& session)
 {
     auto it = mediaSessions.find(session);
     if(mediaSessions.end() == it || it->second->type != MediaSession::Type::Describe) {
@@ -126,17 +128,17 @@ void ServerSession::Private::streamerPrepared(const rtsp::MediaSessionId& sessio
 
     MediaSession& mediaSession = *(it->second);
     WebRTCPeer& localPeer = *mediaSession.localPeer;
-    const rtsp::CSeq describeRequestCSeq = mediaSession.initialRequestCSeq;
+    const CSeq describeRequestCSeq = mediaSession.initialRequestCSeq;
 
     mediaSession.prepared = true;
 
     if(localPeer.sdp().empty())
         owner->disconnect();
     else {
-        rtsp::Response response;
+        Response response;
         prepareOkResponse(describeRequestCSeq, session, &response);
 
-        SetContentType(&response, rtsp::SdpContentType);
+        SetContentType(&response, SdpContentType);
 
         response.body = localPeer.sdp();
 
@@ -146,7 +148,7 @@ void ServerSession::Private::streamerPrepared(const rtsp::MediaSessionId& sessio
     }
 }
 
-void ServerSession::Private::recorderPrepared(const rtsp::MediaSessionId& session)
+void ServerSession::Private::recorderPrepared(const MediaSessionId& session)
 {
     auto it = mediaSessions.find(session);
     if(mediaSessions.end() == it || it->second->type != MediaSession::Type::Record) {
@@ -156,17 +158,17 @@ void ServerSession::Private::recorderPrepared(const rtsp::MediaSessionId& sessio
 
     MediaSession& mediaSession = *(it->second);
     WebRTCPeer& recorder = *mediaSession.localPeer;
-    const rtsp::CSeq recordRequestCSeq = mediaSession.initialRequestCSeq;
+    const CSeq recordRequestCSeq = mediaSession.initialRequestCSeq;
 
     mediaSession.prepared = true;
 
     if(recorder.sdp().empty())
         owner->disconnect();
     else {
-        rtsp::Response response;
+        Response response;
         prepareOkResponse(recordRequestCSeq, session, &response);
 
-        SetContentType(&response, rtsp::SdpContentType);
+        SetContentType(&response, SdpContentType);
 
         response.body = recorder.sdp();
 
@@ -176,7 +178,7 @@ void ServerSession::Private::recorderPrepared(const rtsp::MediaSessionId& sessio
     }
 }
 
-void ServerSession::Private::recordToClientStreamerPrepared(const rtsp::MediaSessionId& mediaSessionId)
+void ServerSession::Private::recordToClientStreamerPrepared(const MediaSessionId& mediaSessionId)
 {
     auto it = mediaSessions.find(mediaSessionId);
     assert(mediaSessions.end() != it);
@@ -198,11 +200,11 @@ void ServerSession::Private::recordToClientStreamerPrepared(const rtsp::MediaSes
         assert(false);
         owner->disconnect();
     } else {
-        rtsp::Request& request =
-            *owner->createRequest(rtsp::Method::RECORD, mediaSession.uri);
+        Request& request =
+            *owner->createRequest(Method::RECORD, mediaSession.uri);
 
         SetRequestSession(&request, mediaSessionId);
-        SetContentType(&request, rtsp::SdpContentType);
+        SetContentType(&request, SdpContentType);
 
         request.body = localPeer.sdp();
 
@@ -213,7 +215,7 @@ void ServerSession::Private::recordToClientStreamerPrepared(const rtsp::MediaSes
 }
 
 void ServerSession::Private::iceCandidate(
-    const rtsp::MediaSessionId& session,
+    const MediaSessionId& session,
     unsigned mlineIndex, const std::string& candidate)
 {
     auto it = mediaSessions.find(session);
@@ -226,15 +228,15 @@ void ServerSession::Private::iceCandidate(
     if(mediaSession.prepared) {
         owner->requestSetup(
             mediaSession.uri,
-            rtsp::IceCandidateContentType,
+            IceCandidateContentType,
             session,
             std::to_string(mlineIndex) + "/" + candidate + "\r\n");
     } else {
-        mediaSession.iceCandidates.emplace_back(rtsp::IceCandidate { mlineIndex, candidate });
+        mediaSession.iceCandidates.emplace_back(IceCandidate { mlineIndex, candidate });
     }
 }
 
-void ServerSession::Private::eos(const rtsp::MediaSessionId& session)
+void ServerSession::Private::eos(const MediaSessionId& session)
 {
     owner->log()->trace("Eos. Session: {}", owner->sessionLogId, session);
 
@@ -246,11 +248,11 @@ void ServerSession::Private::eos(const rtsp::MediaSessionId& session)
 
     MediaSession& mediaSession = *(it->second);
     mediaSession.localPeer->stop();
-    const rtsp::CSeq describeRequestCSeq = mediaSession.initialRequestCSeq;
+    const CSeq describeRequestCSeq = mediaSession.initialRequestCSeq;
 
     if(mediaSession.prepared) {
-        rtsp::Request& request =
-            *owner->createRequest(rtsp::Method::TEARDOWN, mediaSession.uri, session);
+        Request& request =
+            *owner->createRequest(Method::TEARDOWN, mediaSession.uri, session);
 
         owner->sendRequest(request);
     } else {
@@ -266,7 +268,7 @@ ServerSession::ServerSession(
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    rtsp::Session(webRTCConfig, sendRequest, sendResponse),
+    Session(webRTCConfig, sendRequest, sendResponse),
     _p(new Private(this, createPeer)),
     _log(MakeServerSessionLogger(sessionLogId))
 {
@@ -278,7 +280,7 @@ ServerSession::ServerSession(
     const CreatePeer& createRecordPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    rtsp::Session(webRTCConfig, sendRequest, sendResponse),
+    Session(webRTCConfig, sendRequest, sendResponse),
     _p(new Private(this, createPeer, createRecordPeer)),
     _log(MakeServerSessionLogger(sessionLogId))
 {
@@ -292,7 +294,7 @@ bool ServerSession::onConnected(const std::optional<std::string>& authCookie) no
 {
     _p->authCookie = authCookie;
 
-    return rtsp::Session::onConnected();
+    return Session::onConnected();
 }
 
 const std::optional<std::string>& ServerSession::authCookie() const noexcept
@@ -306,10 +308,10 @@ std::string ServerSession::nextSessionId()
 }
 
 bool ServerSession::handleRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<Request>& requestPtr) noexcept
 {
-    if(requestPtr->method != rtsp::Method::RECORD && !authorize(requestPtr)) {
-        log()->error("{} authorize failed for \"{}\"", rtsp::MethodName(requestPtr->method), requestPtr->uri);
+    if(requestPtr->method != Method::RECORD && !authorize(requestPtr)) {
+        log()->error("{} authorize failed for \"{}\"", MethodName(requestPtr->method), requestPtr->uri);
 
         sendUnauthorizedResponse(requestPtr->cseq);
 
@@ -318,10 +320,10 @@ bool ServerSession::handleRequest(
 
     if(isProxyRequest(*requestPtr)) {
         switch(requestPtr->method) {
-        case rtsp::Method::DESCRIBE:
-        case rtsp::Method::SETUP:
-        case rtsp::Method::PLAY:
-        case rtsp::Method::TEARDOWN:
+        case Method::DESCRIBE:
+        case Method::SETUP:
+        case Method::PLAY:
+        case Method::TEARDOWN:
             return handleProxyRequest(requestPtr);
         default:
             break;
@@ -332,9 +334,9 @@ bool ServerSession::handleRequest(
 }
 
 bool ServerSession::onGetParameterRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<Request>& requestPtr) noexcept
 {
-    const std::string& contentType = rtsp::RequestContentType(*requestPtr);
+    const std::string& contentType = RequestContentType(*requestPtr);
     if(contentType.empty() && requestPtr->body.empty()) {
         // PING/PONG case
         sendOkResponse(requestPtr->cseq);
@@ -346,10 +348,10 @@ bool ServerSession::onGetParameterRequest(
 }
 
 bool ServerSession::onOptionsRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<Request>& requestPtr) noexcept
 {
-    rtsp::Response response;
-    prepareOkResponse(requestPtr->cseq, rtsp::MediaSessionId(), &response);
+    Response response;
+    prepareOkResponse(requestPtr->cseq, MediaSessionId(), &response);
 
     std::string options;
     if(listEnabled(requestPtr->uri))
@@ -393,9 +395,9 @@ bool ServerSession::playEnabled(const std::string&) noexcept
 }
 
 bool ServerSession::onDescribeRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<Request>& requestPtr) noexcept
 {
-    const rtsp::Request& request = *requestPtr.get();
+    const Request& request = *requestPtr.get();
 
     if(!playEnabled(request.uri)) {
         log()->error("Playback is not supported for \"{}\"", requestPtr->uri);
@@ -410,7 +412,7 @@ bool ServerSession::onDescribeRequest(
         return true;
     }
 
-    const rtsp::MediaSessionId session = nextSessionId();
+    const MediaSessionId session = nextSessionId();
 
     auto emplacePair =
         _p->mediaSessions.emplace(
@@ -453,15 +455,15 @@ bool ServerSession::subscribeEnabled(const std::string&) noexcept
     return false;
 }
 
-bool ServerSession::authorize(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+bool ServerSession::authorize(const std::unique_ptr<Request>& requestPtr) noexcept
 {
-    return requestPtr->method != rtsp::Method::RECORD;
+    return requestPtr->method != Method::RECORD;
 }
 
 bool ServerSession::onRecordRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<Request>& requestPtr) noexcept
 {
-    const rtsp::Request& request = *requestPtr.get();
+    const Request& request = *requestPtr.get();
 
     if(!recordEnabled(requestPtr->uri) || !_p->recordEnabled())
         return false;
@@ -480,10 +482,10 @@ bool ServerSession::onRecordRequest(
         return false;
 
     const std::string contentType = RequestContentType(*requestPtr);
-    if(contentType != rtsp::SdpContentType)
+    if(contentType != SdpContentType)
         return false;
 
-    const rtsp::MediaSessionId session = nextSessionId();
+    const MediaSessionId session = nextSessionId();
 
     auto emplacePair =
         _p->mediaSessions.emplace(
@@ -523,9 +525,9 @@ bool ServerSession::onRecordRequest(
 }
 
 bool ServerSession::onSetupRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<Request>& requestPtr) noexcept
 {
-    const rtsp::MediaSessionId session = RequestSession(*requestPtr);
+    const MediaSessionId session = RequestSession(*requestPtr);
 
     auto it = _p->mediaSessions.find(session);
     if(it == _p->mediaSessions.end())
@@ -533,7 +535,7 @@ bool ServerSession::onSetupRequest(
 
     WebRTCPeer& localPeer = *it->second->localPeer;
 
-    if(RequestContentType(*requestPtr) != rtsp::IceCandidateContentType)
+    if(RequestContentType(*requestPtr) != IceCandidateContentType)
         return false;
 
     const std::string& ice = requestPtr->body;
@@ -576,9 +578,9 @@ bool ServerSession::onSetupRequest(
 }
 
 bool ServerSession::onPlayRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<Request>& requestPtr) noexcept
 {
-    const rtsp::MediaSessionId session = RequestSession(*requestPtr);
+    const MediaSessionId session = RequestSession(*requestPtr);
     if(session.empty())
         return false;
 
@@ -590,7 +592,7 @@ bool ServerSession::onPlayRequest(
     if(mediaSession.type != MediaSession::Type::Describe)
         return false;
 
-    if(RequestContentType(*requestPtr) != rtsp::SdpContentType)
+    if(RequestContentType(*requestPtr) != SdpContentType)
         return false;
 
     WebRTCPeer& localPeer = *(mediaSession.localPeer);
@@ -604,9 +606,9 @@ bool ServerSession::onPlayRequest(
 }
 
 bool ServerSession::onTeardownRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<Request>& requestPtr) noexcept
 {
-    const rtsp::MediaSessionId session = RequestSession(*requestPtr);
+    const MediaSessionId session = RequestSession(*requestPtr);
 
     auto it = _p->mediaSessions.find(session);
     if(it == _p->mediaSessions.end())
@@ -625,7 +627,7 @@ bool ServerSession::onTeardownRequest(
 
 void ServerSession::startRecordToClient(
     const std::string& uri,
-    const rtsp::MediaSessionId& mediaSessionId) noexcept
+    const MediaSessionId& mediaSessionId) noexcept
 {
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(uri);
     if(!peerPtr) {
@@ -636,7 +638,7 @@ void ServerSession::startRecordToClient(
     auto emplacePair =
         _p->mediaSessions.emplace(
             mediaSessionId,
-            std::make_unique<MediaSession>(MediaSession::Type::Subscribe, uri, rtsp::CSeq()));
+            std::make_unique<MediaSession>(MediaSession::Type::Subscribe, uri, CSeq()));
     if(!emplacePair.second) {
         onEos(); // FIXME! send TEARDOWN instead and remove Media Session
         return;
@@ -665,12 +667,12 @@ void ServerSession::startRecordToClient(
         sessionLogId);
 }
 
-bool ServerSession::onRecordResponse(const rtsp::Request& request, const rtsp::Response& response) noexcept
+bool ServerSession::onRecordResponse(const Request& request, const Response& response) noexcept
 {
-    if(rtsp::StatusCode::OK != response.statusCode)
+    if(StatusCode::OK != response.statusCode)
         return false;
 
-    const rtsp::MediaSessionId mediaSessionId = RequestSession(request);
+    const MediaSessionId mediaSessionId = RequestSession(request);
     if(mediaSessionId.empty() || mediaSessionId != ResponseSession(response))
         return false;
 
@@ -682,7 +684,7 @@ bool ServerSession::onRecordResponse(const rtsp::Request& request, const rtsp::R
     if(mediaSession.type != MediaSession::Type::Subscribe)
         return false;
 
-    if(ResponseContentType(response) != rtsp::SdpContentType)
+    if(ResponseContentType(response) != SdpContentType)
         return false;
 
     WebRTCPeer& localPeer = *(mediaSession.localPeer);
@@ -693,7 +695,7 @@ bool ServerSession::onRecordResponse(const rtsp::Request& request, const rtsp::R
     return true;
 }
 
-void ServerSession::teardownMediaSession(const rtsp::MediaSessionId& mediaSession) noexcept
+void ServerSession::teardownMediaSession(const MediaSessionId& mediaSession) noexcept
 {
     assert(!mediaSession.empty());
     if(mediaSession.empty())
@@ -701,4 +703,6 @@ void ServerSession::teardownMediaSession(const rtsp::MediaSessionId& mediaSessio
 
     const bool erased = _p->mediaSessions.erase(mediaSession) != 0;
     assert(erased);
+}
+
 }

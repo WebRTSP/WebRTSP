@@ -6,34 +6,36 @@
 
 #include "RtspSession/StatusCode.h"
 
+namespace rtsp {
 
 namespace {
 
 inline bool IsMethodSupported(
-    const std::set<rtsp::Method>& supportedMethods,
-    rtsp::Method method) noexcept
+    const std::set<Method>& supportedMethods,
+    Method method) noexcept
 {
     return supportedMethods.find(method) != supportedMethods.end();
 }
 
-bool IsPlaySupported(const std::set<rtsp::Method>& supportedMethods) noexcept
+bool IsPlaySupported(const std::set<Method>& supportedMethods) noexcept
 {
     return
-        IsMethodSupported(supportedMethods, rtsp::Method::DESCRIBE) &&
-        IsMethodSupported(supportedMethods, rtsp::Method::SETUP) &&
-        IsMethodSupported(supportedMethods, rtsp::Method::PLAY) &&
-        IsMethodSupported(supportedMethods, rtsp::Method::TEARDOWN);
+        IsMethodSupported(supportedMethods, Method::DESCRIBE) &&
+        IsMethodSupported(supportedMethods, Method::SETUP) &&
+        IsMethodSupported(supportedMethods, Method::PLAY) &&
+        IsMethodSupported(supportedMethods, Method::TEARDOWN);
 }
 
-bool IsSubscribeSupported(const std::set<rtsp::Method>& supportedMethods) noexcept
+bool IsSubscribeSupported(const std::set<Method>& supportedMethods) noexcept
 {
     return
-        IsMethodSupported(supportedMethods, rtsp::Method::SUBSCRIBE) &&
-        IsMethodSupported(supportedMethods, rtsp::Method::SETUP) &&
-        IsMethodSupported(supportedMethods, rtsp::Method::TEARDOWN);
+        IsMethodSupported(supportedMethods, Method::SUBSCRIBE) &&
+        IsMethodSupported(supportedMethods, Method::SETUP) &&
+        IsMethodSupported(supportedMethods, Method::TEARDOWN);
 }
 
 }
+
 
 struct ClientSession::Private
 {
@@ -47,8 +49,8 @@ struct ClientSession::Private
     std::string uri;
 
     std::unique_ptr<WebRTCPeer> receiver;
-    rtsp::MediaSessionId session;
-    rtsp::CSeq recordRequestCSeq = rtsp::InvalidCSeq;
+    MediaSessionId session;
+    CSeq recordRequestCSeq = InvalidCSeq;
 
     void receiverPrepared();
     void iceCandidate(unsigned, const std::string&);
@@ -70,15 +72,15 @@ void ClientSession::Private::receiverPrepared()
         return;
     }
 
-    if(recordRequestCSeq != rtsp::InvalidCSeq) {
+    if(recordRequestCSeq != InvalidCSeq) {
         owner->sendOkResponse(
             recordRequestCSeq,
             session,
-            rtsp::SdpContentType,
+            SdpContentType,
             receiver->sdp());
 
         receiver->play();
-        recordRequestCSeq = rtsp::InvalidCSeq;
+        recordRequestCSeq = InvalidCSeq;
     } else {
         owner->requestPlay(
             uri,
@@ -92,7 +94,7 @@ void ClientSession::Private::iceCandidate(
 {
     owner->requestSetup(
         uri,
-        rtsp::IceCandidateContentType,
+        IceCandidateContentType,
         session,
         std::to_string(mlineIndex) + "/" + candidate + "\r\n");
 }
@@ -111,7 +113,7 @@ ClientSession::ClientSession(
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    rtsp::Session(webRTCConfig, sendRequest, sendResponse),
+    Session(webRTCConfig, sendRequest, sendResponse),
     _p(new Private(this, uri, createPeer))
 {
 }
@@ -142,29 +144,29 @@ bool ClientSession::onConnected() noexcept
     return true;
 }
 
-rtsp::CSeq ClientSession::requestDescribe() noexcept
+CSeq ClientSession::requestDescribe() noexcept
 {
     assert(!_p->uri.empty());
-    return rtsp::Session::requestDescribe(_p->uri);
+    return Session::requestDescribe(_p->uri);
 }
 
-rtsp::CSeq ClientSession::requestSubscribe() noexcept
+CSeq ClientSession::requestSubscribe() noexcept
 {
     assert(!_p->uri.empty());
-    return rtsp::Session::requestSubscribe(_p->uri);
+    return Session::requestSubscribe(_p->uri);
 }
 
 bool ClientSession::onOptionsResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
+    const Request& request,
+    const Response& response) noexcept
 {
-    if(rtsp::StatusCode::OK != response.statusCode)
+    if(StatusCode::OK != response.statusCode)
         return false;
 
     const FeatureState playSupport = playSupportState(request.uri);
     const FeatureState subscribeSupport = subscribeSupportState(request.uri);
 
-    const std::set<rtsp::Method> supportedMethods = rtsp::ParseOptions(response);
+    const std::set<Method> supportedMethods = ParseOptions(response);
 
     if(playSupport == FeatureState::Required && !IsPlaySupported(supportedMethods))
         return false;
@@ -184,10 +186,10 @@ bool ClientSession::onOptionsResponse(
 }
 
 bool ClientSession::onDescribeResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
+    const Request& request,
+    const Response& response) noexcept
 {
-    if(rtsp::StatusCode::OK != response.statusCode)
+    if(StatusCode::OK != response.statusCode)
         return false;
 
     assert(_p->session.empty());
@@ -221,10 +223,10 @@ bool ClientSession::onDescribeResponse(
 }
 
 bool ClientSession::onSetupResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
+    const Request& request,
+    const Response& response) noexcept
 {
-    if(rtsp::StatusCode::OK != response.statusCode)
+    if(StatusCode::OK != response.statusCode)
         return false;
 
     if(ResponseSession(response) != _p->session)
@@ -234,10 +236,10 @@ bool ClientSession::onSetupResponse(
 }
 
 bool ClientSession::onPlayResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
+    const Request& request,
+    const Response& response) noexcept
 {
-    if(rtsp::StatusCode::OK != response.statusCode)
+    if(StatusCode::OK != response.statusCode)
         return false;
 
     if(ResponseSession(response) != _p->session)
@@ -249,10 +251,10 @@ bool ClientSession::onPlayResponse(
 }
 
 bool ClientSession::onSubscribeResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
+    const Request& request,
+    const Response& response) noexcept
 {
-    if(rtsp::StatusCode::OK != response.statusCode)
+    if(StatusCode::OK != response.statusCode)
         return false;
 
     assert(_p->session.empty());
@@ -265,8 +267,8 @@ bool ClientSession::onSubscribeResponse(
 }
 
 bool ClientSession::onTeardownResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
+    const Request& request,
+    const Response& response) noexcept
 {
     if(ResponseSession(response) != _p->session)
         return false;
@@ -274,9 +276,9 @@ bool ClientSession::onTeardownResponse(
     return false;
 }
 
-bool ClientSession::onRecordRequest(std::unique_ptr<rtsp::Request>& request) noexcept
+bool ClientSession::onRecordRequest(std::unique_ptr<Request>& request) noexcept
 {
-    rtsp::MediaSessionId recordSession = RequestSession(*request);
+    MediaSessionId recordSession = RequestSession(*request);
     if(_p->session != recordSession)
         return false;
 
@@ -307,12 +309,12 @@ bool ClientSession::onRecordRequest(std::unique_ptr<rtsp::Request>& request) noe
 
 }
 
-bool ClientSession::onSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+bool ClientSession::onSetupRequest(std::unique_ptr<Request>& requestPtr) noexcept
 {
     if(RequestSession(*requestPtr) != _p->session)
         return false;
 
-    if(RequestContentType(*requestPtr) != rtsp::IceCandidateContentType)
+    if(RequestContentType(*requestPtr) != IceCandidateContentType)
         return false;
 
     const std::string& ice = requestPtr->body;
@@ -349,7 +351,9 @@ bool ClientSession::onSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) n
         pos = lineEndPos + 2;
     }
 
-    sendOkResponse(requestPtr->cseq, rtsp::RequestSession(*requestPtr));
+    sendOkResponse(requestPtr->cseq, RequestSession(*requestPtr));
 
     return true;
+}
+
 }
