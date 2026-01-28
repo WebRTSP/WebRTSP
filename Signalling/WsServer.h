@@ -7,7 +7,7 @@
 #include <glib.h>
 
 #include "Config.h"
-#include "ServerSession.h"
+#include "RtspSession/ServerSession.h"
 
 
 struct lws_context;
@@ -18,7 +18,7 @@ class WsServer
 {
 public:
     typedef std::function<
-        std::unique_ptr<ServerSession> (
+        std::unique_ptr<rtsp::ServerSession> (
             const rtsp::Session::SendRequest& sendRequest,
             const rtsp::Session::SendResponse& sendResponse)> CreateSession;
 

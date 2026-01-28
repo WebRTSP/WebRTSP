@@ -7,8 +7,9 @@
 #include "RtStreaming/WebRTCPeer.h"
 #include "RtspSession/Session.h"
 
+namespace rtsp {
 
-class ServerSession: public rtsp::Session
+class ServerSession: public Session
 {
 public:
     typedef std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> CreatePeer;
@@ -30,9 +31,9 @@ public:
 
     virtual bool onConnected(const std::optional<std::string>& authCookie) noexcept;
 
-    bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool handleRequest(std::unique_ptr<Request>&) noexcept override;
 
-    void startRecordToClient(const std::string& uri, const rtsp::MediaSessionId&) noexcept;
+    void startRecordToClient(const std::string& uri, const MediaSessionId&) noexcept;
 
 protected:
     const std::optional<std::string>& authCookie() const noexcept;
@@ -43,22 +44,22 @@ protected:
     virtual bool playEnabled(const std::string& uri) noexcept;
     virtual bool recordEnabled(const std::string& uri) noexcept;
     virtual bool subscribeEnabled(const std::string& uri) noexcept;
-    virtual bool authorize(const std::unique_ptr<rtsp::Request>&) noexcept;
+    virtual bool authorize(const std::unique_ptr<Request>&) noexcept;
 
-    bool onGetParameterRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool onOptionsRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool onDescribeRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool onPlayRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool onRecordRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
-    bool onTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onGetParameterRequest(std::unique_ptr<Request>&) noexcept override;
+    bool onOptionsRequest(std::unique_ptr<Request>&) noexcept override;
+    bool onDescribeRequest(std::unique_ptr<Request>&) noexcept override;
+    bool onSetupRequest(std::unique_ptr<Request>&) noexcept override;
+    bool onPlayRequest(std::unique_ptr<Request>&) noexcept override;
+    bool onRecordRequest(std::unique_ptr<Request>&) noexcept override;
+    bool onTeardownRequest(std::unique_ptr<Request>&) noexcept override;
 
-    bool onRecordResponse(const rtsp::Request& request, const rtsp::Response& response) noexcept override;
+    bool onRecordResponse(const Request& request, const Response& response) noexcept override;
 
-    virtual bool isProxyRequest(const rtsp::Request&) noexcept { return false; }
-    virtual bool handleProxyRequest(std::unique_ptr<rtsp::Request>&) noexcept { return false; }
+    virtual bool isProxyRequest(const Request&) noexcept { return false; }
+    virtual bool handleProxyRequest(std::unique_ptr<Request>&) noexcept { return false; }
 
-    virtual void teardownMediaSession(const rtsp::MediaSessionId&) noexcept;
+    virtual void teardownMediaSession(const MediaSessionId&) noexcept;
 
 private:
     const std::shared_ptr<spdlog::logger> _log;
@@ -66,3 +67,5 @@ private:
     struct Private;
     std::unique_ptr<Private> _p;
 };
+
+}
