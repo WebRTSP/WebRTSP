@@ -199,7 +199,7 @@ bool ClientRecordSession::onTeardownResponse(
     return true;
 }
 
-bool ClientRecordSession::onSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+bool ClientRecordSession::onSetupRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
     if(RequestSession(*requestPtr) != _p->session)
         return false;

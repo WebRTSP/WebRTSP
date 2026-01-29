@@ -391,7 +391,7 @@ void Session::disconnect() noexcept
     _sendRequest(nullptr);
 }
 
-bool Session::handleResponse(std::unique_ptr<Response>& responsePtr) noexcept
+bool Session::handleResponse(std::unique_ptr<Response>&& responsePtr) noexcept
 {
     auto it = _sentRequests.find(responsePtr->cseq);
     if(it == _sentRequests.end()) {
@@ -402,38 +402,38 @@ bool Session::handleResponse(std::unique_ptr<Response>& responsePtr) noexcept
     }
 
     const Request& request = it->second;
-    const bool success = handleResponse(request, responsePtr);
+    const bool success = handleResponse(request, std::move(responsePtr));
 
     _sentRequests.erase(it);
 
     return success;
 }
 
-bool Session::handleRequest(std::unique_ptr<Request>& requestPtr) noexcept
+bool Session::handleRequest(std::unique_ptr<Request>&& requestPtr) noexcept
 {
     switch(requestPtr->method) {
     case Method::NONE:
         break;
     case Method::OPTIONS:
-        return onOptionsRequest(requestPtr);
+        return onOptionsRequest(std::move(requestPtr));
     case Method::LIST:
-        return onListRequest(requestPtr);
+        return onListRequest(std::move(requestPtr));
     case Method::DESCRIBE:
-        return onDescribeRequest(requestPtr);
+        return onDescribeRequest(std::move(requestPtr));
     case Method::SETUP:
-        return onSetupRequest(requestPtr);
+        return onSetupRequest(std::move(requestPtr));
     case Method::PLAY:
-        return onPlayRequest(requestPtr);
+        return onPlayRequest(std::move(requestPtr));
     case Method::SUBSCRIBE:
-        return onSubscribeRequest(requestPtr);
+        return onSubscribeRequest(std::move(requestPtr));
     case Method::RECORD:
-        return onRecordRequest(requestPtr);
+        return onRecordRequest(std::move(requestPtr));
     case Method::TEARDOWN:
-        return onTeardownRequest(requestPtr);
+        return onTeardownRequest(std::move(requestPtr));
     case Method::GET_PARAMETER:
-        return onGetParameterRequest(requestPtr);
+        return onGetParameterRequest(std::move(requestPtr));
     case Method::SET_PARAMETER:
-        return onSetParameterRequest(requestPtr);
+        return onSetParameterRequest(std::move(requestPtr));
     }
 
     return false;
@@ -441,7 +441,7 @@ bool Session::handleRequest(std::unique_ptr<Request>& requestPtr) noexcept
 
 bool Session::handleResponse(
     const Request& request,
-    std::unique_ptr<Response>& responsePtr) noexcept
+    std::unique_ptr<Response>&& responsePtr) noexcept
 {
     switch(request.method) {
     case Method::NONE:

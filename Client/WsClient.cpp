@@ -301,7 +301,7 @@ bool WsClient::Private::onMessage(
             return false;
         }
 
-        if(!scd->data->rtspSession->handleRequest(requestPtr)) {
+        if(!scd->data->rtspSession->handleRequest(std::move(requestPtr))) {
             Log()->debug(
                 "Fail handle request:\n{}\nForcing session disconnect...",
                 std::string(message.data(), message.size()));
@@ -317,7 +317,7 @@ bool WsClient::Private::onMessage(
             return false;
         }
 
-        if(!scd->data->rtspSession->handleResponse(responsePtr)) {
+        if(!scd->data->rtspSession->handleResponse(std::move(responsePtr))) {
             Log()->error(
                 "Fail handle response:\n{}\nForcing session disconnect...",
                 std::string(message.data(), message.size()));

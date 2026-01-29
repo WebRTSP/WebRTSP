@@ -54,8 +54,8 @@ protected:
     bool onTeardownResponse(
         const Request&, const Response&) noexcept override;
 
-    bool onRecordRequest(std::unique_ptr<Request>&) noexcept override;
-    bool onSetupRequest(std::unique_ptr<Request>&) noexcept override;
+    bool onRecordRequest(std::unique_ptr<Request>&&) noexcept override;
+    bool onSetupRequest(std::unique_ptr<Request>&&) noexcept override;
 
 private:
     struct Private;

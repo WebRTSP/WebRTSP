@@ -29,9 +29,9 @@ public:
     const std::shared_ptr<spdlog::logger>& log() const
         { return _log; }
 
-    virtual bool onConnected(const std::optional<std::string>& authCookie) noexcept;
+    virtual bool onConnected(const std::optional<std::string>& authCookie = {}) noexcept;
 
-    bool handleRequest(std::unique_ptr<Request>&) noexcept override;
+    bool handleRequest(std::unique_ptr<Request>&&) noexcept override;
 
     void startRecordToClient(const std::string& uri, const MediaSessionId&) noexcept;
 
@@ -46,13 +46,13 @@ protected:
     virtual bool subscribeEnabled(const std::string& uri) noexcept;
     virtual bool authorize(const std::unique_ptr<Request>&) noexcept;
 
-    bool onGetParameterRequest(std::unique_ptr<Request>&) noexcept override;
-    bool onOptionsRequest(std::unique_ptr<Request>&) noexcept override;
-    bool onDescribeRequest(std::unique_ptr<Request>&) noexcept override;
-    bool onSetupRequest(std::unique_ptr<Request>&) noexcept override;
-    bool onPlayRequest(std::unique_ptr<Request>&) noexcept override;
-    bool onRecordRequest(std::unique_ptr<Request>&) noexcept override;
-    bool onTeardownRequest(std::unique_ptr<Request>&) noexcept override;
+    bool onGetParameterRequest(std::unique_ptr<Request>&&) noexcept override;
+    bool onOptionsRequest(std::unique_ptr<Request>&&) noexcept override;
+    bool onDescribeRequest(std::unique_ptr<Request>&&) noexcept override;
+    bool onSetupRequest(std::unique_ptr<Request>&&) noexcept override;
+    bool onPlayRequest(std::unique_ptr<Request>&&) noexcept override;
+    bool onRecordRequest(std::unique_ptr<Request>&&) noexcept override;
+    bool onTeardownRequest(std::unique_ptr<Request>&&) noexcept override;
 
     bool onRecordResponse(const Request& request, const Response& response) noexcept override;
 

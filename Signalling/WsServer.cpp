@@ -361,7 +361,7 @@ bool WsServer::Private::onMessage(
                 break;
         }
 
-        if(!session->handleRequest(requestPtr)) {
+        if(!session->handleRequest(std::move(requestPtr))) {
             session->log()->debug(
                 "Fail handle request:\n{}\nForcing session disconnect...",
                 std::string(message.data(), message.size()));
@@ -377,7 +377,7 @@ bool WsServer::Private::onMessage(
             return false;
         }
 
-        if(!session->handleResponse(responsePtr)) {
+        if(!session->handleResponse(std::move(responsePtr))) {
             Log()->error(
                 "Failed handle response:\n{}\nForcing session disconnect...",
                 std::string(message.data(), message.size()));

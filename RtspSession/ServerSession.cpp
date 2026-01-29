@@ -308,7 +308,7 @@ std::string ServerSession::nextSessionId()
 }
 
 bool ServerSession::handleRequest(
-    std::unique_ptr<Request>& requestPtr) noexcept
+    std::unique_ptr<Request>&& requestPtr) noexcept
 {
     if(requestPtr->method != Method::RECORD && !authorize(requestPtr)) {
         log()->error("{} authorize failed for \"{}\"", MethodName(requestPtr->method), requestPtr->uri);
@@ -330,11 +330,11 @@ bool ServerSession::handleRequest(
         }
     }
 
-    return Session::handleRequest(requestPtr);
+    return Session::handleRequest(std::move(requestPtr));
 }
 
 bool ServerSession::onGetParameterRequest(
-    std::unique_ptr<Request>& requestPtr) noexcept
+    std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const std::string& contentType = RequestContentType(*requestPtr);
     if(contentType.empty() && requestPtr->body.empty()) {
@@ -348,7 +348,7 @@ bool ServerSession::onGetParameterRequest(
 }
 
 bool ServerSession::onOptionsRequest(
-    std::unique_ptr<Request>& requestPtr) noexcept
+    std::unique_ptr<Request>&& requestPtr) noexcept
 {
     Response response;
     prepareOkResponse(requestPtr->cseq, MediaSessionId(), &response);
@@ -395,7 +395,7 @@ bool ServerSession::playEnabled(const std::string&) noexcept
 }
 
 bool ServerSession::onDescribeRequest(
-    std::unique_ptr<Request>& requestPtr) noexcept
+    std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const Request& request = *requestPtr.get();
 
@@ -461,7 +461,7 @@ bool ServerSession::authorize(const std::unique_ptr<Request>& requestPtr) noexce
 }
 
 bool ServerSession::onRecordRequest(
-    std::unique_ptr<Request>& requestPtr) noexcept
+    std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const Request& request = *requestPtr.get();
 
@@ -525,7 +525,7 @@ bool ServerSession::onRecordRequest(
 }
 
 bool ServerSession::onSetupRequest(
-    std::unique_ptr<Request>& requestPtr) noexcept
+    std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const MediaSessionId session = RequestSession(*requestPtr);
 
@@ -578,7 +578,7 @@ bool ServerSession::onSetupRequest(
 }
 
 bool ServerSession::onPlayRequest(
-    std::unique_ptr<Request>& requestPtr) noexcept
+    std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const MediaSessionId session = RequestSession(*requestPtr);
     if(session.empty())
@@ -606,7 +606,7 @@ bool ServerSession::onPlayRequest(
 }
 
 bool ServerSession::onTeardownRequest(
-    std::unique_ptr<Request>& requestPtr) noexcept
+    std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const MediaSessionId session = RequestSession(*requestPtr);
 

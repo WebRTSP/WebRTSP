@@ -32,8 +32,8 @@ struct Session
 
     virtual bool onConnected() noexcept { return true; }
 
-    virtual bool handleRequest(std::unique_ptr<Request>&) noexcept;
-    bool handleResponse(std::unique_ptr<Response>& responsePtr) noexcept;
+    virtual bool handleRequest(std::unique_ptr<Request>&&) noexcept;
+    bool handleResponse(std::unique_ptr<Response>&&) noexcept;
 
     const std::string sessionLogId;
 
@@ -126,30 +126,30 @@ protected:
         const std::string& body,
         const std::optional<std::string>& token = {}) noexcept;
 
-    virtual bool onOptionsRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onOptionsRequest(std::unique_ptr<Request>&&) noexcept
         { return false; }
-    virtual bool onListRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onListRequest(std::unique_ptr<Request>&&) noexcept
         { return false; }
-    virtual bool onDescribeRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onDescribeRequest(std::unique_ptr<Request>&&) noexcept
         { return false; }
-    virtual bool onSetupRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onSetupRequest(std::unique_ptr<Request>&&) noexcept
         { return false; }
-    virtual bool onPlayRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onPlayRequest(std::unique_ptr<Request>&&) noexcept
         { return false; }
-    virtual bool onSubscribeRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onSubscribeRequest(std::unique_ptr<Request>&&) noexcept
         { return false; }
-    virtual bool onRecordRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onRecordRequest(std::unique_ptr<Request>&&) noexcept
         { return false; }
-    virtual bool onTeardownRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onTeardownRequest(std::unique_ptr<Request>&&) noexcept
         { return false; }
-    virtual bool onGetParameterRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onGetParameterRequest(std::unique_ptr<Request>&&) noexcept
         { return false; }
-    virtual bool onSetParameterRequest(std::unique_ptr<Request>&) noexcept
+    virtual bool onSetParameterRequest(std::unique_ptr<Request>&&) noexcept
         { return false; }
 
     virtual bool handleResponse(
         const Request&,
-        std::unique_ptr<Response>&) noexcept;
+        std::unique_ptr<Response>&&) noexcept;
 
     virtual bool onOptionsResponse(const Request& request, const Response& response) noexcept
         { return StatusCode::OK == response.statusCode; }

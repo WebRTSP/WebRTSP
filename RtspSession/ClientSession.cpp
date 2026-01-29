@@ -276,7 +276,7 @@ bool ClientSession::onTeardownResponse(
     return false;
 }
 
-bool ClientSession::onRecordRequest(std::unique_ptr<Request>& request) noexcept
+bool ClientSession::onRecordRequest(std::unique_ptr<Request>&& request) noexcept
 {
     MediaSessionId recordSession = RequestSession(*request);
     if(_p->session != recordSession)
@@ -309,7 +309,7 @@ bool ClientSession::onRecordRequest(std::unique_ptr<Request>& request) noexcept
 
 }
 
-bool ClientSession::onSetupRequest(std::unique_ptr<Request>& requestPtr) noexcept
+bool ClientSession::onSetupRequest(std::unique_ptr<Request>&& requestPtr) noexcept
 {
     if(RequestSession(*requestPtr) != _p->session)
         return false;
