@@ -25,6 +25,9 @@ public:
 private:
     class WebRTSPPeer;
 
+    void reset();
+    void play();
+
     void onConnected() noexcept override;
     void onDisconnected() noexcept override;
 
@@ -36,6 +39,7 @@ private:
         const rtsp::Response&) noexcept override;
 
     bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool onTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 private slots:
     void onReceiverPrepared(const std::shared_ptr<Peer>&, const std::string& sdp);

@@ -34,14 +34,7 @@ Player::~Player() noexcept
 {
 }
 
-void Player::onConnected() noexcept
-{
-    _peer = std::make_shared<Peer>(_view);
-
-    _describeCSeq = connection()->requestDescribe(this, _encodedUri);
-}
-
-void Player::onDisconnected() noexcept
+void Player::reset()
 {
     if(!_peer)
         return;
@@ -53,6 +46,26 @@ void Player::onDisconnected() noexcept
     _peer.reset();
     _describeCSeq = rtsp::InvalidCSeq;
     _mediaSession.clear();
+}
+
+void Player::play()
+{
+    if(_peer)
+        return;
+
+    _peer = std::make_shared<Peer>(_view);
+
+    _describeCSeq = connection()->requestDescribe(this, _encodedUri);
+}
+
+void Player::onConnected() noexcept
+{
+    play();
+}
+
+void Player::onDisconnected() noexcept
+{
+    reset();
 }
 
 void Player::onReceiverPrepared(
@@ -176,6 +189,18 @@ bool Player::onSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
     });
 
     connection()->sendOkResponse(requestPtr->cseq, rtsp::RequestSession(*requestPtr));
+
+    return true;
+}
+
+bool Player::onTeardownRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    connection()->sendOkResponse(requestPtr->cseq, rtsp::RequestSession(*requestPtr));
+
+    if(rtsp::RequestSession(*requestPtr) == _mediaSession) {
+        reset();
+        qInfo() << "TEARDOWN"; // FIXME! add handler
+    }
 
     return true;
 }
