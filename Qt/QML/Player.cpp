@@ -115,6 +115,14 @@ bool Player::onDescribeResponse(
     if(response.cseq != _describeCSeq)
         return false;
 
+    if(response.statusCode != rtsp::StatusCode::OK) {
+        reset();
+        qInfo().nospace()
+            << "DESCRIBE request failed for " << _uri << ": "
+            << response.reasonPhrase; // FIXME! add handler
+        return true;
+    }
+
     Q_ASSERT(_mediaSession.empty());
 
     _mediaSession = ResponseSession(response);
