@@ -206,7 +206,7 @@ void Connection::messageReceived(const QString& message) noexcept
             return;
         }
 
-        if(!handleRequest(requestPtr)) {
+        if(!handleRequest(std::move(requestPtr))) {
             qWarning()
                 << "Failed to handle request:" << Qt::endl
                 << message << Qt::endl
@@ -227,7 +227,7 @@ void Connection::messageReceived(const QString& message) noexcept
             return;
         }
 
-        if(!rtsp::Session::handleResponse(responsePtr)) {
+        if(!rtsp::Session::handleResponse(std::move(responsePtr))) {
             qWarning()
                 << "Failed to handle response:" << Qt::endl
                 << message << Qt::endl
@@ -240,7 +240,7 @@ void Connection::messageReceived(const QString& message) noexcept
 }
 
 bool Connection::handleRequest(
-    std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+    std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
     const rtsp::MediaSessionId mediaSession = rtsp::RequestSession(*requestPtr);
 
@@ -265,7 +265,7 @@ bool Connection::handleRequest(
 
 bool Connection::handleResponse(
     const rtsp::Request& request,
-    std::unique_ptr<rtsp::Response>& responsePtr) noexcept
+    std::unique_ptr<rtsp::Response>&& responsePtr) noexcept
 {
     if(auto it = _sentRequests.find(responsePtr->cseq); it != _sentRequests.end()) {
         Client* target = it->second.owner;

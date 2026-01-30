@@ -79,10 +79,11 @@ private:
     void sendRequest(const rtsp::Request*) noexcept;
     void sendResponse(const rtsp::Response*) noexcept;
 
-    bool handleRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
+    bool handleRequest(
+        std::unique_ptr<rtsp::Request>&&) noexcept override;
     bool handleResponse(
         const rtsp::Request&,
-        std::unique_ptr<rtsp::Response>&) noexcept override;
+        std::unique_ptr<rtsp::Response>&&) noexcept override;
 
     void sendPing() noexcept;
 
