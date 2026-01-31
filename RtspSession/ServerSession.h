@@ -29,7 +29,7 @@ public:
     const std::shared_ptr<spdlog::logger>& log() const
         { return _log; }
 
-    virtual bool onConnected(const std::optional<std::string>& authCookie = {}) noexcept;
+    bool onConnected(const std::optional<std::string>& authCookie = {}) noexcept;
 
     bool handleRequest(std::unique_ptr<Request>&&) noexcept override;
 
