@@ -31,8 +31,9 @@ endif()
 if(HTTP_SUPPORT)
     add_subdirectory(Http)
 endif()
-
-add_subdirectory(Qt)
+if(QML_SUPPORT)
+    add_subdirectory(Qt/QML)
+endif()
 
 if(BUILD_TEST_APPS)
     add_subdirectory(Apps/Test)
