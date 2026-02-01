@@ -71,19 +71,7 @@ void Connection::open() noexcept
 
     _webSocket = new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this);
     QObject::connect(_webSocket, &QWebSocket::connected,
-        this, [this] () {
-            qDebug() << "Connected";
-
-            _isOpen = true;
-
-            _pingTimer.start();
-
-            for(Client* client: _clients) {
-                client->onConnected();
-            }
-
-            emit connected();
-        });
+        this, &Connection::socketConnected);
     QObject::connect(_webSocket, &QWebSocket::disconnected,
         this, [this] () {
             qDebug() << "Disconnected";
@@ -107,6 +95,8 @@ void Connection::open() noexcept
 void Connection::close(bool reconnect) noexcept
 {
     _isOpen = false;
+
+    rtsp::CSeq _authRequest = rtsp::InvalidCSeq;
 
     _pingTimer.stop();
 
@@ -189,6 +179,34 @@ void Connection::sendResponse(const rtsp::Response* response) noexcept
     _webSocket->sendTextMessage(QString::fromStdString(serializedResponse));
 }
 
+void Connection::socketConnected() noexcept
+{
+    qDebug() << "Connected";
+
+    if(_authToken.isEmpty()) {
+        authorized();
+    } else {
+        _authRequest = requestGetParameter(
+            rtsp::WildcardUri,
+            std::string(),
+            std::string(),
+            _authToken.toStdString());
+    }
+}
+
+void Connection::authorized()
+{
+    _isOpen = true;
+
+    _pingTimer.start();
+
+    for(Client* client: _clients) {
+        client->onConnected();
+    }
+
+    emit connected();
+}
+
 void Connection::messageReceived(const QString& message) noexcept
 {
     qDebug() << "WebRTSPClient <-" << message;
@@ -267,6 +285,12 @@ bool Connection::handleResponse(
     const rtsp::Request& request,
     std::unique_ptr<rtsp::Response>&& responsePtr) noexcept
 {
+    if(_authRequest == responsePtr->cseq) {
+        _authRequest = rtsp::InvalidCSeq;
+        authorized();
+        return true;
+    }
+
     if(auto it = _sentRequests.find(responsePtr->cseq); it != _sentRequests.end()) {
         Client* target = it->second.owner;
         _sentRequests.erase(it);

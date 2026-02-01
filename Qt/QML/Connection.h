@@ -34,6 +34,7 @@ public:
 
 public:
     Q_PROPERTY(QUrl serverUrl MEMBER _serverUrl WRITE setServerUrl)
+    Q_PROPERTY(QString authToken MEMBER _authToken)
     Q_PROPERTY(bool isOpen READ isOpen)
 
     explicit Connection(QObject* parent = nullptr) noexcept;
@@ -73,6 +74,8 @@ signals:
     void connected();
 
 private:
+    void authorized();
+
     void registerClient(Client*) noexcept;
     void unregisterClient(Client*) noexcept;
 
@@ -90,13 +93,17 @@ private:
     void close(bool reconnect) noexcept;
 
 private slots:
+    void socketConnected() noexcept;
     void messageReceived(const QString&) noexcept;
 
 private:
     QUrl _serverUrl;
+    QString _authToken;
     bool _reconnect = false;
     QWebSocket* _webSocket = nullptr;
     bool _isOpen = false;
+
+    rtsp::CSeq _authRequest = rtsp::InvalidCSeq;
 
     std::set<Client*> _clients;
     std::map<rtsp::CSeq, RequestData> _sentRequests;
