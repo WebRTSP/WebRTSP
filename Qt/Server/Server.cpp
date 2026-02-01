@@ -149,7 +149,12 @@ Server::Server(
     gst_init(nullptr, nullptr);
 
     setSupportedSubprotocols({ "webrtsp" });
-    if(listen(QHostAddress::Any, signalling::DEFAULT_WS_PORT)) {
+    if(listen(
+        QHostAddress::Any,
+        sslConfig.localCertificate().isNull() ?
+            signalling::DEFAULT_WS_PORT :
+            signalling::DEFAULT_WSS_PORT))
+    {
         qInfo() << "WebRTSP server started on port " << serverPort();
         QObject::connect(
             this,
