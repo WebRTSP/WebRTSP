@@ -122,7 +122,6 @@ void Connection::close(bool reconnect) noexcept
         qDebug() << "Scheduled reconnect in" << delay << "ms";
         _reconnectTimer.start(delay);
     } else {
-        _serverUrl.clear();
         _reconnectTimer.stop();
     }
 }
