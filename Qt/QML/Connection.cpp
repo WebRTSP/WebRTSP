@@ -1,5 +1,6 @@
 #include "Connection.h"
 
+#include <QSslConfiguration>
 #include <QtWebSockets/QWebSocketHandshakeOptions>
 
 #include "RtspParser/RtspSerialize.h"
@@ -86,6 +87,11 @@ void Connection::open() noexcept
         });
     QObject::connect(_webSocket, &QWebSocket::textMessageReceived,
         this, &Connection::messageReceived);
+    if(!_verifyCert) {
+        QSslConfiguration sslConfiggration = QSslConfiguration::defaultConfiguration();
+        sslConfiggration.setPeerVerifyMode(QSslSocket::VerifyNone);
+        _webSocket->setSslConfiguration(sslConfiggration);
+    }
 
     QWebSocketHandshakeOptions options;
     options.setSubprotocols({ "webrtsp" });

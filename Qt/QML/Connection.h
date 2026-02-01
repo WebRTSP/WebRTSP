@@ -34,6 +34,7 @@ public:
 
 public:
     Q_PROPERTY(QUrl serverUrl MEMBER _serverUrl WRITE setServerUrl)
+    Q_PROPERTY(bool verifyCert MEMBER _verifyCert)
     Q_PROPERTY(QString authToken MEMBER _authToken)
     Q_PROPERTY(bool isOpen READ isOpen)
 
@@ -99,6 +100,7 @@ private slots:
 private:
     QUrl _serverUrl;
     QString _authToken;
+    bool _verifyCert = true;
     bool _reconnect = false;
     QWebSocket* _webSocket = nullptr;
     bool _isOpen = false;
