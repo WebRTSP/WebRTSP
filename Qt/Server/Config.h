@@ -9,9 +9,6 @@
 
 #include <spdlog/common.h>
 
-#include "Client/Config.h"
-#include "Signalling/Config.h"
-
 #include "RtStreaming/WebRTCConfig.h"
 
 
@@ -30,7 +27,7 @@ struct StreamerConfig
 };
 
 
-struct Config : public signalling::Config
+struct Config
 {
     std::shared_ptr<WebRTCConfig> webRTCConfig = std::make_shared<WebRTCConfig>();
     std::map<std::string, StreamerConfig> streamers; // escaped streamer name -> StreamerConfig
