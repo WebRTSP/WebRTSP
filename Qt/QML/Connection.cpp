@@ -199,7 +199,7 @@ void Connection::socketConnected() noexcept
     }
 }
 
-void Connection::authorized()
+void Connection::authorized() noexcept
 {
     _isOpen = true;
 

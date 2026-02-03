@@ -75,7 +75,7 @@ signals:
     void connected();
 
 private:
-    void authorized();
+    void authorized() noexcept;
 
     void registerClient(Client*) noexcept;
     void unregisterClient(Client*) noexcept;
