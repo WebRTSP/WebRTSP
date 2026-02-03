@@ -43,6 +43,8 @@ protected:
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
 
+    void setWebRTCConfig(WebRTCConfigPtr&&) noexcept;
+
     Request* createRequest(
         Method,
         const std::string& uri) noexcept;
@@ -177,7 +179,7 @@ protected:
 private:
     const std::shared_ptr<spdlog::logger> _log;
 
-    const WebRTCConfigPtr _webRTCConfig;
+    WebRTCConfigPtr _webRTCConfig;
 
     const SendRequest _sendRequest;
     const SendResponse _sendResponse;

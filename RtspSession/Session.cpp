@@ -36,6 +36,11 @@ Session::~Session()
     log()->info("Session destroyed");
 }
 
+void Session::setWebRTCConfig(WebRTCConfigPtr&& webRTCConfig) noexcept
+{
+    _webRTCConfig = std::move(webRTCConfig);
+}
+
 Request* Session::createRequest(
     Method method,
     const std::string& uri) noexcept
