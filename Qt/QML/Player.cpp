@@ -133,9 +133,14 @@ bool Player::onDescribeResponse(
     if(sdp.empty())
         return false;
 
-    _actor->postAction([owner = this, peer = _peer, sdp] () {
+    _actor->postAction([
+        owner = this,
+        peer = _peer,
+        webRTCConfig = connection()->webRTCConfig(),
+        sdp
+    ] () {
         peer->prepare(
-            std::make_shared<WebRTCConfig>(), // FIXME!
+            webRTCConfig,
             [owner, peer] () { // receiverPrepared
                 QMetaObject::invokeMethod(
                     owner,

@@ -34,6 +34,8 @@ public:
 
 public:
     Q_PROPERTY(QUrl serverUrl MEMBER _serverUrl WRITE setServerUrl)
+    Q_PROPERTY(QUrl stunServerUrl MEMBER _stunServerUrl WRITE setStunServerUrl)
+    Q_PROPERTY(QUrl turnServerUrl MEMBER _turnServerUrl WRITE setTurnServerUrl)
     Q_PROPERTY(bool verifyCert MEMBER _verifyCert)
     Q_PROPERTY(QString authToken MEMBER _authToken)
     Q_PROPERTY(bool isOpen READ isOpen)
@@ -41,6 +43,10 @@ public:
     explicit Connection(QObject* parent = nullptr) noexcept;
 
     void setServerUrl(const QUrl&) noexcept;
+    void setStunServerUrl(const QUrl&) noexcept;
+    void setTurnServerUrl(const QUrl&) noexcept;
+
+    using rtsp::Session::webRTCConfig;
 
     Q_INVOKABLE bool isOpen() const noexcept { return _isOpen; }
 
@@ -75,6 +81,8 @@ signals:
     void connected();
 
 private:
+    void updateWebRTCConfig() noexcept;
+
     void authorized() noexcept;
 
     void registerClient(Client*) noexcept;
@@ -99,6 +107,9 @@ private slots:
 
 private:
     QUrl _serverUrl;
+    QUrl _stunServerUrl;
+    QUrl _turnServerUrl;
+
     QString _authToken;
     bool _verifyCert = true;
     bool _reconnect = false;

@@ -23,8 +23,11 @@ Connection::Connection(QObject* parent) noexcept :
     rtsp::Session(
         std::make_shared<WebRTCConfig>(),
         [this] (const rtsp::Request* request) { sendRequest(request); },
-        [this] (const rtsp::Response* response) { sendResponse(response); })
+        [this] (const rtsp::Response* response) { sendResponse(response); }),
+    _stunServerUrl("stun://stun.cloudflare.com")
 {
+    updateWebRTCConfig();
+
     _pingTimer.setInterval(PING_INTERVAL * 1000);
     QObject::connect(&_pingTimer, &QTimer::timeout, this, &Connection::sendPing);
     _reconnectTimer.setSingleShot(true);
@@ -142,6 +145,26 @@ void Connection::setServerUrl(const QUrl& url) noexcept
     _serverUrl = url;
 }
 
+void Connection::setStunServerUrl(const QUrl& stunServerUrl) noexcept
+{
+    if(_stunServerUrl == stunServerUrl)
+        return;
+
+    _stunServerUrl = stunServerUrl;
+
+    updateWebRTCConfig();
+}
+
+void Connection::setTurnServerUrl(const QUrl& turnServerUrl) noexcept
+{
+    if(_turnServerUrl == turnServerUrl)
+        return;
+
+    _turnServerUrl = turnServerUrl;
+
+    updateWebRTCConfig();
+}
+
 void Connection::sendRequest(const rtsp::Request* request) noexcept
 {
     if(!_webSocket)
@@ -197,6 +220,28 @@ void Connection::socketConnected() noexcept
             std::string(),
             _authToken.toStdString());
     }
+}
+void Connection::updateWebRTCConfig() noexcept
+{
+    std::shared_ptr<WebRTCConfig> webRTCConfig = rtsp::Session::webRTCConfig() ?
+        std::make_shared<WebRTCConfig>(*rtsp::Session::webRTCConfig()) :
+        std::make_shared<WebRTCConfig>();
+
+    webRTCConfig->iceServers.clear();
+    webRTCConfig->iceServers.reserve(
+        (_stunServerUrl.isEmpty() ? 0 : 1) + (_turnServerUrl.isEmpty() ? 0 : 1));
+
+    if(!_stunServerUrl.isEmpty()) {
+        webRTCConfig->iceServers.emplace_back(
+            std::move(_stunServerUrl.toString().toStdString()));
+    }
+
+    if(!_turnServerUrl.isEmpty()) {
+        webRTCConfig->iceServers.emplace_back(
+            std::move(_turnServerUrl.toString().toStdString()));
+    }
+
+    setWebRTCConfig(std::move(webRTCConfig));
 }
 
 void Connection::authorized() noexcept
