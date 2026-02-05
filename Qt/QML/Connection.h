@@ -81,6 +81,16 @@ signals:
     void connected();
     void disconnected();
 
+    void textMessageReceived(const QString&);
+    void binaryMessageReceived(const QByteArray&);
+
+public slots:
+    virtual void sendTextMessage(const QString&) noexcept;
+    virtual void sendBinaryMessage(const QByteArray&) noexcept;
+
+protected slots:
+    virtual void messageReceived(const QString&) noexcept;
+
 private:
     void updateWebRTCConfig() noexcept;
 
@@ -104,7 +114,6 @@ private:
 
 private slots:
     void socketConnected() noexcept;
-    void messageReceived(const QString&) noexcept;
 
 private:
     QUrl _serverUrl;

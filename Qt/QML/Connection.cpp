@@ -89,6 +89,10 @@ void Connection::open() noexcept
             webSocket->deleteLater();
         });
     QObject::connect(_webSocket, &QWebSocket::textMessageReceived,
+        this, &Connection::textMessageReceived);
+    QObject::connect(_webSocket, &QWebSocket::binaryMessageReceived,
+        this, &Connection::binaryMessageReceived);
+    QObject::connect(_webSocket, &QWebSocket::textMessageReceived,
         this, &Connection::messageReceived);
     if(!_verifyCert) {
         QSslConfiguration sslConfiggration = QSslConfiguration::defaultConfiguration();
@@ -167,6 +171,22 @@ void Connection::setTurnServerUrl(const QUrl& turnServerUrl) noexcept
     updateWebRTCConfig();
 }
 
+void Connection::sendTextMessage(const QString& message) noexcept
+{
+    if(!_webSocket)
+        return;
+
+    _webSocket->sendTextMessage(message);
+}
+
+void Connection::sendBinaryMessage(const QByteArray& message) noexcept
+{
+    if(!_webSocket)
+        return;
+
+    _webSocket->sendBinaryMessage(message);
+}
+
 void Connection::sendRequest(const rtsp::Request* request) noexcept
 {
     if(!_webSocket)
@@ -185,7 +205,7 @@ void Connection::sendRequest(const rtsp::Request* request) noexcept
 
     qDebug() << "WebRTSPClient ->" << serializedRequest;
 
-    _webSocket->sendTextMessage(QString::fromStdString(serializedRequest));
+    sendTextMessage(QString::fromStdString(serializedRequest));
 }
 
 void Connection::sendResponse(const rtsp::Response* response) noexcept
@@ -206,7 +226,7 @@ void Connection::sendResponse(const rtsp::Response* response) noexcept
 
     qDebug() << "WebRTSPClient ->" << serializedResponse;
 
-    _webSocket->sendTextMessage(QString::fromStdString(serializedResponse));
+    sendTextMessage(QString::fromStdString(serializedResponse));
 }
 
 void Connection::socketConnected() noexcept
