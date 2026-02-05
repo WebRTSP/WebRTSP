@@ -4,7 +4,9 @@ project(Http)
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLIB REQUIRED glib-2.0)
-pkg_search_module(SPDLOG REQUIRED spdlog)
+if(NOT ANDROID)
+    pkg_search_module(SPDLOG REQUIRED spdlog)
+endif()
 pkg_search_module(MICROHTTP REQUIRED libmicrohttpd)
 
 set(SOURCES

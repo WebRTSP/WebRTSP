@@ -23,6 +23,43 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+if(ANDROID)
+    include(FetchContent)
+
+    FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v1.17.0
+    )
+    FetchContent_MakeAvailable(spdlog)
+
+
+    if(NOT DEFINED ENV{GSTREAMER_ANDROID_ROOT})
+       message(FATAL_ERROR "GSTREAMER_ANDROID_ROOT environment variable is not defined")
+    endif()
+
+    set(GSTREAMER_ANDROID_ROOT $ENV{GSTREAMER_ANDROID_ROOT})
+
+    if(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "x86" OR ${CMAKE_ANDROID_ARCH_ABI} STREQUAL "x86_64")
+        set(GSTREAMER_ANDROID_ARCH ${CMAKE_ANDROID_ARCH_ABI})
+    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "arm64-v8a")
+        set(GSTREAMER_ANDROID_ARCH arm64)
+    elseif(${CMAKE_ANDROID_ARCH_ABI} STREQUAL "armeabi-v7a")
+        set(GSTREAMER_ANDROID_ARCH armv7)
+    endif()
+
+    set(GSTREAMER_ANDROID_ROOT ${GSTREAMER_ANDROID_ROOT}/${GSTREAMER_ANDROID_ARCH})
+
+    set(GSTREAMER_PKG_PATHS
+        "${GSTREAMER_ANDROID_ROOT}/lib/pkgconfig"
+        "${GSTREAMER_ANDROID_ROOT}/lib/gstreamer-1.0/pkgconfig"
+    )
+
+    cmake_path(CONVERT "${GSTREAMER_PKG_PATHS}" TO_NATIVE_PATH_LIST GSTREAMER_PKG_PATHS)
+
+    set(ENV{PKG_CONFIG_PATH} "${GSTREAMER_PKG_PATHS}")
+endif()
+
 add_subdirectory(Helpers)
 add_subdirectory(RtspParser)
 add_subdirectory(RtspSession)

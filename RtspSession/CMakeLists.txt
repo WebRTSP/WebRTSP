@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 3.10)
 project(RtspSession)
 
 find_package(PkgConfig REQUIRED)
-pkg_search_module(SPDLOG REQUIRED spdlog)
+if(NOT ANDROID)
+    pkg_search_module(SPDLOG REQUIRED spdlog)
+endif()
 
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.cpp
