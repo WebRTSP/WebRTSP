@@ -111,18 +111,20 @@ void Connection::close(bool reconnect) noexcept
 
     _reconnect = reconnect;
 
-    if(_webSocket) {
-        _webSocket->disconnect(this);
-        if(QAbstractSocket::UnconnectedState != _webSocket->state())
-            _webSocket->close();
-        _webSocket = nullptr;
-    }
-
     for(Client* client: _clients)
         client->onDisconnected();
 
     _sentRequests.clear();
     _mediaSessions.clear();
+
+    if(_webSocket) {
+        _webSocket->disconnect(this);
+        if(QAbstractSocket::UnconnectedState != _webSocket->state())
+            _webSocket->close();
+        _webSocket = nullptr;
+
+        emit disconnected();
+    }
 
     if(_reconnect) {
         const int delay = QRandomGenerator::global()->bounded(

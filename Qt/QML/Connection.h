@@ -79,6 +79,7 @@ public:
 
 signals:
     void connected();
+    void disconnected();
 
 private:
     void updateWebRTCConfig() noexcept;
