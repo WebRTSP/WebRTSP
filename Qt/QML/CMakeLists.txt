@@ -5,8 +5,8 @@ project(QmlClient LANGUAGES CXX)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick REQUIRED)
-find_package(Qt6 REQUIRED COMPONENTS WebSockets REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS WebSockets)
 
 qt_add_library(${PROJECT_NAME} STATIC)
 qt_add_qml_module(${PROJECT_NAME}
