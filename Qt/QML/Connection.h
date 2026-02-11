@@ -36,6 +36,7 @@ public:
     Q_PROPERTY(QUrl serverUrl MEMBER _serverUrl WRITE setServerUrl)
     Q_PROPERTY(QUrl stunServerUrl MEMBER _stunServerUrl WRITE setStunServerUrl)
     Q_PROPERTY(QUrl turnServerUrl MEMBER _turnServerUrl WRITE setTurnServerUrl)
+    Q_PROPERTY(QString origin MEMBER _origin WRITE setOrigin)
     Q_PROPERTY(bool verifyCert MEMBER _verifyCert)
     Q_PROPERTY(QString authToken MEMBER _authToken)
     Q_PROPERTY(bool isOpen READ isOpen)
@@ -48,6 +49,7 @@ public:
 
     using rtsp::Session::webRTCConfig;
 
+    void setOrigin(const QString& origin) noexcept { _origin = origin; }
     Q_INVOKABLE bool isOpen() const noexcept { return _isOpen; }
 
     Q_INVOKABLE void open() noexcept;
@@ -120,6 +122,7 @@ private:
     QUrl _stunServerUrl;
     QUrl _turnServerUrl;
 
+    QString _origin;
     QString _authToken;
     bool _verifyCert = true;
     bool _reconnect = false;

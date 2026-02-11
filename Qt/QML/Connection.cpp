@@ -73,7 +73,7 @@ void Connection::open() noexcept
 
     _reconnectTimer.stop();
 
-    _webSocket = new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this);
+    _webSocket = new QWebSocket(_origin, QWebSocketProtocol::VersionLatest, this);
     QObject::connect(_webSocket, &QWebSocket::connected,
         this, &Connection::socketConnected);
     QObject::connect(_webSocket, &QWebSocket::disconnected,
