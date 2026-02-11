@@ -22,6 +22,9 @@ public:
         const QString& name = QString(),
         const QSslConfiguration& sslConfiguration = QSslConfiguration::defaultConfiguration()) noexcept;
 
+signals:
+    void clientAuthorized(QWebSocket*);
+
 protected:
     virtual void clientConnected(QWebSocket*) noexcept;
     virtual void clientDisconnected(QWebSocket*) noexcept;
@@ -54,6 +57,7 @@ private:
 
     void closeConnection(QWebSocket* connection) noexcept;
 
+    bool authorize(QWebSocket*, const std::unique_ptr<rtsp::Request>&) noexcept;
     void handleRequest(QWebSocket*, std::unique_ptr<rtsp::Request>&&) noexcept;
     void handleResponse(QWebSocket*, std::unique_ptr<rtsp::Response>&&) noexcept;
 

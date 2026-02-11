@@ -295,6 +295,27 @@ void Server::textMessageReceived(QWebSocket* connection, const QString& message)
     }
 }
 
+bool Server::authorize(
+    QWebSocket* connection,
+    const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+{
+    if(const QVariant authorized = connection->property("authorized"); !authorized.isNull())
+        return authorized.toBool();
+
+    const std::pair<rtsp::Authentication, std::string> authPair =
+        rtsp::ParseAuthentication(*requestPtr);
+
+    const bool authorized = _config->authToken.empty() ||
+        (authPair.first == rtsp::Authentication::Bearer &&
+        authPair.second == _config->authToken);
+
+    connection->setProperty("authorized", authorized);
+
+    emit clientAuthorized(connection);
+
+    return authorized;
+}
+
 void Server::handleRequest(
     QWebSocket* connection,
     std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
@@ -303,26 +324,44 @@ void Server::handleRequest(
     if(!session)
         return;
 
-    if(FIRST_REQUEST_WITHOUT_AUTH_DELAY && !_config->authToken.empty()) {
-        QVariant waiting = connection->property("waiting");
-        if(waiting.isNull()) {
-            connection->setProperty("waiting", true);
+    const QVariant authorized = connection->property("authorized");
+    if(authorized.isNull()) {
+        if(FIRST_REQUEST_WITHOUT_AUTH_DELAY && !_config->authToken.empty()) {
+            const QVariant waiting = connection->property("waiting");
+            if(waiting.isNull()) {
+                connection->setProperty("waiting", true);
 
-            // delay very first request to complicate token brute force
-            QTimer::singleShot(
-                FIRST_REQUEST_WITHOUT_AUTH_DELAY * 1000,
-                connection,
-                [this, connection, requestPtr = std::move(requestPtr)] () mutable {
-                    connection->setProperty("waiting", false);
-                    handleRequest(connection, std::move(requestPtr));
+                // delay very first request to complicate token brute force
+                QTimer::singleShot(
+                    FIRST_REQUEST_WITHOUT_AUTH_DELAY * 1000,
+                    connection,
+                    [this, connection, requestPtr = std::move(requestPtr)] () mutable {
+                        connection->setProperty("waiting", false);
+
+                        handleRequest(connection, std::move(requestPtr));
+                    }
+                );
+                return;
+            } else if(waiting.toBool()) {
+                // client sent next request without waiting answer to the very first one
+                closeConnection(connection);
+                return;
+            } else {
+                // it come here after FIRST_REQUEST_WITHOUT_AUTH_DELAY
+                if(!authorize(connection, requestPtr)) {
+                    closeConnection(connection);
+                    return;
                 }
-            );
-            return;
-        } else if(waiting.toBool()) {
-            // got second request without waiting very first answer
-            closeConnection(connection);
-            return;
+            }
+        } else {
+            if(!authorize(connection, requestPtr)) {
+                closeConnection(connection);
+                return;
+            }
         }
+    } else if(!authorized.toBool()) {
+        closeConnection(connection);
+        return;
     }
 
     // it's better to use std::move_only_function here, but it's from too fresh c++23
