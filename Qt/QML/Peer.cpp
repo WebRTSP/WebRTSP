@@ -58,7 +58,8 @@ void Peer::prepare(const WebRTCConfigPtr& webRTCConfig) noexcept
             const gchar* decodeBinDescription = nullptr;
             bool video = true;
             if(gst_caps_is_always_compatible(padCaps, h264Caps)) {
-                decodeBinDescription = "rtph264depay ! avdec_h264 ! videoconvert ! queue ! glupload ! qml6glsink name=qmlsink";
+                decodeBinDescription = "rtph264depay name=depay ! avdec_h264 ! videoconvert ! "
+                    "queue ! glupload ! qml6glsink name=qmlsink";
             } else if(gst_caps_is_always_compatible(padCaps, vp8Caps)) {
                 decodeBinDescription = "rtpvp8depay ! vp8dec ! videoconvert ! queue ! glupload ! qml6glsink name=qmlsink";
             } else if(gst_caps_is_always_compatible(padCaps, opusCaps)) {
@@ -79,6 +80,26 @@ void Peer::prepare(const WebRTCConfigPtr& webRTCConfig) noexcept
                 gst_bin_add(GST_BIN(pipeline), decodeBin);
                 gst_element_sync_state_with_parent(decodeBin);
                 GstPad* sinkPad = (GstPad*)decodeBin->sinkpads->data;
+                if(video) {
+                    GstElementPtr depayPtr(gst_bin_get_by_name(GST_BIN(decodeBin), "depay"));
+                    if(depayPtr) {
+                        GstPadPtr depaySrcPadPtr(gst_element_get_static_pad(depayPtr.get(), "src"));
+                        gst_pad_add_probe(
+                            depaySrcPadPtr.get(),
+                            GST_PAD_PROBE_TYPE_BUFFER,
+                            [] (GstPad* pad, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
+                                GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+
+                                if(GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT))
+                                    return GST_PAD_PROBE_DROP;
+                                else
+                                    return GST_PAD_PROBE_REMOVE;
+                            },
+                            nullptr,
+                            nullptr
+                        );
+                    }
+                }
                 gst_pad_link(pad, sinkPad);
             }
         };
