@@ -9,6 +9,31 @@
 
 using namespace webrtsp::qml;
 
+void Peer::prepare() noexcept
+{
+    GstWebRTCPeer::prepare(
+        _webRTCConfig,
+        [this] () { // receiverPrepared
+            emit prepared(sdp());
+        },
+        [this] (unsigned mlineIndex, const std::string& candidate) { // iceCandidate
+            emit iceCandidate(mlineIndex, candidate);
+        },
+        [this] () { // eos
+            emit eos();
+        },
+        std::string());
+}
+
+// will be called from streaming thread
+void Peer::postCanPlay(GstElement* element)
+{
+    GstStructure* structure = gst_structure_new_empty("can-play");
+    GstMessage* message = gst_message_new_application(GST_OBJECT(element), structure);
+    g_autoptr(GstBus) bus = gst_element_get_bus(element);
+    gst_bus_post(bus, message);
+}
+
 void Peer::prepare(const WebRTCConfigPtr& webRTCConfig) noexcept
 {
     GstElementPtr pipelinePtr(gst_pipeline_new("Client Pipeline"));
@@ -92,8 +117,10 @@ void Peer::prepare(const WebRTCConfigPtr& webRTCConfig) noexcept
 
                                 if(GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT))
                                     return GST_PAD_PROBE_DROP;
-                                else
+                                else {
+                                    Peer::postCanPlay(GST_PAD_PARENT(pad));
                                     return GST_PAD_PROBE_REMOVE;
+                                }
                             },
                             nullptr,
                             nullptr
@@ -113,4 +140,16 @@ void Peer::prepare(const WebRTCConfigPtr& webRTCConfig) noexcept
     setWebRtcBin(*webRTCConfig, std::move(rtcbinPtr));
 
     pause();
+}
+
+gboolean Peer::onBusMessage(GstMessage* message) noexcept
+{
+    if(GST_MESSAGE_TYPE(message) == GST_MESSAGE_APPLICATION) {
+        if(gst_message_has_name(message, "can-play")) {
+            emit canPlay();
+            return TRUE;
+        }
+    }
+
+    return GstWebRTCPeer::onBusMessage(message);
 }

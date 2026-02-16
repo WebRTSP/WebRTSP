@@ -16,10 +16,10 @@ Player::Player(
     _encodedUri(uri == "*" ? uri.toStdString() : QUrl::toPercentEncoding(uri).toStdString()),
     _view(view)
 {
-    static thread_local std::weak_ptr<Actor> sharedActor;
+    static thread_local std::weak_ptr<QActor> sharedActor;
 
     if(sharedActor.expired()) {
-        _actor = std::make_shared<Actor>();
+        _actor = std::make_shared<QActor>();
         sharedActor = _actor;
     } else {
         _actor = sharedActor.lock();
@@ -54,7 +54,7 @@ void Player::play()
     if(_peer)
         return;
 
-    _peer = std::make_shared<Peer>(_view);
+    _peer = std::make_shared<Peer>(_view, connection()->webRTCConfig());
 
     _describeCSeq = connection()->requestDescribe(this, _encodedUri);
 }
@@ -69,26 +69,17 @@ void Player::onDisconnected() noexcept
     reset();
 }
 
-void Player::onReceiverPrepared(
-    const std::shared_ptr<Peer>& peer,
-    const std::string& sdp)
+void Player::peerPrepared(const std::string& sdp)
 {
-    if(_peer != peer)
-        return;
-
     Q_ASSERT(connection()->isOpen());
 
     connection()->requestPlay(this, _encodedUri, _mediaSession, sdp);
 }
 
-void Player::onIceCandidate(
-    const std::shared_ptr<Peer>& peer,
+void Player::iceCandidate(
     unsigned mlineIndex,
     const std::string& candidate)
 {
-    if(_peer != peer)
-        return;
-
     Q_ASSERT(connection()->isOpen());
 
     connection()->requestSetup(
@@ -99,11 +90,8 @@ void Player::onIceCandidate(
         candidate);
 }
 
-void Player::onEos(const std::shared_ptr<Peer>& peer)
+void Player::eos()
 {
-    if(_peer != peer)
-        return;
-
     Q_ASSERT(connection()->isOpen());
 
     qInfo() << "EOS"; // FIXME! add handler
@@ -134,37 +122,14 @@ bool Player::onDescribeResponse(
     if(sdp.empty())
         return false;
 
-    _actor->postAction([
-        owner = this,
-        peer = _peer,
-        webRTCConfig = connection()->webRTCConfig(),
-        sdp
-    ] () {
-        peer->prepare(
-            webRTCConfig,
-            [owner, peer] () { // receiverPrepared
-                QMetaObject::invokeMethod(
-                    owner,
-                    &Player::onReceiverPrepared,
-                    peer,
-                    peer->sdp());
-            },
-            [owner, peer] (unsigned mlineIndex, const std::string& candidate) { // iceCandidate
-                QMetaObject::invokeMethod(
-                    owner,
-                    &Player::onIceCandidate,
-                    peer,
-                    mlineIndex,
-                    candidate);
-            },
-            [owner, peer] () { // eos
-                QMetaObject::invokeMethod(
-                    owner,
-                    &Player::onEos,
-                    peer);
-            },
-            std::string());
+    QObject::connect(_peer.get(), &Peer::prepared, this, &Player::peerPrepared);
+    QObject::connect(_peer.get(), &Peer::iceCandidate, this, &Player::iceCandidate);
+    QObject::connect(_peer.get(), &Peer::eos, this, &Player::eos);
+    QObject::connect(_peer.get(), &Peer::canPlay, this, &Player::canPlay);
 
+    _actor->postAction([peer = _peer, sdp] () mutable {
+        peer->moveToThread(QThread::currentThread());
+        peer->prepare();
         peer->setRemoteSdp(sdp);
     });
 

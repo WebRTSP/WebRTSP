@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QtQml>
 
-#include "Helpers/Actor.h"
+#include "../QActor.h"
 
 #include "Peer.h"
 #include "ConnectionClient.h"
@@ -42,16 +42,19 @@ private:
     bool onTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
 private slots:
-    void onReceiverPrepared(const std::shared_ptr<Peer>&, const std::string& sdp);
-    void onIceCandidate(const std::shared_ptr<Peer>&, unsigned, const std::string& candidate);
-    void onEos(const std::shared_ptr<Peer>&);
+    void peerPrepared(const std::string& sdp);
+    void iceCandidate(unsigned, const std::string& candidate);
+    void eos();
+
+signals:
+    void canPlay();
 
 private:
     const QString _uri;
     const std::string _encodedUri;
     QPointer<QQuickItem> _view;
 
-    std::shared_ptr<Actor> _actor;
+    std::shared_ptr<QActor> _actor;
     std::shared_ptr<Peer> _peer;
 
     rtsp::CSeq _describeCSeq = rtsp::InvalidCSeq;
