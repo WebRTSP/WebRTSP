@@ -33,6 +33,8 @@ qt_add_qml_module(${PROJECT_NAME}
         Player.cpp
         Peer.h
         Peer.cpp
+        ../QActor.h
+        ../QActor.cpp
     PLUGIN_TARGET WebRTSPClientPlugin
 )
 
