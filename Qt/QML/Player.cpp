@@ -32,6 +32,7 @@ Player::Player(
 
 Player::~Player() noexcept
 {
+    reset();
 }
 
 void Player::reset()
@@ -39,11 +40,11 @@ void Player::reset()
     if(!_peer)
         return;
 
-    _actor->postAction([peer = _peer] () mutable {
+    // use sendAction to be sure peer doestroed before possibler Player destroy
+    _actor->sendAction([peer = std::move(_peer)] () mutable {
         peer.reset();
     });
 
-    _peer.reset();
     _describeCSeq = rtsp::InvalidCSeq;
     _mediaSession.clear();
 }
