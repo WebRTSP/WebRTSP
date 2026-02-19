@@ -5,7 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "Helpers/EventSource.h"
+#include "Helpers/EventSource2.h"
 
 
 namespace {
@@ -47,7 +47,7 @@ void ActorMain(
     GMainContext* mainContext,
     GMainLoop* mainLoop,
     GAsyncQueue* queue,
-    EventSource* notifier)
+    EventSource2* notifier)
 {
     g_main_context_push_thread_default(mainContext);
 
@@ -66,7 +66,7 @@ struct QActor::Private {
     GMainContextPtr mainContextPtr;
     GMainLoopPtr mainLoopPtr;
     GAsyncQueuePtr queuePtr;
-    EventSource notifier;
+    EventSource2 notifier;
     QThread *const actorThread;
 };
 
