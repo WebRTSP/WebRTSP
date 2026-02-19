@@ -5,7 +5,7 @@
 
 #include <QWebSocketServer>
 
-#include "Helpers/Actor.h"
+#include "../QActor.h"
 
 #include "Session.h"
 
@@ -65,7 +65,7 @@ private:
     const Config *const _config;
     Session::SharedData _sharedData;
     std::map<QWebSocket*, std::shared_ptr<Session>> _sessions;
-    Actor _actor;
+    QActor _actor;
 };
 
 }

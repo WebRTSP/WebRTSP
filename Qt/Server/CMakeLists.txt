@@ -17,6 +17,8 @@ add_library(${PROJECT_NAME} STATIC
     Server.cpp
     Session.h
     Session.cpp
+    ../QActor.h
+    ../QActor.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
