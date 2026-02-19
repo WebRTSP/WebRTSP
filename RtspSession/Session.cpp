@@ -1,6 +1,7 @@
 #include "Session.h"
 
 #include <cassert>
+#include <random>
 
 #include <glib.h>
 
@@ -11,8 +12,8 @@ namespace {
 
 std::string GenerateSessionLogId()
 {
-    g_autoptr(GRand) rand = g_rand_new();
-    return std::to_string(g_rand_int(rand));
+    static thread_local std::default_random_engine random((std::random_device()()));
+    return std::to_string(random());
 }
 
 }
