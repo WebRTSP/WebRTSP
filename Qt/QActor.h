@@ -17,6 +17,8 @@ public:
     QActor(QObject* parent = nullptr);
     ~QActor();
 
+    QThread* actorThread() const noexcept;
+
     typedef std::function<void ()> Action;
     void postAction(const Action&);
     void postAction(Action&&);

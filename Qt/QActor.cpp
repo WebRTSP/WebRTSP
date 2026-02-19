@@ -102,6 +102,11 @@ QActor::~QActor()
     }
 }
 
+QThread* QActor::actorThread() const noexcept
+{
+    return _p->actorThread;
+}
+
 void QActor::postAction(const Action& action)
 {
     g_async_queue_push(
