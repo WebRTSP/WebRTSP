@@ -55,6 +55,7 @@ void Player::play()
         return;
 
     _peer = std::make_shared<Peer>(_view, connection()->webRTCConfig());
+    _peer->moveToThread(_actor->actorThread());
 
     _describeCSeq = connection()->requestDescribe(this, _encodedUri);
 }
@@ -128,7 +129,6 @@ bool Player::onDescribeResponse(
     QObject::connect(_peer.get(), &Peer::canPlay, this, &Player::canPlay);
 
     _actor->postAction([peer = _peer, sdp] () mutable {
-        peer->moveToThread(QThread::currentThread());
         peer->prepare();
         peer->setRemoteSdp(sdp);
     });
