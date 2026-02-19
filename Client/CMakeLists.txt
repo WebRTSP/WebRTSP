@@ -2,20 +2,45 @@ cmake_minimum_required(VERSION 3.10)
 
 project(Client)
 
-find_package(PkgConfig REQUIRED)
+if(NOT WIN32)
+	find_package(PkgConfig REQUIRED)
+endif()
+
+if(NOT ANDROID AND NOT WIN32)
+	pkg_search_module(WS REQUIRED libwebsockets)
+endif()
 
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.cpp
     *.h
-    *.cmake)
+    *.cmake
+)
 
 add_library(${PROJECT_NAME} ${SOURCES})
-target_compile_definitions(${PROJECT_NAME} PUBLIC -DGST_USE_UNSTABLE_API)
-target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../)
+
+if(ANDROID OR WIN32)
+    target_link_libraries(${PROJECT_NAME}
+        websockets
+    )
+else()
+    target_include_directories(${PROJECT_NAME}
+        PUBLIC
+            ${LIBWEBSOCKETS_INCLUDE_DIRS}
+        )
+    target_link_libraries(${PROJECT_NAME}
+        ${LIBWEBSOCKETS_LDFLAGS}
+    )
+endif()
+
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../
+)
+
 target_link_libraries(${PROJECT_NAME}
     GstRtStreaming
-    Helpers)
+    Helpers
+)
 
 #get_cmake_property(_variableNames VARIABLES)
 #foreach (_variableName ${_variableNames})

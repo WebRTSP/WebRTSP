@@ -19,11 +19,12 @@ if(DEFINED ENV{SNAPCRAFT_BUILD_ENVIRONMENT})
     set(SNAPCRAFT_BUILD YES)
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
+
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if(ANDROID)
+if(ANDROID OR WIN32)
     include(FetchContent)
 
     FetchContent_Declare(
@@ -33,7 +34,27 @@ if(ANDROID)
     )
     FetchContent_MakeAvailable(spdlog)
 
+    if(HTTP_SUPPORT)
+        FetchContent_Declare(
+          microhttpd
+          GIT_REPOSITORY https://git.gnunet.org/libmicrohttpd.git
+          GIT_TAG v1.0.1
+        )
 
+        FetchContent_MakeAvailable(microhttpd)
+    endif()
+
+    if(LIBWEBSOCKETS_SUPPORT)
+        FetchContent_Declare(
+            libwebsockets
+            GIT_REPOSITORY https://github.com/warmcat/libwebsockets.git
+            GIT_TAG v4.5-stable
+        )
+        FetchContent_MakeAvailable(libwebsockets)
+    endif()
+endif()
+
+if(ANDROID)
     if(NOT DEFINED ENV{GSTREAMER_ANDROID_ROOT})
        message(FATAL_ERROR "GSTREAMER_ANDROID_ROOT environment variable is not defined")
     endif()
