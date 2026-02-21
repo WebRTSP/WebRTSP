@@ -78,10 +78,12 @@ void Peer::prepare(const WebRTCConfigPtr& webRTCConfig) noexcept
 
             GstCapsPtr padCapsPtr(gst_pad_get_current_caps(pad));
             GstCapsPtr h264CapsPtr(gst_caps_from_string("application/x-rtp, media=video, encoding-name=H264"));
+            GstCapsPtr h265CapsPtr(gst_caps_from_string("application/x-rtp, media=video, encoding-name=H265"));
             GstCapsPtr vp8CapsPtr(gst_caps_from_string("application/x-rtp, media=video, encoding-name=VP8"));
             GstCapsPtr opusCapsPtr(gst_caps_from_string("application/x-rtp, media=audio, encoding-name=OPUS"));
             GstCaps* padCaps = padCapsPtr.get();
             GstCaps* h264Caps = h264CapsPtr.get();
+            GstCaps* h265Caps = h265CapsPtr.get();
             GstCaps* vp8Caps = vp8CapsPtr.get();
             GstCaps* opusCaps = opusCapsPtr.get();
 
@@ -89,6 +91,11 @@ void Peer::prepare(const WebRTCConfigPtr& webRTCConfig) noexcept
             bool video = true;
             if(gst_caps_is_always_compatible(padCaps, h264Caps)) {
                 decodeBinDescription = "rtph264depay name=depay ! avdec_h264 ! videoconvert ! "
+                    "queue ! glupload ! qml6glsink name=qmlsink";
+            } else if(gst_caps_is_always_compatible(padCaps, h265Caps)) {
+                decodeBinDescription = "rtph265depay name=depay ! avdec_h265 ! "
+                    "capssetter caps=\"video/x-raw,colorimetry=bt709\" ! "
+                    "videoconvert ! "
                     "queue ! glupload ! qml6glsink name=qmlsink";
             } else if(gst_caps_is_always_compatible(padCaps, vp8Caps)) {
                 decodeBinDescription = "rtpvp8depay ! vp8dec ! videoconvert ! queue ! glupload ! qml6glsink name=qmlsink";

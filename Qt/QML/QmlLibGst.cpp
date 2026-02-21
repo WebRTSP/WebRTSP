@@ -16,10 +16,10 @@ G_END_DECLS
 static void LogToQt(
     GstDebugCategory* category,
     GstDebugLevel level,
-    const gchar* /*file*/,
-    const gchar* /*function*/,
+    const gchar* file,
+    const gchar* function,
     gint /*line*/,
-    GObject* /*object*/,
+    GObject* object,
     GstDebugMessage* message,
     gpointer /*userData*/)
 {
