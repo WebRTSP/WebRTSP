@@ -18,6 +18,34 @@ Session::Session(
 {
 }
 
+bool Session::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
+{
+    if(_authorized.has_value()) {
+        return _authorized.value() ?
+            rtsp::ServerSession::handleRequest(std::move(requestPtr)) :
+            false;
+    }
+
+    const std::pair<rtsp::Authentication, std::string> authPair =
+        rtsp::ParseAuthentication(*requestPtr);
+
+    const bool authorized = _config->authToken.empty() ||
+        (authPair.first == rtsp::Authentication::Bearer &&
+        authPair.second == _config->authToken);
+
+    _authorized = authorized;
+
+    if(authorized) {
+        const bool result = rtsp::ServerSession::handleRequest(std::move(requestPtr));
+
+        emit this->authorized();
+
+        return result;
+    }
+
+    return false;
+}
+
 bool Session::listEnabled(const std::string& uri) noexcept
 {
     return uri == rtsp::WildcardUri;

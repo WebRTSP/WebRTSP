@@ -59,7 +59,6 @@ private:
 
     void closeConnection(QWebSocket* connection) noexcept;
 
-    bool authorize(QWebSocket*, const std::unique_ptr<rtsp::Request>&) noexcept;
     void handleRequest(QWebSocket*, std::unique_ptr<rtsp::Request>&&) noexcept;
     void handleResponse(QWebSocket*, std::unique_ptr<rtsp::Response>&&) noexcept;
 
