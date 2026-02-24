@@ -4,6 +4,10 @@
 
 #include "Connection.h"
 
+enum {
+    RECONNECT_INTERVAL_MIN = 1, // seconds
+    RECONNECT_INTERVAL_MAX = 5, // seconds
+};
 
 using namespace webrtsp::qml;
 
@@ -25,6 +29,9 @@ Player::Player(
         _actor = sharedActor.lock();
     }
 
+    _reconnectTimer.setSingleShot(true);
+    QObject::connect(&_reconnectTimer, &QTimer::timeout, this, &Player::play);
+
     if(connection->isOpen()) {
         onConnected();
     }
@@ -40,6 +47,8 @@ void Player::reset()
     if(!_peer)
         return;
 
+    _reconnectTimer.stop();
+
     // use sendAction to be sure peer doestroyed before possibler Player destroy
     _actor->sendAction([peer = std::move(_peer)] () mutable {
         peer.reset();
@@ -49,10 +58,21 @@ void Player::reset()
     _mediaSession.clear();
 }
 
+void Player::scheduleReconnect() noexcept
+{
+    const int delay = QRandomGenerator::global()->bounded(
+            RECONNECT_INTERVAL_MIN * 1000,
+            RECONNECT_INTERVAL_MAX * 1000);
+    qDebug() << "Scheduled reconnect in" << delay << "ms";
+    _reconnectTimer.start(delay);
+}
+
 void Player::play()
 {
     if(_peer)
         return;
+
+    _reconnectTimer.stop();
 
     _peer = std::make_shared<Peer>(_view, connection()->webRTCConfig());
     _peer->moveToThread(_actor->actorThread());
@@ -95,7 +115,11 @@ void Player::eos()
 {
     Q_ASSERT(connection()->isOpen());
 
-    qInfo() << "EOS"; // FIXME! add handler
+    reset();
+
+    qInfo() << "EOS";
+
+    scheduleReconnect();
 }
 
 bool Player::onDescribeResponse(
@@ -110,6 +134,7 @@ bool Player::onDescribeResponse(
         qInfo().nospace()
             << "DESCRIBE request failed for " << _uri << ": "
             << response.reasonPhrase; // FIXME! add handler
+        scheduleReconnect();
         return true;
     }
 
@@ -178,7 +203,10 @@ bool Player::onTeardownRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexc
 
     if(rtsp::RequestSession(*requestPtr) == _mediaSession) {
         reset();
-        qInfo() << "TEARDOWN"; // FIXME! add handler
+
+        qInfo() << "TEARDOWN";
+
+        scheduleReconnect();
     }
 
     return true;

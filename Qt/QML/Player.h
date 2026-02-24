@@ -26,7 +26,6 @@ private:
     class WebRTSPPeer;
 
     void reset();
-    void play();
 
     void onConnected() noexcept override;
     void onDisconnected() noexcept override;
@@ -41,7 +40,10 @@ private:
     bool onSetupRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
     bool onTeardownRequest(std::unique_ptr<rtsp::Request>&) noexcept override;
 
+    void scheduleReconnect() noexcept;
+
 private slots:
+    void play();
     void peerPrepared(const std::string& sdp);
     void iceCandidate(unsigned, const std::string& candidate);
     void eos();
@@ -56,6 +58,8 @@ private:
 
     std::shared_ptr<QActor> _actor;
     std::shared_ptr<Peer> _peer;
+
+    QTimer _reconnectTimer;
 
     rtsp::CSeq _describeCSeq = rtsp::InvalidCSeq;
 
