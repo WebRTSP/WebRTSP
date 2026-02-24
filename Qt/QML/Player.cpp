@@ -40,7 +40,7 @@ void Player::reset()
     if(!_peer)
         return;
 
-    // use sendAction to be sure peer doestroed before possibler Player destroy
+    // use sendAction to be sure peer doestroyed before possibler Player destroy
     _actor->sendAction([peer = std::move(_peer)] () mutable {
         peer.reset();
     });
