@@ -37,6 +37,8 @@ protected:
 
 private slots:
     void sendMessage(QWebSocket*, const std::string& message) noexcept;
+    // called after session referencing connection destroy
+    void connectionOrphaned(QWebSocket*) noexcept;
 
 private:
     static void SendMessage(

@@ -225,15 +225,27 @@ void Server::clientDisconnected(QWebSocket* connection) noexcept
 {
     connection->setProperty("session", QVariant());
     connection->disconnect(this);
-    connection->deleteLater();
 
     if(auto it = _sessions.find(connection); it != _sessions.end()) {
         std::shared_ptr<Session> session = it->second;
         _sessions.erase(it);
 
-        _actor.postAction([session] () mutable {
+        _actor.postAction([owner = this, connection, session] () mutable {
             session.reset();
+            // It's required to be sure main thread never receives notification
+            // referencing a specific connection after connection is destroyed.
+            // And it's very bad idea to keep pointer do destroyed session somewhere
+            // to do validation, since there is some chance new connection will be created
+            // on the same address as some previous one.
+            // So since the session can be the only source of events coming from other threads
+            // let's do connection destroy after session destroy for 100% guarantee of above.
+            QMetaObject::invokeMethod(
+                owner,
+                &Server::connectionOrphaned,
+                connection);
         });
+    } else {
+        connection->deleteLater();
     }
 }
 
