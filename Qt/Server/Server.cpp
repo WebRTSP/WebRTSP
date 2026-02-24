@@ -214,6 +214,7 @@ void Server::clientConnected(QWebSocket* connection) noexcept
         });
     connection->setProperty("session", QVariant::fromValue(session.get()));
     _sessions.emplace(connection, session);
+    session->moveToThread(_actor.actorThread());
 
     _actor.postAction([session] () {
         session->onConnected();

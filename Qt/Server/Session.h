@@ -2,6 +2,8 @@
 
 #include <map>
 
+#include <QObject>
+
 #include "RtspSession/ServerSession.h"
 #include "RtStreaming/GstRtStreaming/GstStreamingSource.h"
 
@@ -10,8 +12,10 @@
 
 namespace webrtsp::qt {
 
-class Session : public rtsp::ServerSession
+class Session : public QObject, public rtsp::ServerSession
 {
+    Q_OBJECT
+
 public:
     typedef std::map<std::string, std::unique_ptr<GstStreamingSource>> Streamers;
 
