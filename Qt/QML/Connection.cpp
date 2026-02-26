@@ -3,6 +3,7 @@
 #include <QSslConfiguration>
 #include <QtWebSockets/QWebSocketHandshakeOptions>
 
+#include "RtspParser/Response.h"
 #include "RtspParser/RtspSerialize.h"
 #include "RtspParser/RtspParser.h"
 
@@ -43,12 +44,11 @@ void Connection::unregisterClient(Client* client) noexcept
 {
     _clients.erase(client);
 
-    for(auto it = _sentRequests.begin(); it != _sentRequests.end();) {
-        if(it->second.owner == client) {
-            it = _sentRequests.erase(it);
-        } else {
-            ++it;
-       }
+    for(auto& pair: _sentRequests) {
+        if(pair.second.owner == client) {
+            // have to wait all answers to handle all of them correctly
+            pair.second.owner = nullptr;
+        }
     }
 
     for(auto it = _mediaSessions.begin(); it != _mediaSessions.end();) {
@@ -378,6 +378,16 @@ bool Connection::handleResponse(
                     _mediaSessions.emplace(mediaSession, MediaSessionData { request.uri, target });
             }
             return handled;
+        } else if(request.method == rtsp::Method::DESCRIBE &&
+            responsePtr->statusCode == rtsp::StatusCode::OK)
+        {
+            // it's highly possible target was destroyed before receive answer for DESCRIBE.
+            // have to force media session TEARDOWN
+            const rtsp::MediaSessionId mediaSession = rtsp::ResponseSession(*responsePtr);
+            if(!mediaSession.empty())
+                requestTeardown(nullptr, request.uri, mediaSession);
+
+            return true;
         } else {
             return true;
         }
