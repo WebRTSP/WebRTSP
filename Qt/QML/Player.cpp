@@ -63,7 +63,7 @@ void Player::scheduleReconnect() noexcept
     const int delay = QRandomGenerator::global()->bounded(
             RECONNECT_INTERVAL_MIN * 1000,
             RECONNECT_INTERVAL_MAX * 1000);
-    qDebug() << "Scheduled reconnect in" << delay << "ms";
+    qDebug() << "Scheduled reconnect to streamer in" << delay << "ms";
     _reconnectTimer.start(delay);
 }
 
