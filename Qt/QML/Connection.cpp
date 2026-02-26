@@ -368,9 +368,14 @@ bool Connection::handleResponse(
         _sentRequests.erase(it);
         if(target) { // sender may not care about response
             const bool handled = target->handleResponse(request, responsePtr);
-            if(handled && request.method == rtsp::Method::DESCRIBE) {
+            if(handled &&
+                request.method == rtsp::Method::DESCRIBE &&
+                responsePtr->statusCode == rtsp::StatusCode::OK)
+            {
                 const rtsp::MediaSessionId mediaSession = rtsp::ResponseSession(*responsePtr);
-                _mediaSessions.emplace(mediaSession, MediaSessionData { request.uri, target });
+                Q_ASSERT(!mediaSession.empty());
+                if(!mediaSession.empty())
+                    _mediaSessions.emplace(mediaSession, MediaSessionData { request.uri, target });
             }
             return handled;
         } else {
