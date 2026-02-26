@@ -222,7 +222,7 @@ void Server::clientConnected(QWebSocket* connection) noexcept
     QPointer connectionPointer(connection);
     QObject::connect(
         session.get(), &Session::authorized,
-        this, [this, connectionPointer, session] () {
+        this, [this, connectionPointer] () {
             Q_ASSERT(connectionPointer);
             emit clientAuthorized(connectionPointer);
         });
@@ -241,7 +241,8 @@ void Server::clientDisconnected(QWebSocket* connection) noexcept
         std::shared_ptr<Session> session = it->second;
         _sessions.erase(it);
 
-        _actor.postAction([owner = this, connection, session] () mutable {
+        _actor.postAction([owner = this, connection, session = std::move(session)] () mutable {
+            Q_ASSERT(session.use_count() == 1);
             session.reset();
             // It's required to be sure main thread never receives notification
             // referencing a specific connection after connection is destroyed.
