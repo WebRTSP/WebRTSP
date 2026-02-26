@@ -203,6 +203,13 @@ void Session::sendNotFoundResponse(CSeq cseq)
     sendResponse(response);
 }
 
+void Session::sendSessionNotFoundResponse(CSeq cseq, const MediaSessionId& sessionId)
+{
+    Response response;
+    prepareResponse(SESSION_NOT_FOUND, "Session Not Found", cseq, sessionId, &response);
+    sendResponse(response);
+}
+
 void Session::sendBadGatewayResponse(CSeq cseq, const MediaSessionId& sessionId)
 {
     Response response;

@@ -341,8 +341,10 @@ bool Connection::handleRequest(
 
     const auto it = _mediaSessions.find(mediaSession);
     if(it == _mediaSessions.end()) {
-        qWarning() << "Can't handle request with unknown media session id. Forcing disconnect..." << Qt::endl;
-        return false;
+        // it can be request for recently destroyed player
+        qWarning() << "Got request with unknown media session id" << Qt::endl;
+        sendSessionNotFoundResponse(requestPtr->cseq, mediaSession);
+        return true;
     }
 
     Client* mediaSessionOwner = it->second.owner;
