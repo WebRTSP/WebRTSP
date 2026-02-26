@@ -5,6 +5,8 @@
 
 #include <QWebSocketServer>
 
+#include "RtStreaming/GstRtStreaming/LibGst.h"
+
 #include "../QActor.h"
 
 #include "Session.h"
@@ -64,6 +66,7 @@ private:
 
 private:
     const Config *const _config;
+    const LibGst _libGst;
     Session::SharedData _sharedData;
     std::map<QWebSocket*, std::shared_ptr<Session>> _sessions;
     QActor _actor;

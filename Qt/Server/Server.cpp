@@ -147,8 +147,6 @@ Server::Server(
     if(!sslConfig.localCertificate().isNull())
         setSslConfiguration(sslConfig);
 
-    gst_init(nullptr, nullptr);
-
     setSupportedSubprotocols({ "webrtsp" });
     if(listen(
         QHostAddress::Any,
