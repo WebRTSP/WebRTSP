@@ -26,6 +26,8 @@ static void LogToQt(
     gpointer /*userData*/)
 {
     switch(level) {
+        case GST_LEVEL_NONE:
+            break;
         case GST_LEVEL_ERROR:
             qCritical(GStreamer).nospace()
                 << "[" << gst_debug_category_get_name(category) << "] "
@@ -42,7 +44,6 @@ static void LogToQt(
                 << "[" << gst_debug_category_get_name(category) << "] "
                 << gst_debug_message_get(message);
             break;
-        case GST_LEVEL_NONE:
         case GST_LEVEL_DEBUG:
         case GST_LEVEL_LOG:
         case GST_LEVEL_TRACE:
