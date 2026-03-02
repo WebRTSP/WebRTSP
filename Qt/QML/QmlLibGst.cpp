@@ -49,9 +49,9 @@ static void LogToQt(
         case GST_LEVEL_TRACE:
         case GST_LEVEL_MEMDUMP:
         default:
-            // qDebug(GStreamer).nospace()
-            //    << "[" << gst_debug_category_get_name(category) << "] "
-            //    << gst_debug_message_get(message);
+            qDebug(GStreamer).nospace()
+               << "[" << gst_debug_category_get_name(category) << "] "
+               << gst_debug_message_get(message);
             break;
     }
 }
