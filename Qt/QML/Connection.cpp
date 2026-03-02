@@ -7,6 +7,7 @@
 #include "RtspParser/RtspSerialize.h"
 #include "RtspParser/RtspParser.h"
 
+#include "Log.h"
 #include "UriInfo.h"
 #include "Player.h"
 
@@ -64,12 +65,12 @@ void Connection::unregisterClient(Client* client) noexcept
 void Connection::open() noexcept
 {
     if(_webSocket) {
-        qWarning() << "WebRTSP connection already opened.";
+        qWarning(QmlClient) << "WebRTSP connection already opened.";
         return;
     }
     Q_ASSERT(!_webSocket);
 
-    qDebug() << "Connecting to" << _serverUrl.toString();
+    qDebug(QmlClient) << "Connecting to" << _serverUrl.toString();
 
     _reconnectTimer.stop();
 
@@ -78,7 +79,7 @@ void Connection::open() noexcept
         this, &Connection::socketConnected);
     QObject::connect(_webSocket, &QWebSocket::disconnected,
         this, [this] () {
-            qDebug() << "Disconnected";
+            qDebug(QmlClient) << "Disconnected";
 
             QObject* webSocket = sender();
 
@@ -134,7 +135,7 @@ void Connection::close(bool reconnect) noexcept
         const int delay = QRandomGenerator::global()->bounded(
                 RECONNECT_INTERVAL_MIN * 1000,
                 RECONNECT_INTERVAL_MAX * 1000);
-        qDebug() << "Scheduled reconnect in" << delay << "ms";
+        qDebug(QmlClient) << "Scheduled reconnect in" << delay << "ms";
         _reconnectTimer.start(delay);
     } else {
         _reconnectTimer.stop();
@@ -203,7 +204,7 @@ void Connection::sendRequest(const rtsp::Request* request) noexcept
         return;
     }
 
-    qDebug() << "WebRTSPClient ->" << serializedRequest;
+    qDebug(QmlClient) << "WebRTSPClient ->" << serializedRequest;
 
     sendTextMessage(QString::fromStdString(serializedRequest));
 }
@@ -224,14 +225,14 @@ void Connection::sendResponse(const rtsp::Response* response) noexcept
         return;
     }
 
-    qDebug() << "WebRTSPClient ->" << serializedResponse;
+    qDebug(QmlClient) << "WebRTSPClient ->" << serializedResponse;
 
     sendTextMessage(QString::fromStdString(serializedResponse));
 }
 
 void Connection::socketConnected() noexcept
 {
-    qDebug() << "Connected";
+    qDebug(QmlClient) << "Connected";
 
     if(_authToken.isEmpty()) {
         authorized();
@@ -281,13 +282,13 @@ void Connection::authorized() noexcept
 
 void Connection::messageReceived(const QString& message) noexcept
 {
-    qDebug() << "WebRTSPClient <-" << message;
+    qDebug(QmlClient) << "WebRTSPClient <-" << message;
 
     const std::string tmpMessage = message.toStdString();
     if(rtsp::IsRequest(tmpMessage.data(), tmpMessage.size())) {
         std::unique_ptr<rtsp::Request> requestPtr = std::make_unique<rtsp::Request>();
         if(!rtsp::ParseRequest(tmpMessage.data(), tmpMessage.size(), requestPtr.get())) {
-            qWarning()
+            qWarning(QmlClient)
                 << "Failed to parse request:" << Qt::endl
                 << message << Qt::endl
                 << "Forcing disconnect...";
@@ -297,7 +298,7 @@ void Connection::messageReceived(const QString& message) noexcept
         }
 
         if(!handleRequest(std::move(requestPtr))) {
-            qWarning()
+            qWarning(QmlClient)
                 << "Failed to handle request:" << Qt::endl
                 << message << Qt::endl
                 << "Forcing disconnect...";
@@ -308,7 +309,7 @@ void Connection::messageReceived(const QString& message) noexcept
     } else {
         std::unique_ptr<rtsp::Response> responsePtr = std::make_unique<rtsp::Response>();
         if(!rtsp::ParseResponse(tmpMessage.data(), tmpMessage.size(), responsePtr.get())) {
-            qWarning()
+            qWarning(QmlClient)
                 << "Failed to parse response:" << Qt::endl
                 << message << Qt::endl
                 << "Forcing disconnect...";
@@ -318,7 +319,7 @@ void Connection::messageReceived(const QString& message) noexcept
         }
 
         if(!rtsp::Session::handleResponse(std::move(responsePtr))) {
-            qWarning()
+            qWarning(QmlClient)
                 << "Failed to handle response:" << Qt::endl
                 << message << Qt::endl
                 << "Forcing disconnect...";
@@ -335,14 +336,14 @@ bool Connection::handleRequest(
     const rtsp::MediaSessionId mediaSession = rtsp::RequestSession(*requestPtr);
 
     if(mediaSession.empty()) {
-        qWarning() << "Can't handle request without media session id. Forcing disconnect..." << Qt::endl;
+        qWarning(QmlClient) << "Can't handle request without media session id. Forcing disconnect..." << Qt::endl;
         return false;
     }
 
     const auto it = _mediaSessions.find(mediaSession);
     if(it == _mediaSessions.end()) {
         // it can be request for recently destroyed player
-        qWarning() << "Got request with unknown media session id" << Qt::endl;
+        qWarning(QmlClient) << "Got request with unknown media session id" << Qt::endl;
         sendSessionNotFoundResponse(requestPtr->cseq, mediaSession);
         return true;
     }

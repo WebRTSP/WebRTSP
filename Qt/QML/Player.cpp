@@ -2,6 +2,7 @@
 
 #include "RtspParser/RtspParser.h"
 
+#include "Log.h"
 #include "Connection.h"
 
 enum {
@@ -63,7 +64,7 @@ void Player::scheduleReconnect() noexcept
     const int delay = QRandomGenerator::global()->bounded(
             RECONNECT_INTERVAL_MIN * 1000,
             RECONNECT_INTERVAL_MAX * 1000);
-    qDebug() << "Scheduled reconnect to streamer in" << delay << "ms";
+    qDebug(QmlClient) << "Scheduled reconnect to streamer in" << delay << "ms";
     _reconnectTimer.start(delay);
 }
 
@@ -117,7 +118,7 @@ void Player::eos()
 
     reset();
 
-    qInfo() << "EOS";
+    qInfo(QmlClient) << "EOS";
 
     scheduleReconnect();
 }
@@ -131,7 +132,7 @@ bool Player::onDescribeResponse(
 
     if(response.statusCode != rtsp::StatusCode::OK) {
         reset();
-        qInfo().nospace()
+        qInfo(QmlClient).nospace()
             << "DESCRIBE request failed for " << _uri << ": "
             << response.reasonPhrase; // FIXME! add handler
         scheduleReconnect();
@@ -204,7 +205,7 @@ bool Player::onTeardownRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexc
     if(rtsp::RequestSession(*requestPtr) == _mediaSession) {
         reset();
 
-        qInfo() << "TEARDOWN";
+        qInfo(QmlClient) << "TEARDOWN";
 
         scheduleReconnect();
     }

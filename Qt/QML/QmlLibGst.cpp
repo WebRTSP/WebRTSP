@@ -4,6 +4,8 @@
 
 #include <gst/gst.h>
 
+#include "Log.h"
+
 
 #ifdef __ANDROID__
 G_BEGIN_DECLS
@@ -25,18 +27,18 @@ static void LogToQt(
 {
     switch(level) {
         case GST_LEVEL_ERROR:
-            qCritical().nospace()
+            qCritical(GStreamer).nospace()
                 << "[" << gst_debug_category_get_name(category) << "] "
                 << gst_debug_message_get(message);
             break;
         case GST_LEVEL_WARNING:
-            qWarning().nospace()
+            qWarning(GStreamer).nospace()
                 << "[" << gst_debug_category_get_name(category) << "] "
                 << gst_debug_message_get(message);
             break;
         case GST_LEVEL_FIXME:
         case GST_LEVEL_INFO:
-            qInfo().nospace()
+            qInfo(GStreamer).nospace()
                 << "[" << gst_debug_category_get_name(category) << "] "
                 << gst_debug_message_get(message);
             break;
@@ -46,7 +48,7 @@ static void LogToQt(
         case GST_LEVEL_TRACE:
         case GST_LEVEL_MEMDUMP:
         default:
-            // qDebug().nospace()
+            // qDebug(GStreamer).nospace()
             //    << "[" << gst_debug_category_get_name(category) << "] "
             //    << gst_debug_message_get(message);
             break;

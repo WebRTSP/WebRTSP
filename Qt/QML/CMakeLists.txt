@@ -21,6 +21,8 @@ qt_add_qml_module(${PROJECT_NAME}
     URI org.webrtsp.client
     VERSION 0.1
     SOURCES
+        Log.h
+        Log.cpp
         QmlLibGst.h
         QmlLibGst.cpp
         Connection.h
