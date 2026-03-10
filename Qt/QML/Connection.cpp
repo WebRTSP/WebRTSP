@@ -18,6 +18,7 @@ enum {
     RECONNECT_INTERVAL_MIN = 1, // seconds
     RECONNECT_INTERVAL_MAX = 5, // seconds
     PING_INTERVAL = 60, // seconds
+    LONG_REQUEST_RESPONSE_TIMEOUT = 60, // seconds
 };
 
 Connection::Connection(QObject* parent) noexcept :
@@ -31,7 +32,7 @@ Connection::Connection(QObject* parent) noexcept :
     updateWebRTCConfig();
 
     _pingTimer.setInterval(PING_INTERVAL * 1000);
-    QObject::connect(&_pingTimer, &QTimer::timeout, this, &Connection::sendPing);
+    QObject::connect(&_pingTimer, &QTimer::timeout, this, &Connection::onPingTimerTimeout);
     _reconnectTimer.setSingleShot(true);
     QObject::connect(&_reconnectTimer, &QTimer::timeout, this, &Connection::open);
 }
@@ -402,12 +403,7 @@ bool Connection::handleResponse(
         }
     }
 
-    const bool isPing =
-        request.method == rtsp::Method::GET_PARAMETER &&
-        request.headerFields.empty() &&
-        request.body.empty();
-
-    return isPing; // ping answer is never hendled
+    return false;
 }
 
 rtsp::CSeq Connection::requestOptions(Client* source, const std::string& encodedUri) noexcept
@@ -447,7 +443,9 @@ rtsp::CSeq Connection::requestDescribe(Client* source, const std::string& encode
 
     const rtsp::CSeq cseq = rtsp::Session::requestDescribe(encodedUri);
 
-    _sentRequests.emplace(cseq, RequestData { source });
+    _sentRequests.emplace(
+        cseq,
+        RequestData { source, QDeadlineTimer(LONG_REQUEST_RESPONSE_TIMEOUT * 1000) });
 
     return cseq;
 }
@@ -468,7 +466,9 @@ rtsp::CSeq Connection::requestPlay(
         mediaSession,
         sdp);
 
-    _sentRequests.emplace(cseq, RequestData { source });
+    _sentRequests.emplace(
+        cseq,
+        RequestData { source, QDeadlineTimer(LONG_REQUEST_RESPONSE_TIMEOUT * 1000) });
 
     return cseq;
 }
@@ -513,6 +513,25 @@ rtsp::CSeq Connection::requestTeardown(
     return cseq;
 }
 
+void Connection::onPingTimerTimeout() noexcept
+{
+    if(!_isOpen) {
+        Q_ASSERT(false);
+        return;
+    }
+
+    for(const auto& pair: _sentRequests) {
+        if(pair.second.responseDeadline.hasExpired()) {
+            qWarning(QmlClient)
+                << "Stale request found (CSeq:" << pair.first << "). Forcing disconnect...";
+            close(true);
+            return;
+        }
+    }
+
+    sendPing();
+}
+
 void Connection::sendPing() noexcept
 {
     if(!_isOpen) {
@@ -520,7 +539,8 @@ void Connection::sendPing() noexcept
         return;
     }
 
-    rtsp::Session::requestGetParameter("*", std::string(), std::string());
+    const rtsp::CSeq cseq = rtsp::Session::requestGetParameter("*", std::string(), std::string());
+    _sentRequests.emplace(cseq, RequestData { nullptr });
 }
 
 UriInfo* Connection::uriInfo(const QString& uri)

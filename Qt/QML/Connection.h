@@ -4,6 +4,7 @@
 #include <QtQml>
 #include <QQuickItem>
 #include <QWebSocket>
+#include <QDeadlineTimer>
 
 #include "RtspSession/Session.h"
 
@@ -25,6 +26,7 @@ public:
  private:
     struct RequestData {
         Client* owner;
+        QDeadlineTimer responseDeadline = QDeadlineTimer(5 * 1000); // 5 seconds
     };
 
     struct MediaSessionData {
@@ -113,6 +115,7 @@ private:
         const rtsp::Request&,
         std::unique_ptr<rtsp::Response>&&) noexcept override;
 
+    void onPingTimerTimeout() noexcept;
     void sendPing() noexcept;
 
     void close(bool reconnect) noexcept;
