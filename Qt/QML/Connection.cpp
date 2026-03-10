@@ -206,6 +206,9 @@ void Connection::sendRequest(const rtsp::Request* request) noexcept
 
     qDebug(QmlClient) << "WebRTSPClient ->" << serializedRequest;
 
+    if(_pingTimer.isActive())
+        _pingTimer.start(); // restart timer, since ping should be sent only on periods of inactivity
+
     sendTextMessage(QString::fromStdString(serializedRequest));
 }
 
@@ -283,6 +286,9 @@ void Connection::authorized() noexcept
 void Connection::messageReceived(const QString& message) noexcept
 {
     qDebug(QmlClient) << "WebRTSPClient <-" << message;
+
+    if(_pingTimer.isActive())
+        _pingTimer.start(); // restart timer, since ping should be sent only on periods of inactivity
 
     const std::string tmpMessage = message.toStdString();
     if(rtsp::IsRequest(tmpMessage.data(), tmpMessage.size())) {
