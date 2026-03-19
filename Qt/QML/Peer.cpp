@@ -111,13 +111,6 @@ void Peer::prepare(const WebRTCConfigPtr& webRTCConfig) noexcept
                     nullptr);
 
                 if(video) {
-                    GstElementPtr sinkPtr(gst_bin_get_by_name(GST_BIN(decodeBin), "qmlsink"));
-                    g_object_set(sinkPtr.get(), "widget", self->_view, nullptr);
-                }
-                gst_bin_add(GST_BIN(pipeline), decodeBin);
-                gst_element_sync_state_with_parent(decodeBin);
-                GstPad* sinkPad = (GstPad*)decodeBin->sinkpads->data;
-                if(video) {
                     GstElementPtr depayPtr(gst_bin_get_by_name(GST_BIN(decodeBin), "depay"));
                     if(depayPtr) {
                         GstPadPtr depaySrcPadPtr(gst_element_get_static_pad(depayPtr.get(), "src"));
@@ -138,7 +131,14 @@ void Peer::prepare(const WebRTCConfigPtr& webRTCConfig) noexcept
                             nullptr
                         );
                     }
+
+                    GstElementPtr sinkPtr(gst_bin_get_by_name(GST_BIN(decodeBin), "qmlsink"));
+                    g_object_set(sinkPtr.get(), "widget", self->_view, nullptr);
                 }
+
+                gst_bin_add(GST_BIN(pipeline), decodeBin);
+                gst_element_sync_state_with_parent(decodeBin);
+                GstPad* sinkPad = (GstPad*)decodeBin->sinkpads->data;
                 gst_pad_link(pad, sinkPad);
             }
         };
