@@ -22,15 +22,11 @@ enum {
 std::string GenerateList(const Config& config) noexcept
 {
     std::string list;
-    if(config.streamers.empty()) {
-        list = "\r\n";
-    } else {
-        for(const auto& pair: config.streamers) {
-            list += pair.first;
-            list += ": ";
-            list += pair.second.description;
-            list += + "\r\n";
-        }
+    for(const auto& pair: config.streamers) {
+        list += pair.first;
+        list += ": ";
+        list += pair.second.description;
+        list += + "\r\n";
     }
 
     return list;
