@@ -54,7 +54,7 @@ if(ANDROID OR WIN32)
     endif()
 endif()
 
-if(ANDROID)
+if(ANDROID AND NOT DEFINED GSTREAMER_ANDROID_ROOT)
     if(NOT DEFINED ENV{GSTREAMER_ANDROID_ROOT})
        message(FATAL_ERROR "GSTREAMER_ANDROID_ROOT environment variable is not defined")
     endif()
