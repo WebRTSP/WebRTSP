@@ -95,7 +95,7 @@ protected:
     void disconnect() noexcept;
 
     CSeq requestOptions(const std::string& uri) noexcept;
-    CSeq requestList(const std::string& uri = "*") noexcept;
+    CSeq requestList(const std::string& uri = rtsp::WildcardUri) noexcept;
     CSeq sendList(
         const std::string& uri,
         const std::string& list,

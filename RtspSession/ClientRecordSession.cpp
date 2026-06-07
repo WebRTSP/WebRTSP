@@ -115,7 +115,7 @@ ClientRecordSession::~ClientRecordSession()
 
 bool ClientRecordSession::onConnected() noexcept
 {
-    requestOptions(!_p->targetUri.empty() ? _p->targetUri : "*");
+    requestOptions(!_p->targetUri.empty() ? _p->targetUri : rtsp::WildcardUri);
 
     return true;
 }
