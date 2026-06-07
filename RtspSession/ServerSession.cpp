@@ -350,9 +350,6 @@ bool ServerSession::onGetParameterRequest(
 bool ServerSession::onOptionsRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
-    Response response;
-    prepareOkResponse(requestPtr->cseq, MediaSessionId(), &response);
-
     std::string options;
     if(listEnabled(requestPtr->uri))
         options = "LIST";
@@ -382,9 +379,15 @@ bool ServerSession::onOptionsRequest(
         options += ", SETUP, TEARDOWN";
     }
 
-    response.headerFields.emplace("Public", options);
+    Response response;
 
-    sendResponse(response);
+    if(options.empty()) {
+        sendNotFoundResponse(requestPtr->cseq);
+    } else {
+        prepareOkResponse(requestPtr->cseq, MediaSessionId(), &response);
+        response.headerFields.emplace("Public", options);
+        sendResponse(response);
+    }
 
     return true;
 }
