@@ -5,7 +5,7 @@
 
 
 static std::shared_ptr<spdlog::logger> WsServerLogger;
-
+static std::shared_ptr<spdlog::logger> WsClientLogger;
 
 void InitWsServerLogger(spdlog::level::level_enum level)
 {
@@ -19,6 +19,18 @@ void InitWsServerLogger(spdlog::level::level_enum level)
     WsServerLogger->set_level(level);
 }
 
+void InitWsClientLogger(spdlog::level::level_enum level)
+{
+    if(!WsClientLogger) {
+        WsClientLogger = spdlog::stdout_logger_st("WsClient");
+#ifdef SNAPCRAFT_BUILD
+        WsClientLogger->set_pattern("[%n] [%l] %v");
+#endif
+    }
+
+    WsClientLogger->set_level(level);
+}
+
 const std::shared_ptr<spdlog::logger>& WsServerLog()
 {
     if(!WsServerLogger) {
@@ -30,4 +42,17 @@ const std::shared_ptr<spdlog::logger>& WsServerLog()
     }
 
     return WsServerLogger;
+}
+
+const std::shared_ptr<spdlog::logger>& WsClientLog()
+{
+    if(!WsClientLogger) {
+#ifdef NDEBUG
+        InitWsClientLogger(spdlog::level::info);
+#else
+        InitWsClientLogger(spdlog::level::debug);
+#endif
+    }
+
+    return WsClientLogger;
 }

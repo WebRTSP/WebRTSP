@@ -14,8 +14,6 @@
 #include "Log.h"
 
 
-namespace signalling {
-
 namespace {
 
 enum {
@@ -90,7 +88,7 @@ void LogClientIp(lws* wsi, const std::unique_ptr<rtsp::ServerSession>& session) 
 
 struct WsServer::Private
 {
-    Private(WsServer*, const Config&, GMainLoop*, const WsServer::CreateSession&);
+    Private(WsServer*, const WsServerConfig&, GMainLoop*, const WsServer::CreateSession&);
 
     bool init(lws_context* context);
     int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len);
@@ -102,7 +100,7 @@ struct WsServer::Private
     void sendResponse(SessionContextData*, const rtsp::Response*);
 
     WsServer *const owner;
-    Config config;
+    WsServerConfig config;
     GMainLoop* loop;
     CreateSession createSession;
 
@@ -111,7 +109,7 @@ struct WsServer::Private
 
 WsServer::Private::Private(
     WsServer* owner,
-    const Config& config,
+    const WsServerConfig& config,
     GMainLoop* loop,
     const WsServer::CreateSession& createSession) :
     owner(owner), config(config), loop(loop), createSession(createSession)
@@ -462,7 +460,7 @@ void WsServer::Private::sendResponse(
 }
 
 WsServer::WsServer(
-    const Config& config,
+    const WsServerConfig& config,
     GMainLoop* loop,
     const CreateSession& createSession) noexcept :
     _p(std::make_unique<Private>(this, config, loop, createSession))
@@ -476,6 +474,4 @@ WsServer::~WsServer()
 bool WsServer::init(lws_context* context /*= nullptr*/) noexcept
 {
     return _p->init(context);
-}
-
 }

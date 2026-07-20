@@ -4,17 +4,24 @@
 #include <string>
 
 
-namespace signalling {
-
 enum: uint16_t {
-    DEFAULT_WS_PORT = 5554,
-    DEFAULT_WSS_PORT = 5555,
+    WEBRTSP_DEFAULT_WS_PORT = 5554,
+    WEBRTSP_DEFAULT_WSS_PORT = 5555,
 };
 
-struct Config
+struct WsServerConfig
 {
     bool bindToLoopbackOnly = true;
-    unsigned short port = DEFAULT_WS_PORT;
+    unsigned short port = WEBRTSP_DEFAULT_WS_PORT;
 };
 
-}
+struct WsClientConfig
+{
+    std::string server;
+    unsigned short serverPort;
+    bool useTls = true;
+};
+
+bool FillConfigFromUrl(const char*, WsClientConfig*);
+inline bool FillConfigFromUrl(const std::string& url, WsClientConfig* config)
+    { return FillConfigFromUrl(url.c_str(), config); }

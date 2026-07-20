@@ -11,8 +11,6 @@
 #include "Config.h"
 
 
-namespace client {
-
 class WsClient
 {
 public:
@@ -24,7 +22,7 @@ public:
     typedef std::function<void (WsClient&)> Disconnected;
 
     WsClient(
-        const Config&,
+        const WsClientConfig&,
         GMainLoop*,
         const CreateSession&,
         const Disconnected&) noexcept;
@@ -37,5 +35,3 @@ private:
     struct Private;
     std::unique_ptr<Private> _p;
 };
-
-}

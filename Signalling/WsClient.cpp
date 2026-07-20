@@ -12,8 +12,6 @@
 #include "Log.h"
 
 
-namespace client {
-
 namespace {
 
 enum {
@@ -56,7 +54,7 @@ struct WsClient::Private
 {
     Private(
         WsClient*,
-        const Config&,
+        const WsClientConfig&,
         GMainLoop*,
         const CreateSession&,
         const Disconnected&);
@@ -75,7 +73,7 @@ struct WsClient::Private
 
 
     WsClient *const owner;
-    Config config;
+    WsClientConfig config;
     GMainLoop* loop = nullptr;
     CreateSession createSession;
     Disconnected disconnected;
@@ -88,7 +86,7 @@ struct WsClient::Private
 
 WsClient::Private::Private(
     WsClient* owner,
-    const Config& config,
+    const WsClientConfig& config,
     GMainLoop* loop,
     const WsClient::CreateSession& createSession,
     const Disconnected& disconnected) :
@@ -400,7 +398,7 @@ void WsClient::Private::sendResponse(
 }
 
 WsClient::WsClient(
-    const Config& config,
+    const WsClientConfig& config,
     GMainLoop* loop,
     const CreateSession& createSession,
     const Disconnected& disconnected) noexcept:
@@ -420,6 +418,4 @@ bool WsClient::init() noexcept
 void WsClient::connect() noexcept
 {
     _p->connect();
-}
-
 }

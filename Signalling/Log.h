@@ -7,3 +7,6 @@
 
 void InitWsServerLogger(spdlog::level::level_enum level);
 const std::shared_ptr<spdlog::logger>& WsServerLog();
+
+void InitWsClientLogger(spdlog::level::level_enum level);
+const std::shared_ptr<spdlog::logger>& WsClientLog();
