@@ -26,34 +26,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if(ANDROID OR WIN32)
-    include(FetchContent)
-
-    FetchContent_Declare(
-        spdlog
-        GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG v1.17.0
-    )
-    FetchContent_MakeAvailable(spdlog)
-
-    if(HTTP_SUPPORT)
-        FetchContent_Declare(
-          microhttpd
-          GIT_REPOSITORY https://git.gnunet.org/libmicrohttpd.git
-          GIT_TAG v1.0.1
-        )
-
-        FetchContent_MakeAvailable(microhttpd)
-    endif()
-
-    if(LIBWEBSOCKETS_SUPPORT)
-        FetchContent_Declare(
-            libwebsockets
-            GIT_REPOSITORY https://github.com/warmcat/libwebsockets.git
-            GIT_TAG v4.5-stable
-        )
-        FetchContent_MakeAvailable(libwebsockets)
-    endif()
+if(NOT WIN32)
+    find_package(PkgConfig REQUIRED)
 endif()
 
 if(ANDROID)
@@ -87,6 +61,60 @@ if(ANDROID)
     cmake_path(CONVERT "${PKG_CONFIG_PATH}" TO_NATIVE_PATH_LIST PKG_CONFIG_PATH)
 
     set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}")
+
+    # GStreamer has some libraries (like OpenSSL) embedded
+    list(APPEND CMAKE_PREFIX_PATH "${GSTREAMER_ANDROID_ARCH_ROOT}")
+    list(APPEND CMAKE_FIND_ROOT_PATH "${GSTREAMER_ANDROID_ARCH_ROOT}")
+endif()
+
+if(ANDROID OR WIN32)
+    include(FetchContent)
+
+    FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v1.17.0
+    )
+    FetchContent_MakeAvailable(spdlog)
+
+    if(HTTP_SUPPORT)
+        FetchContent_Declare(
+            microhttpd
+            GIT_REPOSITORY https://git.gnunet.org/libmicrohttpd.git
+            GIT_TAG v1.0.1
+        )
+
+        FetchContent_MakeAvailable(microhttpd)
+    endif()
+
+    if(LIBWEBSOCKETS_SUPPORT)
+        if(ANDROID)
+            set(OPENSSL_USE_STATIC_LIBS YES)
+            # it's required to prevent use of OpenSSL build from KDAB in ONVIF
+            find_package(OpenSSL REQUIRED)
+
+            set(LWS_WITH_STATIC ON)
+            set(LWS_WITH_SHARED OFF)
+        endif()
+
+        set(LWS_WITH_MINIMAL_EXAMPLES OFF)
+        set(LWS_WITHOUT_TESTAPPS ON)
+        set(LWS_WITHOUT_TEST_SERVER ON)
+        set(LWS_WITHOUT_TEST_SERVER_EXTPOLL ON)
+        set(LWS_WITHOUT_TEST_PING ON)
+        set(LWS_WITHOUT_TEST_CLIENT ON)
+        set(LWS_WITHOUT_DAEMONIZE ON)
+        set(LWS_WITH_GLIB ON)
+
+        FetchContent_Declare(
+            libwebsockets
+            GIT_REPOSITORY https://github.com/warmcat/libwebsockets.git
+            GIT_TAG v4.5-stable
+        )
+        FetchContent_MakeAvailable(libwebsockets)
+    endif()
+else()
+    pkg_search_module(LIBWEBSOCKETS REQUIRED libwebsockets)
 endif()
 
 add_subdirectory(Helpers)

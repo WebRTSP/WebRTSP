@@ -2,14 +2,6 @@ cmake_minimum_required(VERSION 3.10)
 
 project(Signalling)
 
-if(NOT WIN32)
-    find_package(PkgConfig REQUIRED)
-endif()
-
-if(NOT ANDROID AND NOT WIN32)
-    pkg_search_module(LIBWEBSOCKETS REQUIRED libwebsockets)
-endif()
-
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.cpp
     *.h
