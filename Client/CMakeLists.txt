@@ -3,11 +3,11 @@ cmake_minimum_required(VERSION 3.10)
 project(Client)
 
 if(NOT WIN32)
-	find_package(PkgConfig REQUIRED)
+    find_package(PkgConfig REQUIRED)
 endif()
 
 if(NOT ANDROID AND NOT WIN32)
-	pkg_search_module(WS REQUIRED libwebsockets)
+    pkg_search_module(WS REQUIRED libwebsockets)
 endif()
 
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -26,7 +26,7 @@ else()
     target_include_directories(${PROJECT_NAME}
         PUBLIC
             ${LIBWEBSOCKETS_INCLUDE_DIRS}
-        )
+    )
     target_link_libraries(${PROJECT_NAME}
         ${LIBWEBSOCKETS_LDFLAGS}
     )
