@@ -10,7 +10,9 @@ option(WS_CLIENT_SUPPORT "libwebsockets based client implementation" ON)
 option(QML_SUPPORT "QML support" OFF)
 option(QT_SERVER_SUPPORT "Qt QWebSocketServer based server implementation" OFF)
 
-if(NOT WS_SERVER_SUPPORT AND NOT WS_CLIENT_SUPPORT)
+if(WS_SERVER_SUPPORT OR WS_CLIENT_SUPPORT)
+    set(LIBWEBSOCKETS_SUPPORT ON CACHE BOOL "libwebsockets enabled" FORCE)
+else()
     set(LIBWEBSOCKETS_SUPPORT OFF CACHE BOOL "Disable all references to libwebsockets" FORCE)
 endif()
 
