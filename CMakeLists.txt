@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(WebRTSP)
 
-option(BUILD_TEST_APPS "Build test applications" OFF)
-option(BUILD_BASIC_SERVER "Build basic server application" OFF)
+option(BUILD_TESTS_APP "Build tests application" OFF)
 option(HTTP_SUPPORT "HTTP server support" ON)
 option(SIGNALLING_SUPPORT "libwebsockets based server and client implementations" ON)
 option(STREAMING_SUPPORT "Streaming implementation support" ON)
@@ -138,13 +137,8 @@ if(QT_SERVER_SUPPORT)
     add_subdirectory(Qt/Server)
 endif()
 
-if(BUILD_TEST_APPS)
-    add_subdirectory(Apps/Test)
-    add_subdirectory(Apps/RecordTest)
-endif()
-
-if(BUILD_BASIC_SERVER)
-    add_subdirectory(Apps/BasicServer)
+if(BUILD_TESTS_APP)
+    add_subdirectory(Tests)
 endif()
 
 #get_cmake_property(_variableNames VARIABLES)
