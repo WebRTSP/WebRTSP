@@ -672,7 +672,7 @@ std::pair<Authentication, std::string> ParseAuthentication(const Request& reques
     if(IsEOS(pos, size))
         return std::make_pair(authentication, std::string());
 
-    return std::make_pair(authentication, std::string(buf + pos, size - pos));
+    return { authentication, std::string(buf + pos, size - pos) };
 }
 
 std::pair<std::string, std::string> SplitUri(const std::string& uri)
@@ -684,7 +684,7 @@ std::pair<std::string, std::string> SplitUri(const std::string& uri)
             std::string() :
             uri.substr(separatorPos + 1);
 
-    return std::make_pair(streamerName, substreamName);
+    return { streamerName, substreamName };
 }
 
 }
