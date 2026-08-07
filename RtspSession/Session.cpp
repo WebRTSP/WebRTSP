@@ -3,8 +3,6 @@
 #include <cassert>
 #include <random>
 
-#include <glib.h>
-
 #include "Log.h"
 
 
@@ -21,11 +19,9 @@ std::string GenerateSessionLogId()
 namespace rtsp {
 
 Session::Session(
-    const WebRTCConfigPtr& webRTCConfig,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
     sessionLogId(GenerateSessionLogId()),
-    _webRTCConfig(webRTCConfig),
     _sendRequest(sendRequest),
     _sendResponse(sendResponse),
     _log(MakeRtspSessionLogger(sessionLogId))
@@ -35,11 +31,6 @@ Session::Session(
 Session::~Session()
 {
     log()->info("Session destroyed");
-}
-
-void Session::setWebRTCConfig(WebRTCConfigPtr&& webRTCConfig) noexcept
-{
-    _webRTCConfig = std::move(webRTCConfig);
 }
 
 Request* Session::createRequest(

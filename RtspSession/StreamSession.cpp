@@ -3,8 +3,8 @@
 #include <list>
 #include <map>
 
-#include "RtspSession/StatusCode.h"
-#include "RtspSession/IceCandidate.h"
+#include "StatusCode.h"
+#include "IceCandidate.h"
 
 #include "Log.h"
 
@@ -268,7 +268,8 @@ StreamSession::StreamSession(
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    Session(webRTCConfig, sendRequest, sendResponse),
+    Session(sendRequest, sendResponse),
+    WebRTCSessionMixin(webRTCConfig),
     _p(new Private(this, createPeer)),
     _log(MakeStreamSessionLogger(sessionLogId))
 {
@@ -280,7 +281,8 @@ StreamSession::StreamSession(
     const CreatePeer& createRecordPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    Session(webRTCConfig, sendRequest, sendResponse),
+    Session(sendRequest, sendResponse),
+    WebRTCSessionMixin(webRTCConfig),
     _p(new Private(this, createPeer, createRecordPeer)),
     _log(MakeStreamSessionLogger(sessionLogId))
 {

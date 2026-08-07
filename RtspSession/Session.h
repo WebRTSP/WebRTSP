@@ -12,8 +12,6 @@
 
 #include "StatusCode.h"
 
-#include "RtStreaming/WebRTCConfig.h"
-
 
 namespace rtsp {
 
@@ -28,8 +26,6 @@ struct Session
     const std::shared_ptr<spdlog::logger>& log() const
         { return _log; }
 
-    virtual const WebRTCConfigPtr& webRTCConfig() const { return _webRTCConfig; }
-
     virtual bool onConnected() noexcept { return true; }
 
     virtual bool handleRequest(std::unique_ptr<Request>&&) noexcept;
@@ -39,11 +35,8 @@ struct Session
 
 protected:
     Session(
-        const WebRTCConfigPtr&,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
-
-    void setWebRTCConfig(WebRTCConfigPtr&&) noexcept;
 
     Request* createRequest(
         Method,
@@ -179,8 +172,6 @@ protected:
 
 private:
     const std::shared_ptr<spdlog::logger> _log;
-
-    WebRTCConfigPtr _webRTCConfig;
 
     const SendRequest _sendRequest;
     const SendResponse _sendResponse;

@@ -1,12 +1,14 @@
 #pragma once
 
 #include "RtStreaming/WebRTCPeer.h"
+
 #include "Session.h"
+#include "WebRTCSessionMixin.h"
 
 
 namespace rtsp {
 
-class ClientSession : public Session
+class ClientSession : public Session, public WebRTCSessionMixin
 {
 public:
     typedef std::function<std::unique_ptr<WebRTCPeer> ()> CreatePeer;

@@ -106,7 +106,8 @@ ClientRecordSession::ClientRecordSession(
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    Session(webRTCConfig, sendRequest, sendResponse),
+    Session(sendRequest, sendResponse),
+    WebRTCSessionMixin(webRTCConfig),
     _p(new Private(this, targetUri, recordToken, createPeer)),
     _log(MakeClientSessionLogger(sessionLogId))
 {

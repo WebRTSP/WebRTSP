@@ -113,7 +113,8 @@ ClientSession::ClientSession(
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    Session(webRTCConfig, sendRequest, sendResponse),
+    Session(sendRequest, sendResponse),
+    WebRTCSessionMixin(webRTCConfig),
     _p(new Private(this, uri, createPeer))
 {
 }

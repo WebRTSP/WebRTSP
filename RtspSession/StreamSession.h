@@ -5,12 +5,14 @@
 #include <spdlog/spdlog.h>
 
 #include "RtStreaming/WebRTCPeer.h"
-#include "RtspSession/Session.h"
+
+#include "Session.h"
+#include "WebRTCSessionMixin.h"
 
 
 namespace rtsp {
 
-class StreamSession: public Session
+class StreamSession: public Session, public WebRTCSessionMixin
 {
 public:
     typedef std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> CreatePeer;
