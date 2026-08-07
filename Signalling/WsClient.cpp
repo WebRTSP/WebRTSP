@@ -12,6 +12,9 @@
 #include "Log.h"
 
 
+#define SESSION "[{}]" " "
+
+
 namespace {
 
 enum {
@@ -110,8 +113,10 @@ int WsClient::Private::wsCallback(
                 createSession(
                     std::bind(&Private::sendRequest, this, scd, std::placeholders::_1),
                     std::bind(&Private::sendResponse, this, scd, std::placeholders::_1));
-            if(!session)
+            if(!session) {
+                Log()->error("Failed to create session. Requesting connection close...");
                 return -1;
+            }
 
             scd->data =
                 new SessionData {
@@ -123,8 +128,12 @@ int WsClient::Private::wsCallback(
 
             connected = true;
 
-            if(!onConnected(scd))
+            if(!onConnected(scd)) {
+                Log()->error(
+                    SESSION "Session requested connection close in onConnected handler",
+                    scd->data->rtspSession->sessionLogId);
                 return -1;
+            }
 
             break;
         }
@@ -141,24 +150,37 @@ int WsClient::Private::wsCallback(
                         scd->data->incomingMessage.data() + scd->data->incomingMessage.size(),
                         std::back_inserter(logMessage), '\r');
 
-                    Log()->trace("-> WsClient: {}", logMessage);
+                    Log()->trace(
+                        SESSION "-> WsClient: {}",
+                        scd->data->rtspSession->sessionLogId,
+                        logMessage);
                 }
 
-                if(!onMessage(scd, scd->data->incomingMessage))
+                if(!onMessage(scd, scd->data->incomingMessage)) {
+                    Log()->error(
+                        SESSION "session message handler requested connection close",
+                        scd->data->rtspSession->sessionLogId);
                     return -1;
+                }
 
                 scd->data->incomingMessage.clear();
             }
 
             break;
         case LWS_CALLBACK_CLIENT_WRITEABLE:
-            if(scd->data->terminateSession)
+            if(scd->data->terminateSession) {
+                Log()->debug(
+                    SESSION "session requested connection close",
+                    scd->data->rtspSession->sessionLogId);
                 return -1;
+            }
 
             if(!scd->data->sendMessages.empty()) {
                 MessageBuffer& buffer = scd->data->sendMessages.front();
                 if(!buffer.writeAsText(wsi)) {
-                    Log()->error("Write failed.");
+                    Log()->error(
+                        SESSION "Write failed.",
+                        scd->data->rtspSession->sessionLogId);
                     return -1;
                 }
 
@@ -170,7 +192,13 @@ int WsClient::Private::wsCallback(
 
             break;
         case LWS_CALLBACK_CLIENT_CLOSED:
-            Log()->info("Connection to server is closed.");
+            if(scd->data && scd->data->rtspSession) {
+                Log()->debug(
+                    SESSION "connection to server is closed",
+                    scd->data->rtspSession->sessionLogId);
+            } else {
+                Log()->info("connection to server is closed.");
+            }
 
             delete scd->data;
             scd = nullptr;
@@ -183,7 +211,13 @@ int WsClient::Private::wsCallback(
 
             break;
         case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-            Log()->error("Can not connect to server.");
+            if(scd->data && scd->data->rtspSession) {
+                Log()->error(
+                    SESSION "connection to server is terminated",
+                    scd->data->rtspSession->sessionLogId);
+            } else {
+                Log()->error("can not connect to server.");
+            }
 
             delete scd->data;
             scd = nullptr;
@@ -294,15 +328,17 @@ bool WsClient::Private::onMessage(
             std::make_unique<rtsp::Request>();
         if(!rtsp::ParseRequest(message.data(), message.size(), requestPtr.get())) {
             Log()->error(
-                "Fail parse request:\n{}\nForcing session disconnect...",
-                std::string(message.data(), message.size()));
+                SESSION "Failed to parse request:\n{}\nForcing session disconnect...",
+                scd->data->rtspSession->sessionLogId,
+                std::string_view(message.data(), message.size()));
             return false;
         }
 
         if(!scd->data->rtspSession->handleRequest(std::move(requestPtr))) {
             Log()->debug(
-                "Fail handle request:\n{}\nForcing session disconnect...",
-                std::string(message.data(), message.size()));
+                SESSION "Failed to handle request:\n{}\nForcing session disconnect...",
+                scd->data->rtspSession->sessionLogId,
+                std::string_view(message.data(), message.size()));
             return false;
         }
     } else {
@@ -310,15 +346,17 @@ bool WsClient::Private::onMessage(
             std::make_unique<rtsp::Response>();
         if(!rtsp::ParseResponse(message.data(), message.size(), responsePtr.get())) {
             Log()->error(
-                "Fail parse response:\n{}\nForcing session disconnect...",
-                std::string(message.data(), message.size()));
+                SESSION "Failed to parse response:\n{}\nForcing session disconnect...",
+                scd->data->rtspSession->sessionLogId,
+                std::string_view(message.data(), message.size()));
             return false;
         }
 
         if(!scd->data->rtspSession->handleResponse(std::move(responsePtr))) {
             Log()->error(
-                "Fail handle response:\n{}\nForcing session disconnect...",
-                std::string(message.data(), message.size()));
+                SESSION "Failed to handle response:\n{}\nForcing session disconnect...",
+                scd->data->rtspSession->sessionLogId,
+                std::string_view(message.data(), message.size()));
             return false;
         }
     }
@@ -357,7 +395,10 @@ void WsClient::Private::sendRequest(
                 serializedRequest.begin(),
                 serializedRequest.end(),
                 std::back_inserter(logMessage), '\r');
-            Log()->trace("WsClient -> : {}", logMessage);
+            Log()->trace(
+                SESSION "WsClient -> : {}",
+                scd->data->rtspSession->sessionLogId,
+                logMessage);
         }
 
         MessageBuffer requestMessage;
@@ -388,7 +429,10 @@ void WsClient::Private::sendResponse(
                 serializedResponse.begin(),
                 serializedResponse.end(),
                 std::back_inserter(logMessage), '\r');
-            Log()->trace("WsClient -> : {}", logMessage);
+            Log()->trace(
+                SESSION "WsClient -> : {}",
+                scd->data->rtspSession->sessionLogId,
+                logMessage);
         }
 
         MessageBuffer responseMessage;
