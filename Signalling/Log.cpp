@@ -1,7 +1,6 @@
 #include "Log.h"
 
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_sinks.h>
+#include "Helpers/SpdLog.h"
 
 
 static std::shared_ptr<spdlog::logger> WsServerLogger;
@@ -9,24 +8,16 @@ static std::shared_ptr<spdlog::logger> WsClientLogger;
 
 void InitWsServerLogger(spdlog::level::level_enum level)
 {
-    if(!WsServerLogger) {
-        WsServerLogger = spdlog::stdout_logger_st("WsServer");
-#ifdef SNAPCRAFT_BUILD
-        WsServerLogger->set_pattern("[%n] [%l] %v");
-#endif
-    }
+    if(!WsServerLogger)
+        WsServerLogger = CreateSpdLoggerSt("WsServer");
 
     WsServerLogger->set_level(level);
 }
 
 void InitWsClientLogger(spdlog::level::level_enum level)
 {
-    if(!WsClientLogger) {
-        WsClientLogger = spdlog::stdout_logger_st("WsClient");
-#ifdef SNAPCRAFT_BUILD
-        WsClientLogger->set_pattern("[%n] [%l] %v");
-#endif
-    }
+    if(!WsClientLogger)
+        WsClientLogger = CreateSpdLoggerSt("WsClient");
 
     WsClientLogger->set_level(level);
 }
