@@ -394,11 +394,6 @@ bool StreamSession::onOptionsRequest(
     return true;
 }
 
-bool StreamSession::playEnabled(const std::string&) noexcept
-{
-    return true;
-}
-
 bool StreamSession::onDescribeRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
@@ -448,16 +443,6 @@ bool StreamSession::onDescribeRequest(
         sessionLogId);
 
     return true;
-}
-
-bool StreamSession::recordEnabled(const std::string&) noexcept
-{
-    return false;
-}
-
-bool StreamSession::subscribeEnabled(const std::string&) noexcept
-{
-    return false;
 }
 
 bool StreamSession::authorize(const std::unique_ptr<Request>& requestPtr) noexcept

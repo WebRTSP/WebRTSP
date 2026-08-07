@@ -44,9 +44,9 @@ protected:
     std::string nextSessionId();
 
     virtual bool listEnabled(const std::string& /*uri*/) noexcept { return false; }
-    virtual bool playEnabled(const std::string& uri) noexcept;
-    virtual bool recordEnabled(const std::string& uri) noexcept;
-    virtual bool subscribeEnabled(const std::string& uri) noexcept;
+    virtual bool playEnabled(const std::string& /*uri*/) noexcept { return true; };
+    virtual bool recordEnabled(const std::string& /*uri*/) noexcept { return false; }
+    virtual bool subscribeEnabled(const std::string& /*uri*/) noexcept { return false; };
     virtual bool authorize(const std::unique_ptr<Request>&) noexcept;
 
     bool onGetParameterRequest(std::unique_ptr<Request>&&) noexcept override;
