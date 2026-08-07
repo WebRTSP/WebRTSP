@@ -12,7 +12,7 @@ Session::Session(
     const CreatePeer& createPeer,
     const rtsp::Session::SendRequest& sendRequest,
     const rtsp::Session::SendResponse& sendResponse) noexcept :
-    ServerSession(config->webRTCConfig, createPeer, sendRequest, sendResponse),
+    StreamSession(config->webRTCConfig, createPeer, sendRequest, sendResponse),
     _config(config),
     _sharedData(sharedData)
 {
@@ -22,7 +22,7 @@ bool Session::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcep
 {
     if(_authorized.has_value()) {
         return _authorized.value() ?
-            rtsp::ServerSession::handleRequest(std::move(requestPtr)) :
+            rtsp::StreamSession::handleRequest(std::move(requestPtr)) :
             false;
     }
 
@@ -36,7 +36,7 @@ bool Session::handleRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcep
     _authorized = authorized;
 
     if(authorized) {
-        const bool result = rtsp::ServerSession::handleRequest(std::move(requestPtr));
+        const bool result = rtsp::StreamSession::handleRequest(std::move(requestPtr));
 
         emit this->authorized();
 

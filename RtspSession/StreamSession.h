@@ -7,24 +7,25 @@
 #include "RtStreaming/WebRTCPeer.h"
 #include "RtspSession/Session.h"
 
+
 namespace rtsp {
 
-class ServerSession: public Session
+class StreamSession: public Session
 {
 public:
     typedef std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> CreatePeer;
-    ServerSession(
+    StreamSession(
         const WebRTCConfigPtr&,
         const CreatePeer& createPeer,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
-    ServerSession(
+    StreamSession(
         const WebRTCConfigPtr&,
         const CreatePeer& createPeer,
         const CreatePeer& createRecordPeer,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
-    ~ServerSession();
+    ~StreamSession();
 
     const std::shared_ptr<spdlog::logger>& log() const
         { return _log; }

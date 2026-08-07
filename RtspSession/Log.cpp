@@ -6,7 +6,7 @@
 
 static std::shared_ptr<spdlog::logger> RtspSessionLogger;
 static std::shared_ptr<spdlog::logger> ClientSessionLogger;
-static std::shared_ptr<spdlog::logger> ServerSessionLogger;
+static std::shared_ptr<spdlog::logger> StreamSessionLogger;
 
 
 void InitRtspSessionLogger(spdlog::level::level_enum level)
@@ -58,34 +58,34 @@ std::shared_ptr<spdlog::logger> MakeRtspSessionLogger(const std::string& context
 }
 
 
-void InitServerSessionLogger(spdlog::level::level_enum level)
+void InitStreamSessionLogger(spdlog::level::level_enum level)
 {
-    if(!ServerSessionLogger) {
-        ServerSessionLogger = spdlog::stdout_logger_st("ServerSession");
+    if(!StreamSessionLogger) {
+        StreamSessionLogger = spdlog::stdout_logger_st("StreamSession");
 #ifdef SNAPCRAFT_BUILD
-        ServerSessionLogger->set_pattern("[%n] [%l] %v");
+        StreamSessionLogger->set_pattern("[%n] [%l] %v");
 #endif
     }
 
-    ServerSessionLogger->set_level(level);
+    StreamSessionLogger->set_level(level);
 }
 
-const std::shared_ptr<spdlog::logger>& ServerSessionLog()
+const std::shared_ptr<spdlog::logger>& StreamSessionLog()
 {
-    if(!ServerSessionLogger) {
+    if(!StreamSessionLogger) {
 #ifdef NDEBUG
-        InitServerSessionLogger(spdlog::level::info);
+        InitStreamSessionLogger(spdlog::level::info);
 #else
-        InitServerSessionLogger(spdlog::level::debug);
+        InitStreamSessionLogger(spdlog::level::debug);
 #endif
     }
 
-    return ServerSessionLogger;
+    return StreamSessionLogger;
 }
 
-std::shared_ptr<spdlog::logger> MakeServerSessionLogger(const std::string& context)
+std::shared_ptr<spdlog::logger> MakeStreamSessionLogger(const std::string& context)
 {
-    const std::shared_ptr<spdlog::logger>& logger = ServerSessionLog();
+    const std::shared_ptr<spdlog::logger>& logger = StreamSessionLog();
 
     if(!context.empty()) {
         // have to go long road to avoid issues with duplicated names in loggers registry

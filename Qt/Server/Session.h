@@ -4,7 +4,7 @@
 
 #include <QObject>
 
-#include "RtspSession/ServerSession.h"
+#include "RtspSession/StreamSession.h"
 #include "RtStreaming/GstRtStreaming/GstStreamingSource.h"
 
 #include "Config.h"
@@ -12,7 +12,7 @@
 
 namespace webrtsp::qt {
 
-class Session : public QObject, public rtsp::ServerSession
+class Session : public QObject, public rtsp::StreamSession
 {
     Q_OBJECT
 

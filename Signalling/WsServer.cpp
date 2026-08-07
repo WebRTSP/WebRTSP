@@ -34,7 +34,7 @@ struct SessionData
     bool terminateSession = false;
     MessageBuffer incomingMessage;
     std::deque<MessageBuffer> sendMessages;
-    std::unique_ptr<rtsp::ServerSession> rtspSession;
+    std::unique_ptr<rtsp::StreamSession> rtspSession;
 };
 
 // Should contain only POD types,
@@ -47,7 +47,7 @@ struct SessionContextData
 
 const auto Log = WsServerLog;
 
-void LogClientIp(lws* wsi, const std::unique_ptr<rtsp::ServerSession>& session) {
+void LogClientIp(lws* wsi, const std::unique_ptr<rtsp::StreamSession>& session) {
     char clientIp[INET6_ADDRSTRLEN];
     lws_get_peer_simple(wsi, clientIp, sizeof(clientIp));
 
@@ -141,7 +141,7 @@ int WsServer::Private::wsCallback(
         case LWS_CALLBACK_PROTOCOL_INIT:
             break;
         case LWS_CALLBACK_ESTABLISHED: {
-            std::unique_ptr<rtsp::ServerSession> session =
+            std::unique_ptr<rtsp::StreamSession> session =
                 createSession(
                     std::bind(&Private::sendRequest, this, scd, std::placeholders::_1),
                     std::bind(&Private::sendResponse, this, scd, std::placeholders::_1));
@@ -180,7 +180,7 @@ int WsServer::Private::wsCallback(
             break;
         case LWS_CALLBACK_RECEIVE: {
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
-                const rtsp::ServerSession *const session = scd->data->rtspSession.get();
+                const rtsp::StreamSession *const session = scd->data->rtspSession.get();
 
                 if(session->log()->level() <= spdlog::level::trace) {
                     std::string logMessage;
@@ -210,7 +210,7 @@ int WsServer::Private::wsCallback(
             break;
         }
         case LWS_CALLBACK_SERVER_WRITEABLE: {
-            const rtsp::ServerSession *const session = scd->data->rtspSession.get();
+            const rtsp::StreamSession *const session = scd->data->rtspSession.get();
 
             if(scd->data->terminateSession) {
                 session->log()->debug("websocket session requested connection close");
@@ -328,7 +328,7 @@ bool WsServer::Private::onMessage(
     SessionContextData* scd,
     const MessageBuffer& message)
 {
-    rtsp::ServerSession *const session = scd->data->rtspSession.get();
+    rtsp::StreamSession *const session = scd->data->rtspSession.get();
 
     if(rtsp::IsRequest(message.data(), message.size())) {
         std::unique_ptr<rtsp::Request> requestPtr =

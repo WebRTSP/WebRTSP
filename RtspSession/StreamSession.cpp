@@ -1,4 +1,4 @@
-﻿#include "ServerSession.h"
+﻿#include "StreamSession.h"
 
 #include <list>
 #include <map>
@@ -36,20 +36,20 @@ typedef std::map<MediaSessionId, std::unique_ptr<MediaSession>> MediaSessions;
 
 }
 
-struct ServerSession::Private
+struct StreamSession::Private
 {
     struct AutoEraseRequest;
     struct AutoEraseRecordRequest;
 
     Private(
-        ServerSession* owner,
+        StreamSession* owner,
         const CreatePeer& createPeer);
     Private(
-        ServerSession* owner,
+        StreamSession* owner,
         const CreatePeer& createPeer,
         const CreatePeer& createRecordPeer);
 
-    ServerSession *const owner;
+    StreamSession *const owner;
 
     CreatePeer createPeer;
     CreatePeer createRecordPeer;
@@ -77,16 +77,16 @@ private:
     unsigned _nextSessionId = 1;
 };
 
-ServerSession::Private::Private(
-    ServerSession* owner,
+StreamSession::Private::Private(
+    StreamSession* owner,
     const CreatePeer& createPeer) :
     owner(owner),
     createPeer(createPeer)
 {
 }
 
-ServerSession::Private::Private(
-    ServerSession* owner,
+StreamSession::Private::Private(
+    StreamSession* owner,
     const CreatePeer& createPeer,
     const CreatePeer& createRecordPeer) :
     owner(owner),
@@ -95,7 +95,7 @@ ServerSession::Private::Private(
 {
 }
 
-void ServerSession::Private::sendIceCandidates(
+void StreamSession::Private::sendIceCandidates(
     const MediaSessionId& session,
     MediaSession* mediaSession)
 {
@@ -118,7 +118,7 @@ void ServerSession::Private::sendIceCandidates(
     }
 }
 
-void ServerSession::Private::streamerPrepared(const MediaSessionId& session)
+void StreamSession::Private::streamerPrepared(const MediaSessionId& session)
 {
     auto it = mediaSessions.find(session);
     if(mediaSessions.end() == it || it->second->type != MediaSession::Type::Describe) {
@@ -148,7 +148,7 @@ void ServerSession::Private::streamerPrepared(const MediaSessionId& session)
     }
 }
 
-void ServerSession::Private::recorderPrepared(const MediaSessionId& session)
+void StreamSession::Private::recorderPrepared(const MediaSessionId& session)
 {
     auto it = mediaSessions.find(session);
     if(mediaSessions.end() == it || it->second->type != MediaSession::Type::Record) {
@@ -178,7 +178,7 @@ void ServerSession::Private::recorderPrepared(const MediaSessionId& session)
     }
 }
 
-void ServerSession::Private::recordToClientStreamerPrepared(const MediaSessionId& mediaSessionId)
+void StreamSession::Private::recordToClientStreamerPrepared(const MediaSessionId& mediaSessionId)
 {
     auto it = mediaSessions.find(mediaSessionId);
     assert(mediaSessions.end() != it);
@@ -214,7 +214,7 @@ void ServerSession::Private::recordToClientStreamerPrepared(const MediaSessionId
     }
 }
 
-void ServerSession::Private::iceCandidate(
+void StreamSession::Private::iceCandidate(
     const MediaSessionId& session,
     unsigned mlineIndex, const std::string& candidate)
 {
@@ -236,7 +236,7 @@ void ServerSession::Private::iceCandidate(
     }
 }
 
-void ServerSession::Private::eos(const MediaSessionId& session)
+void StreamSession::Private::eos(const MediaSessionId& session)
 {
     owner->log()->trace("Eos. Session: {}", owner->sessionLogId, session);
 
@@ -263,18 +263,18 @@ void ServerSession::Private::eos(const MediaSessionId& session)
 }
 
 
-ServerSession::ServerSession(
+StreamSession::StreamSession(
     const WebRTCConfigPtr& webRTCConfig,
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
     Session(webRTCConfig, sendRequest, sendResponse),
     _p(new Private(this, createPeer)),
-    _log(MakeServerSessionLogger(sessionLogId))
+    _log(MakeStreamSessionLogger(sessionLogId))
 {
 }
 
-ServerSession::ServerSession(
+StreamSession::StreamSession(
     const WebRTCConfigPtr& webRTCConfig,
     const CreatePeer& createPeer,
     const CreatePeer& createRecordPeer,
@@ -282,32 +282,32 @@ ServerSession::ServerSession(
     const SendResponse& sendResponse) noexcept :
     Session(webRTCConfig, sendRequest, sendResponse),
     _p(new Private(this, createPeer, createRecordPeer)),
-    _log(MakeServerSessionLogger(sessionLogId))
+    _log(MakeStreamSessionLogger(sessionLogId))
 {
 }
 
-ServerSession::~ServerSession()
+StreamSession::~StreamSession()
 {
 }
 
-bool ServerSession::onConnected(const std::optional<std::string>& authCookie) noexcept
+bool StreamSession::onConnected(const std::optional<std::string>& authCookie) noexcept
 {
     _p->authCookie = authCookie;
 
     return Session::onConnected();
 }
 
-const std::optional<std::string>& ServerSession::authCookie() const noexcept
+const std::optional<std::string>& StreamSession::authCookie() const noexcept
 {
     return _p->authCookie;
 }
 
-std::string ServerSession::nextSessionId()
+std::string StreamSession::nextSessionId()
 {
     return _p->nextSessionId();
 }
 
-bool ServerSession::handleRequest(
+bool StreamSession::handleRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
     if(requestPtr->method != Method::RECORD && !authorize(requestPtr)) {
@@ -333,7 +333,7 @@ bool ServerSession::handleRequest(
     return Session::handleRequest(std::move(requestPtr));
 }
 
-bool ServerSession::onGetParameterRequest(
+bool StreamSession::onGetParameterRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const std::string& contentType = RequestContentType(*requestPtr);
@@ -347,7 +347,7 @@ bool ServerSession::onGetParameterRequest(
     return true;
 }
 
-bool ServerSession::onOptionsRequest(
+bool StreamSession::onOptionsRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
     std::string options;
@@ -392,12 +392,12 @@ bool ServerSession::onOptionsRequest(
     return true;
 }
 
-bool ServerSession::playEnabled(const std::string&) noexcept
+bool StreamSession::playEnabled(const std::string&) noexcept
 {
     return true;
 }
 
-bool ServerSession::onDescribeRequest(
+bool StreamSession::onDescribeRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const Request& request = *requestPtr.get();
@@ -430,17 +430,17 @@ bool ServerSession::onDescribeRequest(
     mediaSession.localPeer->prepare(
         webRTCConfig(),
         std::bind(
-            &ServerSession::Private::streamerPrepared,
+            &StreamSession::Private::streamerPrepared,
             _p.get(),
             session),
         std::bind(
-            &ServerSession::Private::iceCandidate,
+            &StreamSession::Private::iceCandidate,
             _p.get(),
             session,
             std::placeholders::_1,
             std::placeholders::_2),
         std::bind(
-            &ServerSession::Private::eos,
+            &StreamSession::Private::eos,
             _p.get(),
             session),
         sessionLogId);
@@ -448,22 +448,22 @@ bool ServerSession::onDescribeRequest(
     return true;
 }
 
-bool ServerSession::recordEnabled(const std::string&) noexcept
+bool StreamSession::recordEnabled(const std::string&) noexcept
 {
     return false;
 }
 
-bool ServerSession::subscribeEnabled(const std::string&) noexcept
+bool StreamSession::subscribeEnabled(const std::string&) noexcept
 {
     return false;
 }
 
-bool ServerSession::authorize(const std::unique_ptr<Request>& requestPtr) noexcept
+bool StreamSession::authorize(const std::unique_ptr<Request>& requestPtr) noexcept
 {
     return requestPtr->method != Method::RECORD;
 }
 
-bool ServerSession::onRecordRequest(
+bool StreamSession::onRecordRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const Request& request = *requestPtr.get();
@@ -505,17 +505,17 @@ bool ServerSession::onRecordRequest(
     localPeer.prepare(
         webRTCConfig(),
         std::bind(
-            &ServerSession::Private::recorderPrepared,
+            &StreamSession::Private::recorderPrepared,
             _p.get(),
             session),
         std::bind(
-            &ServerSession::Private::iceCandidate,
+            &StreamSession::Private::iceCandidate,
             _p.get(),
             session,
             std::placeholders::_1,
             std::placeholders::_2),
         std::bind(
-            &ServerSession::Private::eos,
+            &StreamSession::Private::eos,
             _p.get(),
             session),
         sessionLogId);
@@ -527,7 +527,7 @@ bool ServerSession::onRecordRequest(
     return true;
 }
 
-bool ServerSession::onSetupRequest(
+bool StreamSession::onSetupRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const MediaSessionId session = RequestSession(*requestPtr);
@@ -580,7 +580,7 @@ bool ServerSession::onSetupRequest(
     return true;
 }
 
-bool ServerSession::onPlayRequest(
+bool StreamSession::onPlayRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const MediaSessionId session = RequestSession(*requestPtr);
@@ -608,7 +608,7 @@ bool ServerSession::onPlayRequest(
     return true;
 }
 
-bool ServerSession::onTeardownRequest(
+bool StreamSession::onTeardownRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
     const MediaSessionId session = RequestSession(*requestPtr);
@@ -628,7 +628,7 @@ bool ServerSession::onTeardownRequest(
     return true;
 }
 
-void ServerSession::startRecordToClient(
+void StreamSession::startRecordToClient(
     const std::string& uri,
     const MediaSessionId& mediaSessionId) noexcept
 {
@@ -654,23 +654,23 @@ void ServerSession::startRecordToClient(
     mediaSession.localPeer->prepare(
         webRTCConfig(),
         std::bind(
-            &ServerSession::Private::recordToClientStreamerPrepared,
+            &StreamSession::Private::recordToClientStreamerPrepared,
             _p.get(),
             mediaSessionId),
         std::bind(
-            &ServerSession::Private::iceCandidate,
+            &StreamSession::Private::iceCandidate,
             _p.get(),
             mediaSessionId,
             std::placeholders::_1,
             std::placeholders::_2),
         std::bind(
-            &ServerSession::Private::eos,
+            &StreamSession::Private::eos,
             _p.get(),
             mediaSessionId),
         sessionLogId);
 }
 
-bool ServerSession::onRecordResponse(const Request& request, const Response& response) noexcept
+bool StreamSession::onRecordResponse(const Request& request, const Response& response) noexcept
 {
     if(StatusCode::OK != response.statusCode)
         return false;
@@ -698,7 +698,7 @@ bool ServerSession::onRecordResponse(const Request& request, const Response& res
     return true;
 }
 
-void ServerSession::teardownMediaSession(const MediaSessionId& mediaSession) noexcept
+void StreamSession::teardownMediaSession(const MediaSessionId& mediaSession) noexcept
 {
     assert(!mediaSession.empty());
     if(mediaSession.empty())
