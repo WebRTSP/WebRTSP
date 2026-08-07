@@ -1,156 +1,31 @@
 #include "Log.h"
 
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_sinks.h>
+#include "Helpers/SpdLog.h"
 
 
-static std::shared_ptr<spdlog::logger> RtspSessionLogger;
-static std::shared_ptr<spdlog::logger> ClientSessionLogger;
-static std::shared_ptr<spdlog::logger> StreamSessionLogger;
+static std::shared_ptr<spdlog::logger> SessionLogger;
 
+namespace rtsp {
 
-void InitRtspSessionLogger(spdlog::level::level_enum level)
+void InitSessionLogger(spdlog::level::level_enum level) noexcept
 {
-    if(!RtspSessionLogger) {
-        RtspSessionLogger = spdlog::stdout_logger_st("rtsp::Session");
-#ifdef SNAPCRAFT_BUILD
-        RtspSessionLogger->set_pattern("[%n] [%l] %v");
-#endif
-    }
+    if(!SessionLogger)
+        SessionLogger = CreateSpdLoggerSt("Session");
 
-    RtspSessionLogger->set_level(level);
+    SessionLogger->set_level(level);
 }
 
-const std::shared_ptr<spdlog::logger>& RtspSessionLog()
+const std::shared_ptr<spdlog::logger>& SessionLog() noexcept
 {
-    if(!RtspSessionLogger) {
+    if(!SessionLogger) {
 #ifdef NDEBUG
-        InitRtspSessionLogger(spdlog::level::info);
+        InitSessionLogger(spdlog::level::info);
 #else
-        InitRtspSessionLogger(spdlog::level::debug);
+        InitSessionLogger(spdlog::level::debug);
 #endif
     }
 
-    return RtspSessionLogger;
+    return SessionLogger;
 }
 
-std::shared_ptr<spdlog::logger> MakeRtspSessionLogger(const std::string& context)
-{
-    const std::shared_ptr<spdlog::logger>& logger = RtspSessionLog();
-
-    if(context.empty()) {
-        return logger;
-    } else {
-        // have to go long road to avoid issues with duplicated names in loggers registry
-        std::shared_ptr<spdlog::logger> loggerWithContext = std::make_shared<spdlog::logger>(
-            logger->name(),
-            std::make_shared<spdlog::sinks::stdout_sink_st>());
-        loggerWithContext->set_level(logger->level());
-
-#ifdef SNAPCRAFT_BUILD
-        loggerWithContext->set_pattern("[" + context + "] [%n] [%l] %v");
-#else
-        loggerWithContext->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [" + context + "] [%n] [%l] %v");
-#endif
-
-        return loggerWithContext;
-    }
-}
-
-
-void InitStreamSessionLogger(spdlog::level::level_enum level)
-{
-    if(!StreamSessionLogger) {
-        StreamSessionLogger = spdlog::stdout_logger_st("StreamSession");
-#ifdef SNAPCRAFT_BUILD
-        StreamSessionLogger->set_pattern("[%n] [%l] %v");
-#endif
-    }
-
-    StreamSessionLogger->set_level(level);
-}
-
-const std::shared_ptr<spdlog::logger>& StreamSessionLog()
-{
-    if(!StreamSessionLogger) {
-#ifdef NDEBUG
-        InitStreamSessionLogger(spdlog::level::info);
-#else
-        InitStreamSessionLogger(spdlog::level::debug);
-#endif
-    }
-
-    return StreamSessionLogger;
-}
-
-std::shared_ptr<spdlog::logger> MakeStreamSessionLogger(const std::string& context)
-{
-    const std::shared_ptr<spdlog::logger>& logger = StreamSessionLog();
-
-    if(!context.empty()) {
-        // have to go long road to avoid issues with duplicated names in loggers registry
-        std::shared_ptr<spdlog::logger> loggerWithContext = std::make_shared<spdlog::logger>(
-            logger->name(),
-            std::make_shared<spdlog::sinks::stdout_sink_st>());
-        loggerWithContext->set_level(logger->level());
-
-#ifdef SNAPCRAFT_BUILD
-        loggerWithContext->set_pattern("[" + context + "] [%n] [%l] %v");
-#else
-        loggerWithContext->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [" + context + "] [%n] [%l] %v");
-#endif
-
-        return loggerWithContext;
-    }
-
-    return logger;
-}
-
-
-void InitClientSessionLogger(spdlog::level::level_enum level)
-{
-    if(!ClientSessionLogger) {
-        ClientSessionLogger = spdlog::stdout_logger_st("ClientSession");
-#ifdef SNAPCRAFT_BUILD
-        ClientSessionLogger->set_pattern("[%n] [%l] %v");
-#endif
-    }
-
-    ClientSessionLogger->set_level(level);
-}
-
-const std::shared_ptr<spdlog::logger>& ClientSessionLog()
-{
-    if(!ClientSessionLogger) {
-#ifdef NDEBUG
-        InitClientSessionLogger(spdlog::level::info);
-#else
-        InitClientSessionLogger(spdlog::level::debug);
-#endif
-    }
-
-    return ClientSessionLogger;
-}
-
-std::shared_ptr<spdlog::logger> MakeClientSessionLogger(const std::string& context)
-{
-    const std::shared_ptr<spdlog::logger>& logger = ClientSessionLog();
-
-    if(context.empty()) {
-        return logger;
-    } else {
-        // have to go long road to avoid issues with duplicated names in loggers registry
-        std::shared_ptr<spdlog::logger> loggerWithContext = std::make_shared<spdlog::logger>(
-            logger->name(),
-            std::make_shared<spdlog::sinks::stdout_sink_st>());
-        loggerWithContext->set_level(logger->level());
-
-#ifdef SNAPCRAFT_BUILD
-        loggerWithContext->set_pattern("[" + context + "] [%n] [%l] %v");
-#else
-        loggerWithContext->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [" + context + "] [%n] [%l] %v");
-#endif
-
-        return loggerWithContext;
-    }
 }

@@ -29,9 +29,6 @@ public:
         const SendResponse& sendResponse) noexcept;
     ~StreamSession();
 
-    const std::shared_ptr<spdlog::logger>& log() const
-        { return _log; }
-
     bool onConnected(const std::optional<std::string>& authCookie = {}) noexcept;
 
     bool handleRequest(std::unique_ptr<Request>&&) noexcept override;
@@ -65,8 +62,6 @@ protected:
     virtual void teardownMediaSession(const MediaSessionId&) noexcept;
 
 private:
-    const std::shared_ptr<spdlog::logger> _log;
-
     struct Private;
     std::unique_ptr<Private> _p;
 };

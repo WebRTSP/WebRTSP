@@ -8,6 +8,10 @@
 #include "Log.h"
 
 
+#define SESSION "[{}]" " "
+#define TAG "[ClientRecordSession]" " "
+
+
 namespace rtsp {
 
 namespace {
@@ -93,7 +97,7 @@ void ClientRecordSession::Private::iceCandidate(
 
 void ClientRecordSession::Private::eos()
 {
-    owner->log()->trace("Eos");
+    owner->log()->trace(SESSION TAG "Eos", owner->sessionLogId);
 
     owner->onEos(); // FIXME! send TEARDOWN and remove Media Session instead
 }
@@ -108,8 +112,7 @@ ClientRecordSession::ClientRecordSession(
     const SendResponse& sendResponse) noexcept :
     Session(sendRequest, sendResponse),
     WebRTCSessionMixin(webRTCConfig),
-    _p(new Private(this, targetUri, recordToken, createPeer)),
-    _log(MakeClientSessionLogger(sessionLogId))
+    _p(new Private(this, targetUri, recordToken, createPeer))
 {
 }
 
@@ -236,7 +239,10 @@ bool ClientRecordSession::onSetupRequest(std::unique_ptr<Request>&& requestPtr) 
             if(candidate.empty())
                 return false;
 
-            log()->trace("Adding ice candidate \"{}\"", candidate);
+            log()->trace(
+                SESSION TAG "Adding ice candidate \"{}\"",
+                sessionLogId,
+                candidate);
 
             _p->streamer->addIceCandidate(idx, candidate);
         } catch(...) {

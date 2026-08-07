@@ -9,6 +9,10 @@
 #include "Log.h"
 
 
+#define SESSION "[{}]" " "
+#define TAG "[StreamSession]" " "
+
+
 namespace rtsp {
 
 namespace {
@@ -238,7 +242,10 @@ void StreamSession::Private::iceCandidate(
 
 void StreamSession::Private::eos(const MediaSessionId& session)
 {
-    owner->log()->trace("Eos. Session: {}", owner->sessionLogId, session);
+    owner->log()->trace(
+        SESSION TAG "Eos. Media Session: {}",
+        owner->sessionLogId,
+        session);
 
     auto it = mediaSessions.find(session);
     if(mediaSessions.end() == it) {
@@ -270,8 +277,7 @@ StreamSession::StreamSession(
     const SendResponse& sendResponse) noexcept :
     Session(sendRequest, sendResponse),
     WebRTCSessionMixin(webRTCConfig),
-    _p(new Private(this, createPeer)),
-    _log(MakeStreamSessionLogger(sessionLogId))
+    _p(new Private(this, createPeer))
 {
 }
 
@@ -283,8 +289,7 @@ StreamSession::StreamSession(
     const SendResponse& sendResponse) noexcept :
     Session(sendRequest, sendResponse),
     WebRTCSessionMixin(webRTCConfig),
-    _p(new Private(this, createPeer, createRecordPeer)),
-    _log(MakeStreamSessionLogger(sessionLogId))
+    _p(new Private(this, createPeer, createRecordPeer))
 {
 }
 
@@ -400,14 +405,20 @@ bool StreamSession::onDescribeRequest(
     const Request& request = *requestPtr.get();
 
     if(!playEnabled(request.uri)) {
-        log()->error("Playback is not supported for \"{}\"", requestPtr->uri);
+        log()->error(
+            SESSION TAG "Playback is not supported for \"{}\"",
+            sessionLogId,
+            requestPtr->uri);
         sendNotFoundResponse(request.cseq);
         return true;
     }
 
     std::unique_ptr<WebRTCPeer> peerPtr = _p->createPeer(requestPtr->uri);
     if(!peerPtr) {
-        log()->error("Failed to create peer for \"{}\"", requestPtr->uri);
+        log()->error(
+            SESSION TAG "Failed to create peer for \"{}\"",
+            sessionLogId,
+            requestPtr->uri);
         sendServiceUnavailableResponse(request.cseq);
         return true;
     }
@@ -459,7 +470,10 @@ bool StreamSession::onRecordRequest(
         return false;
 
     if(!authorize(requestPtr)) {
-        log()->error("RECORD authorize failed for \"{}\"", requestPtr->uri);
+        log()->error(
+            SESSION TAG "RECORD authorize failed for \"{}\"",
+            sessionLogId,
+            requestPtr->uri);
         return false;
     }
 
@@ -553,7 +567,10 @@ bool StreamSession::onSetupRequest(
             if(candidate.empty())
                 return false;
 
-            log()->trace("Adding ice candidate \"{}\"", sessionLogId, candidate);
+            log()->trace(
+                SESSION TAG "Adding ice candidate \"{}\"",
+                sessionLogId,
+                candidate);
 
             localPeer.addIceCandidate(idx, candidate);
         } catch(...) {

@@ -3,7 +3,9 @@
 #include <cassert>
 #include <random>
 
-#include "Log.h"
+
+#define SESSION "[{}]" " "
+#define TAG "[rtsp::Session]" " "
 
 
 namespace {
@@ -23,14 +25,13 @@ Session::Session(
     const SendResponse& sendResponse) noexcept :
     sessionLogId(GenerateSessionLogId()),
     _sendRequest(sendRequest),
-    _sendResponse(sendResponse),
-    _log(MakeRtspSessionLogger(sessionLogId))
+    _sendResponse(sendResponse)
 {
 }
 
 Session::~Session()
 {
-    log()->info("Session destroyed");
+    log()->info(SESSION TAG "Session destroyed", sessionLogId);
 }
 
 Request* Session::createRequest(
@@ -400,7 +401,9 @@ bool Session::handleResponse(std::unique_ptr<Response>&& responsePtr) noexcept
     auto it = _sentRequests.find(responsePtr->cseq);
     if(it == _sentRequests.end()) {
         log()->error(
+            SESSION TAG
             "Failed to find sent request corresponding to response with CSeq = {}",
+            sessionLogId,
             responsePtr->cseq);
         return false;
     }

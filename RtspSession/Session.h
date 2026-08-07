@@ -10,6 +10,7 @@
 #include "RtspParser/Request.h"
 #include "RtspParser/Response.h"
 
+#include "Log.h"
 #include "StatusCode.h"
 
 
@@ -22,15 +23,14 @@ struct Session
 
     virtual ~Session();
 
-    const std::shared_ptr<spdlog::logger>& log() const
-        { return _log; }
+    const std::string sessionLogId;
+    const std::shared_ptr<spdlog::logger>& log() const noexcept
+        { return SessionLog(); }
 
     virtual bool onConnected() noexcept { return true; }
 
     virtual bool handleRequest(std::unique_ptr<Request>&&) noexcept;
     bool handleResponse(std::unique_ptr<Response>&&) noexcept;
-
-    const std::string sessionLogId;
 
 protected:
     Session(
@@ -170,8 +170,6 @@ protected:
     virtual void onEos() noexcept;
 
 private:
-    const std::shared_ptr<spdlog::logger> _log;
-
     const SendRequest _sendRequest;
     const SendResponse _sendResponse;
 
