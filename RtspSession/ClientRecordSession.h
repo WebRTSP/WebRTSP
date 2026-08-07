@@ -4,7 +4,9 @@
 #include "RtspSession/Session.h"
 
 
-class ClientRecordSession : public rtsp::Session
+namespace rtsp {
+
+class ClientRecordSession : public Session
 {
 public:
     typedef std::function<std::unique_ptr<WebRTCPeer> (const std::string& uri)> CreatePeer;
@@ -45,3 +47,5 @@ private:
     struct Private;
     std::unique_ptr<Private> _p;
 };
+
+}

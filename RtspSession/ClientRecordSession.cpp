@@ -8,24 +8,27 @@
 #include "Log.h"
 
 
+namespace rtsp {
+
 namespace {
 
 inline bool IsMethodSupported(
-    const std::set<rtsp::Method>& supportedMethods,
-    rtsp::Method method) noexcept
+    const std::set<Method>& supportedMethods,
+    Method method) noexcept
 {
     return supportedMethods.find(method) != supportedMethods.end();
 }
 
-bool IsRecordSupported(const std::set<rtsp::Method>& supportedMethods) noexcept
+bool IsRecordSupported(const std::set<Method>& supportedMethods) noexcept
 {
     return
-        IsMethodSupported(supportedMethods, rtsp::Method::RECORD) &&
-        IsMethodSupported(supportedMethods, rtsp::Method::SETUP) &&
-        IsMethodSupported(supportedMethods, rtsp::Method::TEARDOWN);
+        IsMethodSupported(supportedMethods, Method::RECORD) &&
+        IsMethodSupported(supportedMethods, Method::SETUP) &&
+        IsMethodSupported(supportedMethods, Method::TEARDOWN);
 }
 
 }
+
 
 struct ClientRecordSession::Private
 {
@@ -44,10 +47,10 @@ struct ClientRecordSession::Private
     const CreatePeer createPeer;
 
     std::unique_ptr<WebRTCPeer> streamer;
-    std::deque<rtsp::IceCandidate> iceCandidates;
+    std::deque<IceCandidate> iceCandidates;
 
-    rtsp::CSeq recordRequested = false;
-    rtsp::MediaSessionId session;
+    CSeq recordRequested = false;
+    MediaSessionId session;
 
     void streamerPrepared();
     void iceCandidate(unsigned, const std::string&);
@@ -78,11 +81,11 @@ void ClientRecordSession::Private::iceCandidate(
     unsigned mlineIndex, const std::string& candidate)
 {
     if(session.empty()) {
-        iceCandidates.emplace_back(rtsp::IceCandidate { mlineIndex, candidate });
+        iceCandidates.emplace_back(IceCandidate { mlineIndex, candidate });
     } else {
         owner->requestSetup(
             targetUri,
-            rtsp::IceCandidateContentType,
+            IceCandidateContentType,
             session,
             std::to_string(mlineIndex) + "/" + candidate + "\r\n");
     }
@@ -103,7 +106,7 @@ ClientRecordSession::ClientRecordSession(
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    rtsp::Session(webRTCConfig, sendRequest, sendResponse),
+    Session(webRTCConfig, sendRequest, sendResponse),
     _p(new Private(this, targetUri, recordToken, createPeer)),
     _log(MakeClientSessionLogger(sessionLogId))
 {
@@ -115,34 +118,34 @@ ClientRecordSession::~ClientRecordSession()
 
 bool ClientRecordSession::onConnected() noexcept
 {
-    requestOptions(!_p->targetUri.empty() ? _p->targetUri : rtsp::WildcardUri);
+    requestOptions(!_p->targetUri.empty() ? _p->targetUri : WildcardUri);
 
     return true;
 }
 
 bool ClientRecordSession::onOptionsResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
+    const Request& request,
+    const Response& response) noexcept
 {
-    if(rtsp::StatusCode::OK != response.statusCode)
+    if(StatusCode::OK != response.statusCode)
         return false;
 
-    const std::set<rtsp::Method> supportedMethods = rtsp::ParseOptions(response);
+    const std::set<Method> supportedMethods = ParseOptions(response);
 
     return IsRecordSupported(supportedMethods);
 }
 
 bool ClientRecordSession::onRecordResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
+    const Request& request,
+    const Response& response) noexcept
 {
-    if(response.statusCode != rtsp::StatusCode::OK)
+    if(response.statusCode != StatusCode::OK)
         return false;
 
-    if(ResponseContentType(response) != rtsp::SdpContentType)
+    if(ResponseContentType(response) != SdpContentType)
         return false;
 
-    rtsp::MediaSessionId session = ResponseSession(response);
+    MediaSessionId session = ResponseSession(response);
     if(session.empty())
         return false;
 
@@ -152,7 +155,7 @@ bool ClientRecordSession::onRecordResponse(
 
     if(!_p->iceCandidates.empty()) {
         std::string iceCandidates;
-        for(const rtsp::IceCandidate& c : _p->iceCandidates) {
+        for(const IceCandidate& c : _p->iceCandidates) {
             iceCandidates +=
                 std::to_string(c.mlineIndex) + "/" + c.candidate + "\r\n";
         }
@@ -160,7 +163,7 @@ bool ClientRecordSession::onRecordResponse(
         if(!iceCandidates.empty()) {
             requestSetup(
                 _p->targetUri,
-                rtsp::IceCandidateContentType,
+                IceCandidateContentType,
                 _p->session,
                 iceCandidates);
         }
@@ -174,17 +177,17 @@ bool ClientRecordSession::onRecordResponse(
 }
 
 bool ClientRecordSession::onSetupResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
+    const Request& request,
+    const Response& response) noexcept
 {
-    if(rtsp::StatusCode::OK != response.statusCode)
+    if(StatusCode::OK != response.statusCode)
         return false;
 
     if(ResponseSession(response) != _p->session)
         return false;
 
     const std::string contentType = RequestContentType(request);
-     if(contentType == rtsp::IceCandidateContentType)
+     if(contentType == IceCandidateContentType)
         ;
      else
          return false;
@@ -193,18 +196,18 @@ bool ClientRecordSession::onSetupResponse(
 }
 
 bool ClientRecordSession::onTeardownResponse(
-    const rtsp::Request& request,
-    const rtsp::Response& response) noexcept
+    const Request& request,
+    const Response& response) noexcept
 {
     return true;
 }
 
-bool ClientRecordSession::onSetupRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
+bool ClientRecordSession::onSetupRequest(std::unique_ptr<Request>&& requestPtr) noexcept
 {
     if(RequestSession(*requestPtr) != _p->session)
         return false;
 
-    if(RequestContentType(*requestPtr) != rtsp::IceCandidateContentType)
+    if(RequestContentType(*requestPtr) != IceCandidateContentType)
         return false;
 
     const std::string& ice = requestPtr->body;
@@ -241,7 +244,7 @@ bool ClientRecordSession::onSetupRequest(std::unique_ptr<rtsp::Request>&& reques
         pos = lineEndPos + 2;
     }
 
-    sendOkResponse(requestPtr->cseq, rtsp::RequestSession(*requestPtr));
+    sendOkResponse(requestPtr->cseq, RequestSession(*requestPtr));
 
     return true;
 }
@@ -304,4 +307,6 @@ void ClientRecordSession::stopRecord() noexcept
             disconnect();
         }
     }
+}
+
 }
