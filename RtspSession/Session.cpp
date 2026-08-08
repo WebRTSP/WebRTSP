@@ -86,6 +86,23 @@ Request* Session::attachRequest(const std::unique_ptr<rtsp::Request>& requestPtr
     }
 }
 
+Request* Session::attachRequest(std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
+{
+    for(;;) {
+        const CSeq cseq = _nextCSeq++;
+        const auto& pair =
+            _sentRequests.emplace(
+                cseq,
+                std::move(*requestPtr));
+
+        if(pair.second) {
+            Request& request = pair.first->second;
+            request.cseq = cseq;
+            return &request;
+        }
+    }
+}
+
 Response* Session::prepareResponse(
     StatusCode statusCode,
     const std::string::value_type* reasonPhrase,

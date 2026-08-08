@@ -46,6 +46,7 @@ protected:
         std::string_view uri,
         const MediaSessionId&) noexcept;
     Request* attachRequest(const std::unique_ptr<rtsp::Request>&) noexcept;
+    Request* attachRequest(std::unique_ptr<rtsp::Request>&&) noexcept;
 
     static Response* prepareResponse(
         StatusCode,
