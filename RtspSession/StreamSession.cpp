@@ -379,6 +379,10 @@ bool StreamSession::onOptionsRequest(
     Response response;
 
     if(options.empty()) {
+        log()->warn(
+            SESSION TAG "Session has no any supported METHOD for \"{}\" URI",
+            sessionLogId,
+            requestPtr->uri);
         sendNotFoundResponse(requestPtr->cseq);
     } else {
         prepareOkResponse(requestPtr->cseq, MediaSessionId(), &response);
