@@ -36,18 +36,16 @@ Session::~Session()
 
 Request* Session::createRequest(
     Method method,
-    const std::string& uri) noexcept
+    std::string_view uri) noexcept
 {
     for(;;) {
         const auto& pair =
-            _sentRequests.emplace(
+            _sentRequests.try_emplace(
                 _nextCSeq,
-                Request {
-                    .method = method,
-                    .uri = {},
-                    .protocol = Protocol::WEBRTSP_0_2,
-                    .cseq = _nextCSeq
-                });
+                method,
+                std::string(),
+                Protocol::WEBRTSP_0_2,
+                _nextCSeq);
 
         ++_nextCSeq;
 
@@ -61,7 +59,7 @@ Request* Session::createRequest(
 
 Request* Session::createRequest(
     Method method,
-    const std::string& uri,
+    std::string_view uri,
     const MediaSessionId& session) noexcept
 {
     Request* request = createRequest(method, uri);
@@ -138,7 +136,7 @@ void Session::sendOkResponse(
 
 void Session::sendOkResponse(
     CSeq cseq,
-    const std::string& contentType,
+    std::string_view contentType,
     const std::string& body)
 {
     Response response;
@@ -154,7 +152,7 @@ void Session::sendOkResponse(
 void Session::sendOkResponse(
     CSeq cseq,
     const MediaSessionId& session,
-    const std::string& contentType,
+    std::string_view contentType,
     const std::string& body)
 {
     Response response;
@@ -221,7 +219,7 @@ void Session::sendRequest(const Request& request) noexcept
     _sendRequest(&request);
 }
 
-CSeq Session::requestOptions(const std::string& uri) noexcept
+CSeq Session::requestOptions(std::string_view uri) noexcept
 {
     assert(!uri.empty());
     if(uri.empty())
@@ -234,7 +232,7 @@ CSeq Session::requestOptions(const std::string& uri) noexcept
     return request.cseq;
 }
 
-CSeq Session::requestList(const std::string& uri) noexcept
+CSeq Session::requestList(std::string_view uri) noexcept
 {
     Request& request = *createRequest(Method::LIST, uri);
 
@@ -244,7 +242,7 @@ CSeq Session::requestList(const std::string& uri) noexcept
 }
 
 CSeq Session::sendList(
-    const std::string& uri,
+    std::string_view uri,
     const std::string& list,
     const std::optional<std::string>& token) noexcept
 {
@@ -262,7 +260,7 @@ CSeq Session::sendList(
     return request.cseq;
 }
 
-CSeq Session::requestDescribe(const std::string& uri) noexcept
+CSeq Session::requestDescribe(std::string_view uri) noexcept
 {
     Request& request = *createRequest(Method::DESCRIBE, uri);
 
@@ -272,8 +270,8 @@ CSeq Session::requestDescribe(const std::string& uri) noexcept
 }
 
 CSeq Session::requestSetup(
-    const std::string& uri,
-    const std::string& contentType,
+    std::string_view uri,
+    std::string_view contentType,
     const MediaSessionId& session,
     const std::string& body) noexcept
 {
@@ -293,7 +291,7 @@ CSeq Session::requestSetup(
 }
 
 CSeq Session::requestPlay(
-    const std::string& uri,
+    std::string_view uri,
     const MediaSessionId& session,
     const std::string& sdp) noexcept
 {
@@ -306,7 +304,7 @@ CSeq Session::requestPlay(
     return request->cseq;
 }
 
-CSeq Session::requestSubscribe(const std::string& uri) noexcept
+CSeq Session::requestSubscribe(std::string_view uri) noexcept
 {
     Request& request = *createRequest(Method::SUBSCRIBE, uri);
 
@@ -316,7 +314,7 @@ CSeq Session::requestSubscribe(const std::string& uri) noexcept
 }
 
 CSeq Session::requestRecord(
-    const std::string& uri,
+    std::string_view uri,
     const std::string& sdp,
     const std::optional<std::string>& token) noexcept
 {
@@ -335,7 +333,7 @@ CSeq Session::requestRecord(
 }
 
 CSeq Session::requestTeardown(
-    const std::string& uri,
+    std::string_view uri,
     const MediaSessionId& session) noexcept
 {
     Request& request = *createRequest(Method::TEARDOWN, uri, session);
@@ -346,8 +344,8 @@ CSeq Session::requestTeardown(
 }
 
 CSeq Session::requestGetParameter(
-    const std::string& uri,
-    const std::string& contentType,
+    std::string_view uri,
+    std::string_view contentType,
     const std::string& body,
     const std::optional<std::string>& token) noexcept
 {
@@ -367,8 +365,8 @@ CSeq Session::requestGetParameter(
 }
 
 CSeq Session::requestSetParameter(
-    const std::string& uri,
-    const std::string& contentType,
+    std::string_view uri,
+    std::string_view contentType,
     const std::string& body,
     const std::optional<std::string>& token) noexcept
 {

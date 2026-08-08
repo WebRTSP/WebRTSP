@@ -39,10 +39,10 @@ protected:
 
     Request* createRequest(
         Method,
-        const std::string& uri) noexcept;
+        std::string_view uri) noexcept;
     Request* createRequest(
         Method,
-        const std::string& uri,
+        std::string_view uri,
         const MediaSessionId&) noexcept;
     Request* attachRequest(
         const std::unique_ptr<rtsp::Request>& requestPtr) noexcept;
@@ -65,12 +65,12 @@ protected:
     void sendOkResponse(CSeq, const MediaSessionId&);
     void sendOkResponse(
         CSeq,
-        const std::string& contentType,
+        std::string_view contentType,
         const std::string& body);
     void sendOkResponse(
         CSeq,
         const MediaSessionId&,
-        const std::string& contentType,
+        std::string_view contentType,
         const std::string& body);
 
     void sendBadRequestResponse(CSeq);
@@ -86,38 +86,38 @@ protected:
 
     void disconnect() noexcept;
 
-    CSeq requestOptions(const std::string& uri) noexcept;
-    CSeq requestList(const std::string& uri = rtsp::WildcardUri) noexcept;
+    CSeq requestOptions(std::string_view uri) noexcept;
+    CSeq requestList(std::string_view uri = rtsp::WildcardUri) noexcept;
     CSeq sendList(
-        const std::string& uri,
+        std::string_view uri,
         const std::string& list,
         const std::optional<std::string>& token = {}) noexcept;
-    CSeq requestDescribe(const std::string& uri) noexcept;
+    CSeq requestDescribe(std::string_view uri) noexcept;
     CSeq requestSetup(
-        const std::string& uri,
-        const std::string& contentType,
+        std::string_view uri,
+        std::string_view contentType,
         const MediaSessionId& session,
         const std::string& body) noexcept;
     CSeq requestPlay(
-        const std::string& uri,
+        std::string_view uri,
         const MediaSessionId& session,
         const std::string& sdp) noexcept;
-    CSeq requestSubscribe(const std::string& uri) noexcept;
+    CSeq requestSubscribe(std::string_view uri) noexcept;
     CSeq requestRecord(
-        const std::string& uri,
+        std::string_view uri,
         const std::string& sdp,
         const std::optional<std::string>& token = {}) noexcept;
     CSeq requestTeardown(
-        const std::string& uri,
+        std::string_view uri,
         const MediaSessionId&) noexcept;
     CSeq requestGetParameter(
-        const std::string& uri,
-        const std::string& contentType,
+        std::string_view uri,
+        std::string_view contentType,
         const std::string& body,
         const std::optional<std::string>& token = {}) noexcept;
     CSeq requestSetParameter(
-        const std::string& uri,
-        const std::string& contentType,
+        std::string_view uri,
+        std::string_view contentType,
         const std::string& body,
         const std::optional<std::string>& token = {}) noexcept;
 

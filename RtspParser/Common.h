@@ -8,20 +8,20 @@
 namespace rtsp {
 
 typedef unsigned CSeq;
-constexpr CSeq InvalidCSeq = 0;
+inline constexpr CSeq InvalidCSeq = 0;
 
 typedef std::string MediaSessionId;
 
 typedef std::map<std::string, std::string> Parameters;
 typedef std::set<std::string> ParametersNames;
 
-const char UriSeparator = '/';
-const char *const WildcardUri = "*";
+inline constexpr char UriSeparator = '/';
+inline constexpr std::string_view WildcardUri = "*";
 
-const char *const ContentTypeFieldName = "Content-Type";
-const char *const TextListContentType = "text/list";
-const char *const TextParametersContentType = "text/parameters";
-const char *const SdpContentType = "application/sdp";
-const char *const IceCandidateContentType = "application/x-ice-candidate";
+inline constexpr std::string_view AuthorizationFieldName = "Authorization";
+inline constexpr std::string_view TextListContentType = "text/list";
+inline constexpr std::string_view TextParametersContentType = "text/parameters";
+inline constexpr std::string_view SdpContentType = "application/sdp";
+inline constexpr std::string_view IceCandidateContentType = "application/x-ice-candidate";
 
 }
