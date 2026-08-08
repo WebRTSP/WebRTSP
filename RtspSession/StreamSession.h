@@ -38,8 +38,6 @@ public:
 protected:
     const std::optional<std::string>& authCookie() const noexcept;
 
-    std::string nextSessionId();
-
     virtual bool listEnabled(const std::string& /*uri*/) noexcept { return false; }
     virtual bool playEnabled(const std::string& /*uri*/) noexcept { return true; };
     virtual bool recordEnabled(const std::string& /*uri*/) noexcept { return false; }

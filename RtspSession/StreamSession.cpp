@@ -65,8 +65,8 @@ struct StreamSession::Private
     bool recordEnabled()
         { return createRecordPeer ? true : false; }
 
-    std::string nextSessionId()
-        { return std::to_string(_nextSessionId++); }
+    rtsp::MediaSessionId nextMediaSession()
+        { return owner->nextMediaSession(); }
 
     void sendIceCandidates(const MediaSessionId&, MediaSession* mediaSession);
     void streamerPrepared(const MediaSessionId&);
@@ -76,9 +76,6 @@ struct StreamSession::Private
         const MediaSessionId&,
         unsigned, const std::string&);
     void eos(const MediaSessionId& session);
-
-private:
-    unsigned _nextSessionId = 1;
 };
 
 StreamSession::Private::Private(
@@ -307,11 +304,6 @@ const std::optional<std::string>& StreamSession::authCookie() const noexcept
     return _p->authCookie;
 }
 
-std::string StreamSession::nextSessionId()
-{
-    return _p->nextSessionId();
-}
-
 bool StreamSession::handleRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
@@ -421,7 +413,7 @@ bool StreamSession::onDescribeRequest(
         return true;
     }
 
-    const MediaSessionId session = nextSessionId();
+    const MediaSessionId session = nextMediaSession();
 
     auto emplacePair =
         _p->mediaSessions.emplace(
@@ -487,7 +479,7 @@ bool StreamSession::onRecordRequest(
     if(contentType != SdpContentType)
         return false;
 
-    const MediaSessionId session = nextSessionId();
+    const MediaSessionId session = nextMediaSession();
 
     auto emplacePair =
         _p->mediaSessions.emplace(

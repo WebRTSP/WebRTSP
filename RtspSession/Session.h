@@ -32,6 +32,9 @@ struct Session
     virtual bool handleRequest(std::unique_ptr<Request>&&) noexcept;
     bool handleResponse(std::unique_ptr<Response>&&) noexcept;
 
+    rtsp::MediaSessionId nextMediaSession()
+        { return std::to_string(_nextMediaSession++); }
+
 protected:
     Session(const SendRequest&, const SendResponse&) noexcept;
 
@@ -176,6 +179,7 @@ private:
     const SendResponse _sendResponse;
 
     CSeq _nextCSeq = 1;
+    unsigned _nextMediaSession = 1;
 
     std::map<CSeq, Request> _sentRequests;
 };
