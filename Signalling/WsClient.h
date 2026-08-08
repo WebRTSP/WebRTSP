@@ -27,7 +27,7 @@ public:
         const CreateSession&,
         const Disconnected&) noexcept;
     bool init() noexcept;
-    ~WsClient();
+    ~WsClient() noexcept;
 
     void connect() noexcept;
 

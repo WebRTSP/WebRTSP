@@ -60,19 +60,19 @@ struct WsClient::Private
         const WsClientConfig&,
         GMainLoop*,
         const CreateSession&,
-        const Disconnected&);
+        const Disconnected&) noexcept;
 
-    bool init();
-    int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len);
-    int wsCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len);
-    bool onMessage(SessionContextData*, const MessageBuffer&);
+    bool init() noexcept;
+    int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
+    int wsCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
+    bool onMessage(SessionContextData*, const MessageBuffer&) noexcept;
 
-    void send(SessionContextData*, MessageBuffer*);
-    void sendRequest(SessionContextData*, const rtsp::Request*);
-    void sendResponse(SessionContextData*, const rtsp::Response*);
+    void send(SessionContextData*, MessageBuffer*) noexcept;
+    void sendRequest(SessionContextData*, const rtsp::Request*) noexcept;
+    void sendResponse(SessionContextData*, const rtsp::Response*) noexcept;
 
-    void connect();
-    bool onConnected(SessionContextData*);
+    void connect() noexcept;
+    bool onConnected(SessionContextData*) noexcept;
 
 
     WsClient *const owner;
@@ -92,7 +92,7 @@ WsClient::Private::Private(
     const WsClientConfig& config,
     GMainLoop* loop,
     const WsClient::CreateSession& createSession,
-    const Disconnected& disconnected) :
+    const Disconnected& disconnected) noexcept :
     owner(owner), config(config), loop(loop),
     createSession(createSession), disconnected(disconnected)
 {
@@ -102,7 +102,7 @@ int WsClient::Private::wsCallback(
     lws* wsi,
     lws_callback_reasons reason,
     void* user,
-    void* in, size_t len)
+    void* in, size_t len) noexcept
 {
     SessionContextData* scd = static_cast<SessionContextData*>(user);
     switch(reason) {
@@ -236,7 +236,7 @@ int WsClient::Private::wsCallback(
     return 0;
 }
 
-bool WsClient::Private::init()
+bool WsClient::Private::init() noexcept
 {
     auto WsCallback =
         [] (lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) -> int {
@@ -284,7 +284,7 @@ bool WsClient::Private::init()
     return true;
 }
 
-void WsClient::Private::connect()
+void WsClient::Private::connect() noexcept
 {
     if(connection)
         return;
@@ -314,14 +314,14 @@ void WsClient::Private::connect()
     connected = false;
 }
 
-bool WsClient::Private::onConnected(SessionContextData* scd)
+bool WsClient::Private::onConnected(SessionContextData* scd) noexcept
 {
     return scd->data->rtspSession->onConnected();
 }
 
 bool WsClient::Private::onMessage(
     SessionContextData* scd,
-    const MessageBuffer& message)
+    const MessageBuffer& message) noexcept
 {
     if(rtsp::IsRequest(message.data(), message.size())) {
         std::unique_ptr<rtsp::Request> requestPtr =
@@ -364,7 +364,9 @@ bool WsClient::Private::onMessage(
     return true;
 }
 
-void WsClient::Private::send(SessionContextData* scd, MessageBuffer* message)
+void WsClient::Private::send(
+    SessionContextData* scd,
+    MessageBuffer* message) noexcept
 {
     assert(!message->empty());
 
@@ -375,7 +377,7 @@ void WsClient::Private::send(SessionContextData* scd, MessageBuffer* message)
 
 void WsClient::Private::sendRequest(
     SessionContextData* scd,
-    const rtsp::Request* request)
+    const rtsp::Request* request) noexcept
 {
     if(!request) {
         scd->data->terminateSession = true;
@@ -409,7 +411,7 @@ void WsClient::Private::sendRequest(
 
 void WsClient::Private::sendResponse(
     SessionContextData* scd,
-    const rtsp::Response* response)
+    const rtsp::Response* response) noexcept
 {
     if(!response) {
         scd->data->terminateSession = true;
@@ -450,7 +452,7 @@ WsClient::WsClient(
 {
 }
 
-WsClient::~WsClient()
+WsClient::~WsClient() noexcept
 {
 }
 
