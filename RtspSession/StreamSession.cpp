@@ -142,8 +142,7 @@ void StreamSession::Private::streamerPrepared(const MediaSessionId& session)
         Response response;
         prepareOkResponse(describeRequestCSeq, session, &response);
 
-        SetContentType(&response, SdpContentType);
-
+        response.contentType = SdpContentType;
         response.body = localPeer.sdp();
 
         owner->sendResponse(response);
@@ -172,8 +171,7 @@ void StreamSession::Private::recorderPrepared(const MediaSessionId& session)
         Response response;
         prepareOkResponse(recordRequestCSeq, session, &response);
 
-        SetContentType(&response, SdpContentType);
-
+        response.contentType = SdpContentType;
         response.body = recorder.sdp();
 
         owner->sendResponse(response);
@@ -207,9 +205,9 @@ void StreamSession::Private::recordToClientStreamerPrepared(const MediaSessionId
         Request& request =
             *owner->createRequest(Method::RECORD, mediaSession.uri);
 
-        SetRequestSession(&request, mediaSessionId);
-        SetContentType(&request, SdpContentType);
+        request.session = mediaSessionId;
 
+        request.contentType = SdpContentType;
         request.body = localPeer.sdp();
 
         owner->sendRequest(request);
@@ -343,7 +341,7 @@ bool StreamSession::handleRequest(
 bool StreamSession::onGetParameterRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
-    const std::string& contentType = RequestContentType(*requestPtr);
+    const std::string& contentType = requestPtr->contentType;
     if(contentType.empty() && requestPtr->body.empty()) {
         // PING/PONG case
         sendOkResponse(requestPtr->cseq);
@@ -485,7 +483,7 @@ bool StreamSession::onRecordRequest(
     if(!peerPtr)
         return false;
 
-    const std::string contentType = RequestContentType(*requestPtr);
+    const std::string& contentType = requestPtr->contentType;
     if(contentType != SdpContentType)
         return false;
 
@@ -531,7 +529,7 @@ bool StreamSession::onRecordRequest(
 bool StreamSession::onSetupRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
-    const MediaSessionId session = RequestSession(*requestPtr);
+    const MediaSessionId& session = requestPtr->session;
 
     auto it = _p->mediaSessions.find(session);
     if(it == _p->mediaSessions.end())
@@ -539,7 +537,7 @@ bool StreamSession::onSetupRequest(
 
     WebRTCPeer& localPeer = *it->second->localPeer;
 
-    if(RequestContentType(*requestPtr) != IceCandidateContentType)
+    if(requestPtr->contentType != IceCandidateContentType)
         return false;
 
     const std::string& ice = requestPtr->body;
@@ -587,7 +585,7 @@ bool StreamSession::onSetupRequest(
 bool StreamSession::onPlayRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
-    const MediaSessionId session = RequestSession(*requestPtr);
+    const MediaSessionId& session = requestPtr->session;
     if(session.empty())
         return false;
 
@@ -599,7 +597,7 @@ bool StreamSession::onPlayRequest(
     if(mediaSession.type != MediaSession::Type::Describe)
         return false;
 
-    if(RequestContentType(*requestPtr) != SdpContentType)
+    if(requestPtr->contentType != SdpContentType)
         return false;
 
     WebRTCPeer& localPeer = *(mediaSession.localPeer);
@@ -615,7 +613,7 @@ bool StreamSession::onPlayRequest(
 bool StreamSession::onTeardownRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
-    const MediaSessionId session = RequestSession(*requestPtr);
+    const MediaSessionId& session = requestPtr->session;
 
     auto it = _p->mediaSessions.find(session);
     if(it == _p->mediaSessions.end())
@@ -679,8 +677,8 @@ bool StreamSession::onRecordResponse(const Request& request, const Response& res
     if(StatusCode::OK != response.statusCode)
         return false;
 
-    const MediaSessionId mediaSessionId = RequestSession(request);
-    if(mediaSessionId.empty() || mediaSessionId != ResponseSession(response))
+    const MediaSessionId& mediaSessionId = request.session;
+    if(mediaSessionId.empty() || mediaSessionId != response.session)
         return false;
 
     auto it = _p->mediaSessions.find(mediaSessionId);
@@ -691,7 +689,7 @@ bool StreamSession::onRecordResponse(const Request& request, const Response& res
     if(mediaSession.type != MediaSession::Type::Subscribe)
         return false;
 
-    if(ResponseContentType(response) != SdpContentType)
+    if(response.contentType != SdpContentType)
         return false;
 
     WebRTCPeer& localPeer = *(mediaSession.localPeer);

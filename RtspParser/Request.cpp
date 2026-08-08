@@ -3,37 +3,13 @@
 
 namespace rtsp {
 
-MediaSessionId RequestSession(const Request& request)
-{
-    auto it = request.headerFields.find("session");
-    if(request.headerFields.end() == it)
-        return MediaSessionId();
-
-    return it->second;
-}
-
-void SetRequestSession(Request* request, const MediaSessionId& session)
-{
-    request->headerFields["session"] = session;
-}
-
-std::string RequestContentType(const Request& request)
-{
-    auto it = request.headerFields.find("content-type");
-    if(request.headerFields.end() == it)
-        return std::string();
-
-    return it->second;
-}
-
-void SetContentType(Request* request, const std::string& contentType)
-{
-    request->headerFields[ContentTypeFieldName] = contentType;
-}
-
 void SetBearerAuthorization(Request* request, const std::string& token)
 {
-    request->headerFields["Authorization"] = "Bearer " + token;
+#if __cplusplus > 202603L
+    request->headerFields.insert_or_assign(AuthorizationFieldName, "Bearer " + token);
+#else
+    request->headerFields[std::string(AuthorizationFieldName)] = "Bearer " + token;
+#endif
 }
 
 }

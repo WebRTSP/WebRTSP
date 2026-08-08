@@ -340,7 +340,7 @@ void Connection::messageReceived(const QString& message) noexcept
 bool Connection::handleRequest(
     std::unique_ptr<rtsp::Request>&& requestPtr) noexcept
 {
-    const rtsp::MediaSessionId mediaSession = rtsp::RequestSession(*requestPtr);
+    const rtsp::MediaSessionId& mediaSession = requestPtr->session;
 
     if(mediaSession.empty()) {
         qWarning(QmlClient) << "Can't handle request without media session id. Forcing disconnect..." << Qt::endl;
@@ -382,7 +382,7 @@ bool Connection::handleResponse(
                 request.method == rtsp::Method::DESCRIBE &&
                 responsePtr->statusCode == rtsp::StatusCode::OK)
             {
-                const rtsp::MediaSessionId mediaSession = rtsp::ResponseSession(*responsePtr);
+                const rtsp::MediaSessionId& mediaSession = responsePtr->session;
                 Q_ASSERT(!mediaSession.empty());
                 if(!mediaSession.empty())
                     _mediaSessions.emplace(mediaSession, MediaSessionData { request.uri, target });
@@ -393,7 +393,7 @@ bool Connection::handleResponse(
         {
             // it's highly possible target was destroyed before receive answer for DESCRIBE.
             // have to force media session TEARDOWN
-            const rtsp::MediaSessionId mediaSession = rtsp::ResponseSession(*responsePtr);
+            const rtsp::MediaSessionId& mediaSession = responsePtr->session;
             if(!mediaSession.empty())
                 requestTeardown(nullptr, request.uri, mediaSession);
 

@@ -16,14 +16,11 @@ struct Response {
     unsigned statusCode;
     std::string reasonPhrase;
     CSeq cseq;
+    MediaSessionId session;
 
     std::map<std::string, std::string, LessNoCase> headerFields;
+    std::string contentType;
     std::string body;
 };
-
-MediaSessionId ResponseSession(const Response&);
-void SetResponseSession(Response*, const MediaSessionId&);
-std::string ResponseContentType(const Response&);
-void SetContentType(Response*, const std::string&);
 
 }

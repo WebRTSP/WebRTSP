@@ -165,7 +165,9 @@ void TestParse()
         assert(success);
         assert(request.method == rtsp::Method::GET_PARAMETER);
         assert(request.cseq == 9);
-        assert(request.headerFields.size() == 3);
+        assert(request.session == "12345678");
+        assert(request.contentType == "text/parameters");
+        assert(request.headerFields.size() == 1);
         assert(!request.body.empty());
     }
 
@@ -186,7 +188,8 @@ void TestParse()
         assert(response.statusCode == 200);
         assert(response.reasonPhrase == "OK");
         assert(response.cseq == 9);
-        assert(response.headerFields.size() == 2);
+        assert(response.contentType == "text/parameters");
+        assert(response.headerFields.size() == 1);
         assert(!response.body.empty());
     }
 }

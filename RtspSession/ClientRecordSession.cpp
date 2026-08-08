@@ -146,10 +146,10 @@ bool ClientRecordSession::onRecordResponse(
     if(response.statusCode != StatusCode::OK)
         return false;
 
-    if(ResponseContentType(response) != SdpContentType)
+    if(response.contentType != SdpContentType)
         return false;
 
-    MediaSessionId session = ResponseSession(response);
+    MediaSessionId session = response.session;
     if(session.empty())
         return false;
 
@@ -187,10 +187,10 @@ bool ClientRecordSession::onSetupResponse(
     if(StatusCode::OK != response.statusCode)
         return false;
 
-    if(ResponseSession(response) != _p->session)
+    if(response.session != _p->session)
         return false;
 
-    const std::string contentType = RequestContentType(request);
+    const std::string contentType = request.contentType;
      if(contentType == IceCandidateContentType)
         ;
      else
@@ -208,10 +208,10 @@ bool ClientRecordSession::onTeardownResponse(
 
 bool ClientRecordSession::onSetupRequest(std::unique_ptr<Request>&& requestPtr) noexcept
 {
-    if(RequestSession(*requestPtr) != _p->session)
+    if(requestPtr->session != _p->session)
         return false;
 
-    if(RequestContentType(*requestPtr) != IceCandidateContentType)
+    if(requestPtr->contentType != IceCandidateContentType)
         return false;
 
     const std::string& ice = requestPtr->body;
@@ -251,7 +251,7 @@ bool ClientRecordSession::onSetupRequest(std::unique_ptr<Request>&& requestPtr) 
         pos = lineEndPos + 2;
     }
 
-    sendOkResponse(requestPtr->cseq, RequestSession(*requestPtr));
+    sendOkResponse(requestPtr->cseq, requestPtr->session);
 
     return true;
 }

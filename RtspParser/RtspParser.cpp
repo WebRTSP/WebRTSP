@@ -368,14 +368,38 @@ bool ParseRequest(const char* request, size_t size, Request* out) noexcept
     if(!IsEOS(position, size))
         out->body.assign(request + position, size - position);
 
-    auto cseqIt = out->headerFields.find("cseq");
-    if(out->headerFields.end() == cseqIt || cseqIt->second.empty())
+    auto cseqIt = out->headerFields.find(ToLower(CSeqFieldName));
+    if(cseqIt != out->headerFields.end() || cseqIt->second.empty())
         return false;
 
     if(!ParseCSeq(cseqIt->second, &out->cseq))
         return false;
 
     out->headerFields.erase(cseqIt);
+
+    auto sessionIt = out->headerFields.find(ToLower(SessionFieldName));
+    if(sessionIt != out->headerFields.end()) {
+        if(sessionIt->second.empty())
+            return false;
+
+        out->session = std::move(sessionIt->second);
+
+        out->headerFields.erase(sessionIt);
+    } else {
+        out->session.clear();
+    }
+
+    auto contentTypeIt = out->headerFields.find(ToLower(ContentTypeFieldName));
+    if(contentTypeIt != out->headerFields.end()) {
+        if(contentTypeIt->second.empty())
+            return false;
+
+        out->contentType = std::move(contentTypeIt->second);
+
+        out->headerFields.erase(contentTypeIt);
+    } else {
+        out->contentType.clear();
+    }
 
     return true;
 }
@@ -474,11 +498,35 @@ bool ParseResponse(const char* response, size_t size, Response* out) noexcept
         out->body.assign(response + position, size - position);
 
     auto cseqIt = out->headerFields.find("cseq");
-    if(out->headerFields.end() == cseqIt || cseqIt->second.empty())
+    if(cseqIt == out->headerFields.end() || cseqIt->second.empty())
         return false;
 
     if(!ParseCSeq(cseqIt->second, &out->cseq))
         return false;
+
+    auto sessionIt = out->headerFields.find(ToLower(SessionFieldName));
+    if(sessionIt != out->headerFields.end()) {
+        if(sessionIt->second.empty())
+            return false;
+
+        out->session = std::move(sessionIt->second);
+
+        out->headerFields.erase(sessionIt);
+    } else {
+        out->session.clear();
+    }
+
+    auto contentTypeIt = out->headerFields.find(ToLower(ContentTypeFieldName));
+    if(contentTypeIt != out->headerFields.end()) {
+        if(contentTypeIt->second.empty())
+            return false;
+
+        out->contentType = std::move(contentTypeIt->second);
+
+        out->headerFields.erase(contentTypeIt);
+    } else {
+        out->contentType.clear();
+    }
 
     out->headerFields.erase(cseqIt);
 

@@ -169,7 +169,7 @@ bool Player::onPlayResponse(
     if(rtsp::StatusCode::OK != response.statusCode)
         return false;
 
-    if(rtsp::ResponseSession(response) != _mediaSession)
+    if(response.session != _mediaSession)
         return false;
 
     _actor->postAction([peer = _peer] () {
@@ -193,16 +193,16 @@ bool Player::onSetupRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
         peer->addIceCandidate(iceCandidate.first, iceCandidate.second);
     });
 
-    connection()->sendOkResponse(requestPtr->cseq, rtsp::RequestSession(*requestPtr));
+    connection()->sendOkResponse(requestPtr->cseq, requestPtr->session);
 
     return true;
 }
 
 bool Player::onTeardownRequest(std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
-    connection()->sendOkResponse(requestPtr->cseq, rtsp::RequestSession(*requestPtr));
+    connection()->sendOkResponse(requestPtr->cseq, requestPtr->session);
 
-    if(rtsp::RequestSession(*requestPtr) == _mediaSession) {
+    if(requestPtr->session == _mediaSession) {
         reset();
 
         qInfo(QmlClient) << "TEARDOWN";

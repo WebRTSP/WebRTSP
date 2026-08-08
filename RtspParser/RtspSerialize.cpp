@@ -52,6 +52,20 @@ void Serialize(const Request& request, std::string* out) noexcept
         *out += std::to_string(request.cseq);
         *out += "\r\n";
 
+        if(!request.session.empty()) {
+            *out += SessionFieldName;
+            *out += ": ";
+            *out += request.session;
+            *out += "\r\n";
+        }
+
+        if(!request.contentType.empty()) {
+            *out += ContentTypeFieldName;
+            *out += ": ";
+            *out += request.contentType;
+            *out += "\r\n";
+        }
+
         for(const std::pair<std::string, std::string>& hf: request.headerFields) {
             *out += hf.first;
             *out += ": ";
@@ -90,6 +104,20 @@ void Serialize(const Response& response, std::string* out) noexcept
         *out += "CSeq: ";
         *out += std::to_string(response.cseq);
         *out += "\r\n";
+
+        if(!response.session.empty()) {
+            *out += SessionFieldName;
+            *out += ": ";
+            *out += response.session;
+            *out += "\r\n";
+        }
+
+        if(!response.contentType.empty()) {
+            *out += ContentTypeFieldName;
+            *out += ": ";
+            *out += response.contentType;
+            *out += "\r\n";
+        }
 
         for(const std::pair<std::string, std::string>& hf: response.headerFields) {
             *out += hf.first;

@@ -64,7 +64,7 @@ Request* Session::createRequest(
 {
     Request* request = createRequest(method, uri);
 
-    SetRequestSession(request, session);
+    request->session = session;
 
     return request;
 }
@@ -98,9 +98,7 @@ Response* Session::prepareResponse(
     out->cseq = cseq;
     out->statusCode = statusCode;
     out->reasonPhrase = reasonPhrase;
-
-    if(!session.empty())
-        SetResponseSession(out, session);
+    out->session = session;
 
     return out;
 }
@@ -142,8 +140,7 @@ void Session::sendOkResponse(
     Response response;
     prepareOkResponse(cseq, &response);
 
-    SetContentType(&response, contentType);
-
+    response.contentType = contentType;
     response.body = body;
 
     sendResponse(response);
@@ -158,8 +155,7 @@ void Session::sendOkResponse(
     Response response;
     prepareOkResponse(cseq, session, &response);
 
-    SetContentType(&response, contentType);
-
+    response.contentType = contentType;
     response.body = body;
 
     sendResponse(response);
@@ -248,11 +244,10 @@ CSeq Session::sendList(
 {
     Request& request = *createRequest(Method::LIST, uri);
 
-    SetContentType(&request, TextParametersContentType);
-
     if(token)
         SetBearerAuthorization(&request, token.value());
 
+    request.contentType = TextParametersContentType;
     request.body = list;
 
     sendRequest(request);
@@ -280,9 +275,9 @@ CSeq Session::requestSetup(
 
     Request& request = *createRequest(Method::SETUP, uri);
 
-    SetRequestSession(&request, session);
-    SetContentType(&request, contentType);
+    request.session = session;
 
+    request.contentType = contentType;
     request.body = body;
 
     sendRequest(request);
@@ -296,7 +291,8 @@ CSeq Session::requestPlay(
     const std::string& sdp) noexcept
 {
     Request* request = createRequest(Method::PLAY, uri, session);
-    rtsp::SetContentType(request, SdpContentType);
+
+    request->contentType = SdpContentType;
     request->body = sdp;
 
     sendRequest(*request);
@@ -320,7 +316,7 @@ CSeq Session::requestRecord(
 {
     Request& request = *createRequest(Method::RECORD, uri);
 
-    SetContentType(&request, rtsp::SdpContentType);
+    request.contentType = rtsp::SdpContentType;
 
     if(token)
         SetBearerAuthorization(&request, token.value());
@@ -351,13 +347,11 @@ CSeq Session::requestGetParameter(
 {
     Request& request = *createRequest(Method::GET_PARAMETER, uri);
 
-    if(!contentType.empty())
-        SetContentType(&request, contentType);
-
-    request.body = body;
-
     if(token)
         SetBearerAuthorization(&request, token.value());
+
+    request.contentType = contentType;
+    request.body = body;
 
     sendRequest(request);
 
@@ -372,12 +366,11 @@ CSeq Session::requestSetParameter(
 {
     Request& request = *createRequest(Method::SET_PARAMETER, uri);
 
-    SetContentType(&request, contentType);
-
-    request.body = body;
-
     if(token)
         SetBearerAuthorization(&request, token.value());
+
+    request.contentType = contentType;
+    request.body = body;
 
     sendRequest(request);
 

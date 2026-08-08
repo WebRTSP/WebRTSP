@@ -200,7 +200,7 @@ bool ClientSession::onDescribeResponse(
 
     assert(_p->session.empty());
 
-    _p->session = ResponseSession(response);
+    _p->session = response.session;
     if(_p->session.empty())
         return false;
 
@@ -235,7 +235,7 @@ bool ClientSession::onSetupResponse(
     if(StatusCode::OK != response.statusCode)
         return false;
 
-    if(ResponseSession(response) != _p->session)
+    if(response.session != _p->session)
         return false;
 
     return true;
@@ -248,7 +248,7 @@ bool ClientSession::onPlayResponse(
     if(StatusCode::OK != response.statusCode)
         return false;
 
-    if(ResponseSession(response) != _p->session)
+    if(response.session != _p->session)
         return false;
 
     _p->receiver->play();
@@ -265,7 +265,7 @@ bool ClientSession::onSubscribeResponse(
 
     assert(_p->session.empty());
 
-    _p->session = ResponseSession(response);
+    _p->session = response.session;
     if(_p->session.empty())
         return false;
 
@@ -276,7 +276,7 @@ bool ClientSession::onTeardownResponse(
     const Request& request,
     const Response& response) noexcept
 {
-    if(ResponseSession(response) != _p->session)
+    if(response.session != _p->session)
         return false;
 
     return false;
@@ -284,7 +284,7 @@ bool ClientSession::onTeardownResponse(
 
 bool ClientSession::onRecordRequest(std::unique_ptr<Request>&& request) noexcept
 {
-    MediaSessionId recordSession = RequestSession(*request);
+    MediaSessionId recordSession = request->session;
     if(_p->session != recordSession)
         return false;
 
@@ -317,10 +317,10 @@ bool ClientSession::onRecordRequest(std::unique_ptr<Request>&& request) noexcept
 
 bool ClientSession::onSetupRequest(std::unique_ptr<Request>&& requestPtr) noexcept
 {
-    if(RequestSession(*requestPtr) != _p->session)
+    if(requestPtr->session != _p->session)
         return false;
 
-    if(RequestContentType(*requestPtr) != IceCandidateContentType)
+    if(requestPtr->contentType != IceCandidateContentType)
         return false;
 
     const std::string& ice = requestPtr->body;
@@ -360,7 +360,7 @@ bool ClientSession::onSetupRequest(std::unique_ptr<Request>&& requestPtr) noexce
         pos = lineEndPos + 2;
     }
 
-    sendOkResponse(requestPtr->cseq, RequestSession(*requestPtr));
+    sendOkResponse(requestPtr->cseq, requestPtr->session);
 
     return true;
 }
