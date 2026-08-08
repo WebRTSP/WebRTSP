@@ -203,6 +203,13 @@ void Session::sendSessionNotFoundResponse(CSeq cseq, const MediaSessionId& sessi
     sendResponse(response);
 }
 
+void Session::sendInternalErrorResponse(CSeq cseq)
+{
+    Response response;
+    prepareResponse(INTERNAL_ERROR, "Internal Server Error", cseq, std::string(), &response);
+    sendResponse(response);
+}
+
 void Session::sendBadGatewayResponse(CSeq cseq, const MediaSessionId& sessionId)
 {
     Response response;
