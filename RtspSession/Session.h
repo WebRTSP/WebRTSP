@@ -43,7 +43,7 @@ protected:
     Request* createRequest(
         Method,
         const std::string& uri,
-        const std::string& session) noexcept;
+        const MediaSessionId&) noexcept;
     Request* attachRequest(
         const std::unique_ptr<rtsp::Request>& requestPtr) noexcept;
 
