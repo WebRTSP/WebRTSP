@@ -8,7 +8,7 @@ namespace rtsp {
 
 struct LessNoCase
 {
-    bool operator()(const std::string& l, const std::string& r) const {
+    bool operator() (const std::string& l, const std::string& r) const {
         return std::lexicographical_compare(
             l.begin(), l.end(),
             r.begin(), r.end(),

@@ -69,8 +69,7 @@ Request* Session::createRequest(
     return request;
 }
 
-Request* Session::attachRequest(
-    const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
+Request* Session::attachRequest(const std::unique_ptr<rtsp::Request>& requestPtr) noexcept
 {
     for(;;) {
         const CSeq cseq = _nextCSeq++;

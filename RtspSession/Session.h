@@ -33,9 +33,7 @@ struct Session
     bool handleResponse(std::unique_ptr<Response>&&) noexcept;
 
 protected:
-    Session(
-        const SendRequest& sendRequest,
-        const SendResponse& sendResponse) noexcept;
+    Session(const SendRequest&, const SendResponse&) noexcept;
 
     Request* createRequest(
         Method,
@@ -44,21 +42,20 @@ protected:
         Method,
         std::string_view uri,
         const MediaSessionId&) noexcept;
-    Request* attachRequest(
-        const std::unique_ptr<rtsp::Request>& requestPtr) noexcept;
+    Request* attachRequest(const std::unique_ptr<rtsp::Request>&) noexcept;
 
     static Response* prepareResponse(
-        StatusCode statusCode,
+        StatusCode,
         const std::string::value_type* reasonPhrase,
-        CSeq cseq,
-        const MediaSessionId& session,
+        CSeq,
+        const MediaSessionId&,
         Response* out);
     static Response* prepareOkResponse(
-        CSeq cseq,
-        const MediaSessionId& session,
+        CSeq,
+        const MediaSessionId&,
         Response* out);
     static Response* prepareOkResponse(
-        CSeq cseq,
+        CSeq,
         Response* out);
 
     void sendOkResponse(CSeq);

@@ -554,7 +554,7 @@ bool StreamSession::onSetupRequest(
         if(delimiterPos == std::string::npos || 0 == delimiterPos)
             return false;
 
-        try{
+        try {
             const int idx = std::stoi(line.substr(0, delimiterPos));
             if(idx < 0)
                 return false;

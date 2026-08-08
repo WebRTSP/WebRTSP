@@ -339,7 +339,7 @@ bool WsServer::Private::init(lws_context* context)
 
         lws_vhost* vhost = lws_create_vhost(context, &vhostInfo);
         if(!vhost)
-             return false;
+            return false;
     }
 
     return true;
