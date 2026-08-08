@@ -50,7 +50,8 @@ struct SessionContextData
 
 const auto Log = WsServerLog;
 
-std::string ClientIpString(lws* wsi) {
+std::string ClientIpString(lws* wsi) noexcept
+{
     char clientIp[INET6_ADDRSTRLEN];
     lws_get_peer_simple(wsi, clientIp, sizeof(clientIp));
 
@@ -92,16 +93,20 @@ std::string ClientIpString(lws* wsi) {
 
 struct WsServer::Private
 {
-    Private(WsServer*, const WsServerConfig&, GMainLoop*, const WsServer::CreateSession&);
+    Private(
+        WsServer*,
+        const WsServerConfig&,
+        GMainLoop*,
+        const WsServer::CreateSession&) noexcept;
 
-    bool init(lws_context* context);
-    int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len);
-    int wsCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len);
-    bool onMessage(SessionContextData*, const MessageBuffer&);
+    bool init(lws_context* context) noexcept;
+    int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
+    int wsCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
+    bool onMessage(SessionContextData*, const MessageBuffer&) noexcept;
 
-    void send(SessionContextData*, MessageBuffer*);
-    void sendRequest(SessionContextData*, const rtsp::Request*);
-    void sendResponse(SessionContextData*, const rtsp::Response*);
+    void send(SessionContextData*, MessageBuffer*) noexcept;
+    void sendRequest(SessionContextData*, const rtsp::Request*) noexcept;
+    void sendResponse(SessionContextData*, const rtsp::Response*) noexcept;
 
     WsServer *const owner;
     WsServerConfig config;
@@ -115,7 +120,7 @@ WsServer::Private::Private(
     WsServer* owner,
     const WsServerConfig& config,
     GMainLoop* loop,
-    const WsServer::CreateSession& createSession) :
+    const WsServer::CreateSession& createSession) noexcept :
     owner(owner), config(config), loop(loop), createSession(createSession)
 {
 }
@@ -123,7 +128,7 @@ WsServer::Private::Private(
 int WsServer::Private::httpCallback(
     lws* wsi,
     lws_callback_reasons reason,
-    void* user, void* in, size_t len)
+    void* user, void* in, size_t len) noexcept
 {
     switch(reason) {
         default:
@@ -137,7 +142,7 @@ int WsServer::Private::wsCallback(
     lws* wsi,
     lws_callback_reasons reason,
     void* user,
-    void* in, size_t len)
+    void* in, size_t len) noexcept
 {
     SessionContextData* scd = static_cast<SessionContextData*>(user);
 
@@ -275,7 +280,7 @@ int WsServer::Private::wsCallback(
     return 0;
 }
 
-bool WsServer::Private::init(lws_context* context)
+bool WsServer::Private::init(lws_context* context) noexcept
 {
     auto HttpCallback =
         [] (lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) -> int {
@@ -347,7 +352,7 @@ bool WsServer::Private::init(lws_context* context)
 
 bool WsServer::Private::onMessage(
     SessionContextData* scd,
-    const MessageBuffer& message)
+    const MessageBuffer& message) noexcept
 {
     rtsp::StreamSession *const session = scd->data->rtspSession.get();
 
@@ -413,7 +418,9 @@ bool WsServer::Private::onMessage(
     return true;
 }
 
-void WsServer::Private::send(SessionContextData* scd, MessageBuffer* message)
+void WsServer::Private::send(
+    SessionContextData* scd,
+    MessageBuffer* message) noexcept
 {
     scd->data->sendMessages.emplace_back(std::move(*message));
 
@@ -422,7 +429,7 @@ void WsServer::Private::send(SessionContextData* scd, MessageBuffer* message)
 
 void WsServer::Private::sendRequest(
     SessionContextData* scd,
-    const rtsp::Request* request)
+    const rtsp::Request* request) noexcept
 {
     if(!request) {
         scd->data->terminateSession = true;
@@ -456,7 +463,7 @@ void WsServer::Private::sendRequest(
 
 void WsServer::Private::sendResponse(
     SessionContextData* scd,
-    const rtsp::Response* response)
+    const rtsp::Response* response) noexcept
 {
     if(!response) {
         scd->data->terminateSession = true;
@@ -496,7 +503,7 @@ WsServer::WsServer(
 {
 }
 
-WsServer::~WsServer()
+WsServer::~WsServer() noexcept
 {
 }
 

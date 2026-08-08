@@ -22,7 +22,7 @@ public:
 
     WsServer(const WsServerConfig&, GMainLoop*, const CreateSession&) noexcept;
     bool init(lws_context* = nullptr) noexcept;
-    ~WsServer();
+    ~WsServer() noexcept;
 
 private:
     struct Private;
