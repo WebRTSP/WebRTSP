@@ -57,6 +57,10 @@ protected:
     static Response* prepareOkResponse(
         CSeq,
         Response* out);
+    static Response* prepareBadGatewayResponse(
+        CSeq,
+        const MediaSessionId&,
+        Response* out);
 
     void sendOkResponse(CSeq);
     void sendOkResponse(CSeq, const MediaSessionId&);
