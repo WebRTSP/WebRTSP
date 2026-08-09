@@ -97,7 +97,7 @@ struct WsServer::Private
         WsServer*,
         const WsServerConfig&,
         GMainLoop*,
-        const WsServer::CreateSession&) noexcept;
+        SessionFactory*) noexcept;
 
     bool init(lws_context* context) noexcept;
     int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
@@ -111,7 +111,7 @@ struct WsServer::Private
     WsServer *const owner;
     WsServerConfig config;
     GMainLoop* loop;
-    CreateSession createSession;
+    SessionFactory *const sessionFactory;
 
     LwsContextPtr contextPtr;
 };
@@ -120,8 +120,8 @@ WsServer::Private::Private(
     WsServer* owner,
     const WsServerConfig& config,
     GMainLoop* loop,
-    const WsServer::CreateSession& createSession) noexcept :
-    owner(owner), config(config), loop(loop), createSession(createSession)
+    WsServer::SessionFactory* sessionFactory) noexcept :
+    owner(owner), config(config), loop(loop), sessionFactory(sessionFactory)
 {
 }
 
@@ -150,10 +150,13 @@ int WsServer::Private::wsCallback(
         case LWS_CALLBACK_PROTOCOL_INIT:
             break;
         case LWS_CALLBACK_ESTABLISHED: {
-            std::unique_ptr<rtsp::StreamSession> session =
-                createSession(
-                    std::bind(&Private::sendRequest, this, scd, std::placeholders::_1),
-                    std::bind(&Private::sendResponse, this, scd, std::placeholders::_1));
+            std::unique_ptr<rtsp::StreamSession> session = sessionFactory->createSession(
+                [this, scd] (const rtsp::Request* request) {
+                    sendRequest(scd, request);
+                },
+                [this, scd] (const rtsp::Response* response) {
+                    sendResponse(scd, response);
+                });
             if(!session) {
                 Log()->error("failed to create websocket session. Requesting connection close...");
                 return -1;
@@ -498,8 +501,8 @@ void WsServer::Private::sendResponse(
 WsServer::WsServer(
     const WsServerConfig& config,
     GMainLoop* loop,
-    const CreateSession& createSession) noexcept :
-    _p(std::make_unique<Private>(this, config, loop, createSession))
+    SessionFactory* sessionFactory) noexcept :
+    _p(std::make_unique<Private>(this, config, loop, sessionFactory))
 {
 }
 

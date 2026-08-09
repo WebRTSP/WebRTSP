@@ -15,16 +15,20 @@ struct lws_context;
 class WsServer final
 {
 public:
-    typedef std::function<
-        std::unique_ptr<rtsp::StreamSession> (
-            const rtsp::Session::SendRequest& sendRequest,
-            const rtsp::Session::SendResponse& sendResponse)> CreateSession;
-
-    WsServer(const WsServerConfig&, GMainLoop*, const CreateSession&) noexcept;
     bool init(lws_context* = nullptr) noexcept;
+    struct SessionFactory;
+
+    WsServer(const WsServerConfig&, GMainLoop*, SessionFactory*) noexcept;
     ~WsServer() noexcept;
 
 private:
     struct Private;
     std::unique_ptr<Private> _p;
+};
+
+struct WsServer::SessionFactory
+{
+    virtual std::unique_ptr<rtsp::StreamSession> createSession(
+        const rtsp::Session::SendRequest& sendRequest,
+        const rtsp::Session::SendResponse& sendResponse) noexcept = 0;
 };
