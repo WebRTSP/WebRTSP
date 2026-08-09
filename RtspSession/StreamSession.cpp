@@ -47,9 +47,6 @@ struct StreamSession::Private
 
     Private(
         StreamSession* owner,
-        const CreatePeer& createPeer);
-    Private(
-        StreamSession* owner,
         const CreatePeer& createPeer,
         const CreatePeer& createRecordPeer);
 
@@ -77,14 +74,6 @@ struct StreamSession::Private
         unsigned, const std::string&);
     void eos(const MediaSessionId& session);
 };
-
-StreamSession::Private::Private(
-    StreamSession* owner,
-    const CreatePeer& createPeer) :
-    owner(owner),
-    createPeer(createPeer)
-{
-}
 
 StreamSession::Private::Private(
     StreamSession* owner,
@@ -268,23 +257,21 @@ void StreamSession::Private::eos(const MediaSessionId& session)
 StreamSession::StreamSession(
     const WebRTCConfigPtr& webRTCConfig,
     const CreatePeer& createPeer,
-    const SendRequest& sendRequest,
-    const SendResponse& sendResponse) noexcept :
-    Session(sendRequest, sendResponse),
-    WebRTCSessionMixin(webRTCConfig),
-    _p(new Private(this, createPeer))
-{
-}
-
-StreamSession::StreamSession(
-    const WebRTCConfigPtr& webRTCConfig,
-    const CreatePeer& createPeer,
     const CreatePeer& createRecordPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
     Session(sendRequest, sendResponse),
     WebRTCSessionMixin(webRTCConfig),
     _p(new Private(this, createPeer, createRecordPeer))
+{
+}
+
+StreamSession::StreamSession(
+    const WebRTCConfigPtr& webRTCConfig,
+    const CreatePeer& createPeer,
+    const SendRequest& sendRequest,
+    const SendResponse& sendResponse) noexcept :
+    StreamSession(webRTCConfig, createPeer, {}, sendRequest, sendResponse)
 {
 }
 
