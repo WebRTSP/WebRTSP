@@ -32,6 +32,12 @@ public:
     ~WsClient() noexcept;
 
     void connect() noexcept;
+    // server can register new agent if agentId or accessToken is empty
+    void connectAsAgent(
+        const std::string& clientId,
+        const std::string& agentId = {},
+        const std::string& accessToken = {}) noexcept;
+    void disconnect() noexcept;
 
 private:
     struct Private;
@@ -41,6 +47,13 @@ private:
 struct WsClient::SessionFactory
 {
     virtual std::unique_ptr<rtsp::Session> createSession(
+        const rtsp::Session::SendRequest& sendRequest,
+        const rtsp::Session::SendResponse& sendResponse) noexcept { return nullptr; };
+
+    virtual std::unique_ptr<rtsp::Session> createAgentSession(
+        const std::string& clientId,
+        std::string&& agentId,
+        std::string&& accessToken,
         const rtsp::Session::SendRequest& sendRequest,
         const rtsp::Session::SendResponse& sendResponse) noexcept { return nullptr; };
 };

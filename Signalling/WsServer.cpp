@@ -11,11 +11,16 @@
 #include "RtspParser/RtspParser.h"
 #include "RtspParser/RtspSerialize.h"
 
+#include "Common.h"
 #include "Log.h"
 
 
 #define SESSION "[{}]" " "
 
+
+// FIXME! limit max incoming message size
+
+// #define ENABLE_DYNAMIC_AGENTS 1
 
 namespace {
 
@@ -34,6 +39,9 @@ const char* AuthCookieName = "WebRTSP-Auth";
 
 struct SessionData
 {
+    std::string clientId;
+    std::string agentId;
+
     bool terminateSession = false;
     MessageBuffer incomingMessage;
     std::deque<MessageBuffer> sendMessages;
@@ -95,7 +103,8 @@ struct WsServer::Private
 {
     Private(
         const WsServerConfig&,
-        SessionFactory*) noexcept;
+        SessionFactory*,
+        WsServer::AgentsDb*) noexcept;
 
     bool init(GMainLoop*, lws_context*) noexcept;
     int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
@@ -108,14 +117,18 @@ struct WsServer::Private
 
     WsServerConfig config;
     SessionFactory *const sessionFactory;
+    AgentsDb *const agentsDb;
 
     LwsContextPtr contextPtr;
 };
 
 WsServer::Private::Private(
     const WsServerConfig& config,
-    WsServer::SessionFactory* sessionFactory) noexcept :
-    config(config), sessionFactory(sessionFactory)
+    WsServer::SessionFactory* sessionFactory,
+    WsServer::AgentsDb* agentsDb) noexcept :
+    config(config),
+    sessionFactory(sessionFactory),
+    agentsDb(agentsDb)
 {
 }
 
@@ -138,43 +151,203 @@ int WsServer::Private::wsCallback(
     void* user,
     void* in, size_t len) noexcept
 {
-    SessionContextData* scd = static_cast<SessionContextData*>(user);
-
     switch (reason) {
         case LWS_CALLBACK_PROTOCOL_INIT:
             break;
-        case LWS_CALLBACK_ESTABLISHED: {
-            std::optional<std::string> authCookie;
-            char cookieBuf[256];
-            size_t cookieSize = sizeof(cookieBuf);
-            if(0 == lws_http_cookie_get(wsi, AuthCookieName, cookieBuf, &cookieSize))
-                authCookie = std::string(cookieBuf);
+        case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION: {
+            char valueBuffer[64 + 1];
+            const bool hasClientId = lws_hdr_custom_copy(
+                wsi,
+                valueBuffer,
+                sizeof(valueBuffer),
+                webrtsp::ClientIdFieldName,
+                std::string_view(webrtsp::ClientIdFieldName).size()) > 1; // > 1 since lws_hdr_custom_copy returns size including terminating zero
 
-            std::unique_ptr<rtsp::Session> session = sessionFactory->createSession(
-                std::move(authCookie),
-                [this, scd] (const rtsp::Request* request) {
-                    sendRequest(scd, request);
-                },
-                [this, scd] (const rtsp::Response* response) {
-                    sendResponse(scd, response);
-                });
-            if(!session) {
-                Log()->error("failed to create websocket session. Requesting connection close...");
+            if(hasClientId && !agentsDb) {
+                Log()->error(
+                    "Got connection from Agent without agents support. {}",
+                    ClientIpString(wsi));
                 return -1;
             }
 
-            Log()->info(
-                SESSION "Client connected. {}",
-                session->sessionLogId,
+            if(!agentsDb || !hasClientId)
+                break;
+
+            std::string clientId = valueBuffer;
+
+            const bool hasAgentId = lws_hdr_custom_copy(
+                wsi,
+                valueBuffer,
+                sizeof(valueBuffer),
+                webrtsp::AgentIdFieldName,
+                std::string_view(webrtsp::AgentIdFieldName).size()) > 1;
+#if ENABLE_DYNAMIC_AGENTS
+            if(!hasAgentId)
+                break; // new agent registration. Will be finished in LWS_CALLBACK_ADD_HEADERS.
+#else
+            if(!hasAgentId) {
+                Log()->error("Got Agent connection with only Client ID provided. Client Id: {}, {}",
+                    clientId,
+                    ClientIpString(wsi));
+
+                return -1;
+            }
+#endif
+
+            SessionContextData* scd = static_cast<SessionContextData*>(user);
+
+            scd->data = new SessionData { .clientId = std::move(clientId) };
+
+            scd->data->agentId = valueBuffer;
+
+            const bool hasToken = lws_hdr_custom_copy(
+                wsi,
+                valueBuffer,
+                sizeof(valueBuffer),
+                webrtsp::TokenFieldName,
+                std::string_view(webrtsp::TokenFieldName).size()) > 1;
+            if(!hasToken) {
+                Log()->error(
+                    "Got Agent ID without access token. {}",
+                    ClientIpString(wsi));
+                return -1;
+            }
+
+            if(!agentsDb->authenticateAgent(
+                scd->data->clientId,
+                scd->data->agentId,
+                valueBuffer))
+            {
+                Log()->error(
+                    "Agent authentication failed. Client Id: {}, Agent Id: {}, {}",
+                    scd->data->clientId,
+                    scd->data->agentId,
+                    ClientIpString(wsi));
+
+                lws_return_http_status(wsi, HTTP_STATUS_UNAUTHORIZED, "Unknown Agent");
+                return -1;
+            }
+
+            Log()->debug("Agent authorized. Client Id: {}, Agent Id: {}, {}",
+                scd->data->clientId,
+                scd->data->agentId,
                 ClientIpString(wsi));
 
-            scd->data =
-                new SessionData {
-                    .terminateSession = false,
-                    .incomingMessage ={},
-                    .sendMessages = {},
-                    .rtspSession = std::move(session)};
+            break;
+        }
+        case LWS_CALLBACK_ADD_HEADERS: {
+            if(!agentsDb)
+                break;
+
+            SessionContextData* scd = static_cast<SessionContextData*>(user);
+
+            if(!scd->data || scd->data->clientId.empty())
+                break; // regular client
+
+            if(!scd->data->agentId.empty())
+                break; // agent already authorized in LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION
+
+#if ENABLE_DYNAMIC_AGENTS
+            // Agent is not registered yet
+            std::optional<AgentsDb::AgentCredentials> credentials =
+                agentsDb->registerAgent(scd->data->clientId);
+            if(!credentials.has_value()) {
+                Log()->error("Failed to register new Agent. Client Id: {}, {}",
+                    scd->data->clientId,
+                    ClientIpString(wsi));
+                return -1;
+            }
+
+            Log()->info("New Agent registered. Client Id: {}, Agent Id: {}, {}",
+                scd->data->clientId,
+                credentials->agentId,
+                ClientIpString(wsi));
+
+            struct lws_process_html_args* htmlArgs = reinterpret_cast<lws_process_html_args*>(in);
+            unsigned char** p = reinterpret_cast<unsigned char**>(&htmlArgs->p);
+            unsigned char* end = *p + htmlArgs->max_len;
+
+            if(lws_add_http_header_by_name(
+                wsi,
+                reinterpret_cast<const unsigned char*>(webrtsp::AgentIdFieldName),
+                reinterpret_cast<const unsigned char*>(credentials->agentId.c_str()),
+                static_cast<int>(credentials->agentId.size()),
+                p,
+                end) != 0)
+            {
+                Log()->error("Failed to set \"{}\" header value", webrtsp::AgentIdFieldName);
+                return -1;
+            }
+
+            if(lws_add_http_header_by_name(
+                wsi,
+                reinterpret_cast<const unsigned char*>(webrtsp::TokenFieldName),
+                reinterpret_cast<const unsigned char*>(credentials->accessToken.c_str()),
+                static_cast<int>(credentials->accessToken.size()),
+                p,
+                end) != 0)
+            {
+                Log()->error("Failed to set \"{}\" header value", webrtsp::TokenFieldName);
+                return -1;
+            }
+
+            scd->data->agentId = std::move(credentials->agentId);
+#endif
+
+            break;
+        }
+        case LWS_CALLBACK_ESTABLISHED: {
+            SessionContextData* scd = static_cast<SessionContextData*>(user);
+
+            if(!scd->data)
+                scd->data = new SessionData;
+
             scd->wsi = wsi;
+
+            std::unique_ptr<rtsp::Session> session;
+            if(scd->data->agentId.empty()) {
+                std::optional<std::string> authCookie;
+                char cookieBuf[256];
+                size_t cookieSize = sizeof(cookieBuf);
+                if(0 == lws_http_cookie_get(wsi, AuthCookieName, cookieBuf, &cookieSize))
+                    authCookie = std::string(cookieBuf, cookieSize);
+
+                Log()->info(
+                    "Client connected. {}",
+                    ClientIpString(wsi));
+
+                session = sessionFactory->createSession(
+                    std::move(authCookie),
+                    [this, scd] (const rtsp::Request* request) {
+                        sendRequest(scd, request);
+                    },
+                    [this, scd] (const rtsp::Response* response) {
+                        sendResponse(scd, response);
+                    });
+            } else {
+                Log()->info(
+                    "Agent connected. Client Id: {}, Agent Id: {}, {}",
+                    scd->data->clientId,
+                    scd->data->agentId,
+                    ClientIpString(wsi));
+
+                session = sessionFactory->createAgentSession(
+                    std::move(scd->data->clientId),
+                    std::move(scd->data->agentId),
+                    [this, scd] (const rtsp::Request* request) {
+                        sendRequest(scd, request);
+                    },
+                    [this, scd] (const rtsp::Response* response) {
+                        sendResponse(scd, response);
+                    });
+            }
+
+            if(!session) {
+                Log()->error("Failed to create session. Requesting connection close...");
+                return -1;
+            }
+
+            scd->data->rtspSession = std::move(session);
 
             if(!scd->data->rtspSession->onConnected()) {
                 Log()->error(
@@ -189,6 +362,8 @@ int WsServer::Private::wsCallback(
             Log()->trace("PONG");
             break;
         case LWS_CALLBACK_RECEIVE: {
+            SessionContextData* scd = static_cast<SessionContextData*>(user);
+
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
                 const rtsp::Session *const session = scd->data->rtspSession.get();
 
@@ -219,6 +394,8 @@ int WsServer::Private::wsCallback(
             break;
         }
         case LWS_CALLBACK_SERVER_WRITEABLE: {
+            SessionContextData* scd = static_cast<SessionContextData*>(user);
+
             const rtsp::Session *const session = scd->data->rtspSession.get();
 
             if(scd->data->terminateSession) {
@@ -257,6 +434,13 @@ int WsServer::Private::wsCallback(
             break;
         }
         case LWS_CALLBACK_CLOSED: {
+            SessionContextData* scd = static_cast<SessionContextData*>(user);
+
+            scd->wsi = nullptr;
+
+            if(!scd->data) // connection is filtered
+                break;
+
             if(scd->data->rtspSession) {
                 Log()->debug(
                     SESSION "connection closed",
@@ -265,8 +449,6 @@ int WsServer::Private::wsCallback(
 
             delete scd->data;
             scd->data = nullptr;
-
-            scd->wsi = nullptr;
 
             break;
         }
@@ -494,8 +676,9 @@ void WsServer::Private::sendResponse(
 
 WsServer::WsServer(
     const WsServerConfig& config,
-    SessionFactory* sessionFactory) noexcept :
-    _p(std::make_unique<Private>(config, sessionFactory))
+    SessionFactory* sessionFactory,
+    AgentsDb* agentsDb) noexcept :
+    _p(std::make_unique<Private>(config, sessionFactory, agentsDb))
 {
 }
 
