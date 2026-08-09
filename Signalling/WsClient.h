@@ -14,17 +14,14 @@
 class WsClient final
 {
 public:
-    typedef std::function<
-        std::unique_ptr<rtsp::Session> (
-            const rtsp::Session::SendRequest& sendRequest,
-            const rtsp::Session::SendResponse& sendResponse)> CreateSession;
+    struct SessionFactory;
 
     typedef std::function<void (WsClient&)> Disconnected;
 
     WsClient(
         const WsClientConfig&,
         GMainLoop*,
-        const CreateSession&,
+        SessionFactory*,
         const Disconnected&) noexcept;
     bool init() noexcept;
     ~WsClient() noexcept;
@@ -34,4 +31,11 @@ public:
 private:
     struct Private;
     std::unique_ptr<Private> _p;
+};
+
+struct WsClient::SessionFactory
+{
+    virtual std::unique_ptr<rtsp::Session> createSession(
+        const rtsp::Session::SendRequest& sendRequest,
+        const rtsp::Session::SendResponse& sendResponse) noexcept { return nullptr; };
 };

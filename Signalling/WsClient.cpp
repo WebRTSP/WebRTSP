@@ -59,7 +59,7 @@ struct WsClient::Private
         WsClient*,
         const WsClientConfig&,
         GMainLoop*,
-        const CreateSession&,
+        SessionFactory*,
         const Disconnected&) noexcept;
 
     bool init() noexcept;
@@ -78,7 +78,7 @@ struct WsClient::Private
     WsClient *const owner;
     WsClientConfig config;
     GMainLoop* loop = nullptr;
-    CreateSession createSession;
+    SessionFactory *const sessionFactory;
     Disconnected disconnected;
 
     LwsContextPtr contextPtr;
@@ -91,10 +91,10 @@ WsClient::Private::Private(
     WsClient* owner,
     const WsClientConfig& config,
     GMainLoop* loop,
-    const WsClient::CreateSession& createSession,
+    SessionFactory* sessionFactory,
     const Disconnected& disconnected) noexcept :
     owner(owner), config(config), loop(loop),
-    createSession(createSession), disconnected(disconnected)
+    sessionFactory(sessionFactory), disconnected(disconnected)
 {
 }
 
@@ -109,10 +109,9 @@ int WsClient::Private::wsCallback(
         case LWS_CALLBACK_CLIENT_ESTABLISHED: {
             Log()->info("Connection to server established.");
 
-            std::unique_ptr<rtsp::Session> session =
-                createSession(
-                    std::bind(&Private::sendRequest, this, scd, std::placeholders::_1),
-                    std::bind(&Private::sendResponse, this, scd, std::placeholders::_1));
+            std::unique_ptr<rtsp::Session> session = sessionFactory->createSession(
+                [this, scd] (const rtsp::Request* request) { sendRequest(scd, request); },
+                [this, scd] (const rtsp::Response* response) { sendResponse(scd, response); });
             if(!session) {
                 Log()->error("Failed to create session. Requesting connection close...");
                 return -1;
@@ -446,9 +445,9 @@ void WsClient::Private::sendResponse(
 WsClient::WsClient(
     const WsClientConfig& config,
     GMainLoop* loop,
-    const CreateSession& createSession,
+    SessionFactory* sessionFactory,
     const Disconnected& disconnected) noexcept:
-    _p(std::make_unique<Private>(this, config, loop, createSession, disconnected))
+    _p(std::make_unique<Private>(this, config, loop, sessionFactory, disconnected))
 {
 }
 
