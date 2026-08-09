@@ -44,9 +44,9 @@ struct ClientRecordSession::Private
 
     ClientRecordSession* owner;
 
-    std::string targetUri;
-    std::string sourceUri;
-    std::string recordToken;
+    const std::string targetUri;
+    const std::string sourceUri;
+    const std::string recordToken;
 
     const CreatePeer createPeer;
 
