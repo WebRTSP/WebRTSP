@@ -356,7 +356,7 @@ bool StreamSession::onOptionsRequest(
 bool StreamSession::onDescribeRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
-    const Request& request = *requestPtr.get();
+    const Request& request = *requestPtr;
 
     if(!playEnabled(request.uri)) {
         log()->error(
@@ -418,7 +418,7 @@ bool StreamSession::authorize(const std::unique_ptr<Request>& requestPtr) noexce
 bool StreamSession::onRecordRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
-    const Request& request = *requestPtr.get();
+    const Request& request = *requestPtr;
 
     if(!recordEnabled(requestPtr->uri) || !_p->recordEnabled())
         return false;
