@@ -369,7 +369,7 @@ bool ParseRequest(const char* request, size_t size, Request* out) noexcept
         out->body.assign(request + position, size - position);
 
     auto cseqIt = out->headerFields.find(ToLower(CSeqFieldName));
-    if(cseqIt != out->headerFields.end() || cseqIt->second.empty())
+    if(cseqIt == out->headerFields.end() || cseqIt->second.empty())
         return false;
 
     if(!ParseCSeq(cseqIt->second, &out->cseq))
