@@ -58,11 +58,10 @@ struct WsClient::Private
     Private(
         WsClient*,
         const WsClientConfig&,
-        GMainLoop*,
         SessionFactory*,
         const Disconnected&) noexcept;
 
-    bool init() noexcept;
+    bool init(GMainLoop*) noexcept;
     int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
     int wsCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
     bool onMessage(SessionContextData*, const MessageBuffer&) noexcept;
@@ -77,7 +76,6 @@ struct WsClient::Private
 
     WsClient *const owner;
     WsClientConfig config;
-    GMainLoop* loop = nullptr;
     SessionFactory *const sessionFactory;
     Disconnected disconnected;
 
@@ -90,10 +88,9 @@ struct WsClient::Private
 WsClient::Private::Private(
     WsClient* owner,
     const WsClientConfig& config,
-    GMainLoop* loop,
     SessionFactory* sessionFactory,
     const Disconnected& disconnected) noexcept :
-    owner(owner), config(config), loop(loop),
+    owner(owner), config(config),
     sessionFactory(sessionFactory), disconnected(disconnected)
 {
 }
@@ -235,7 +232,7 @@ int WsClient::Private::wsCallback(
     return 0;
 }
 
-bool WsClient::Private::init() noexcept
+bool WsClient::Private::init(GMainLoop* loop) noexcept
 {
     auto WsCallback =
         [] (lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) -> int {
@@ -444,10 +441,9 @@ void WsClient::Private::sendResponse(
 
 WsClient::WsClient(
     const WsClientConfig& config,
-    GMainLoop* loop,
     SessionFactory* sessionFactory,
     const Disconnected& disconnected) noexcept:
-    _p(std::make_unique<Private>(this, config, loop, sessionFactory, disconnected))
+    _p(std::make_unique<Private>(this, config, sessionFactory, disconnected))
 {
 }
 
@@ -455,9 +451,9 @@ WsClient::~WsClient() noexcept
 {
 }
 
-bool WsClient::init() noexcept
+bool WsClient::init(GMainLoop* loop) noexcept
 {
-    return _p->init();
+    return _p->init(loop);
 }
 
 void WsClient::connect() noexcept

@@ -20,10 +20,9 @@ public:
 
     WsClient(
         const WsClientConfig&,
-        GMainLoop*,
         SessionFactory*,
         const Disconnected&) noexcept;
-    bool init() noexcept;
+    bool init(GMainLoop*) noexcept;
     ~WsClient() noexcept;
 
     void connect() noexcept;
