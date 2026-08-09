@@ -159,13 +159,13 @@ void Session::sendOkResponse(
 void Session::sendOkResponse(
     CSeq cseq,
     std::string_view contentType,
-    const std::string& body)
+    std::string&& body)
 {
     Response response;
     prepareOkResponse(cseq, &response);
 
     response.contentType = contentType;
-    response.body = body;
+    response.body = std::move(body);
 
     sendResponse(response);
 }
@@ -174,13 +174,13 @@ void Session::sendOkResponse(
     CSeq cseq,
     const MediaSessionId& session,
     std::string_view contentType,
-    const std::string& body)
+    std::string&& body)
 {
     Response response;
     prepareOkResponse(cseq, session, &response);
 
     response.contentType = contentType;
-    response.body = body;
+    response.body = std::move(body);
 
     sendResponse(response);
 }
@@ -299,7 +299,7 @@ CSeq Session::requestSetup(
     std::string_view uri,
     std::string_view contentType,
     const MediaSessionId& session,
-    const std::string& body) noexcept
+    std::string&& body) noexcept
 {
     assert(!uri.empty());
     assert(!session.empty());
@@ -309,7 +309,7 @@ CSeq Session::requestSetup(
     request.session = session;
 
     request.contentType = contentType;
-    request.body = body;
+    request.body = std::move(body);
 
     sendRequest(request);
 
@@ -352,7 +352,7 @@ CSeq Session::requestRecord(
     if(token)
         SetBearerAuthorization(&request, token.value());
 
-    request.body.assign(sdp);
+    request.body = sdp;
 
     sendRequest(request);
 
@@ -373,7 +373,7 @@ CSeq Session::requestTeardown(
 CSeq Session::requestGetParameter(
     std::string_view uri,
     std::string_view contentType,
-    const std::string& body,
+    std::string&& body,
     const std::optional<std::string>& token) noexcept
 {
     Request& request = *createRequest(Method::GET_PARAMETER, uri);
@@ -382,7 +382,7 @@ CSeq Session::requestGetParameter(
         SetBearerAuthorization(&request, token.value());
 
     request.contentType = contentType;
-    request.body = body;
+    request.body = std::move(body);
 
     sendRequest(request);
 
@@ -392,7 +392,7 @@ CSeq Session::requestGetParameter(
 CSeq Session::requestSetParameter(
     std::string_view uri,
     std::string_view contentType,
-    const std::string& body,
+    std::string&& body,
     const std::optional<std::string>& token) noexcept
 {
     Request& request = *createRequest(Method::SET_PARAMETER, uri);
@@ -401,7 +401,7 @@ CSeq Session::requestSetParameter(
         SetBearerAuthorization(&request, token.value());
 
     request.contentType = contentType;
-    request.body = body;
+    request.body = std::move(body);
 
     sendRequest(request);
 

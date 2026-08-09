@@ -68,12 +68,12 @@ struct Session
     void sendOkResponse(
         CSeq,
         std::string_view contentType,
-        const std::string& body);
+        std::string&& body);
     void sendOkResponse(
         CSeq,
         const MediaSessionId&,
         std::string_view contentType,
-        const std::string& body);
+        std::string&& body);
 
     void sendBadRequestResponse(CSeq);
     void sendUnauthorizedResponse(CSeq);
@@ -100,7 +100,7 @@ struct Session
         std::string_view uri,
         std::string_view contentType,
         const MediaSessionId& session,
-        const std::string& body) noexcept;
+        std::string&& body) noexcept;
     CSeq requestPlay(
         std::string_view uri,
         const MediaSessionId& session,
@@ -116,12 +116,12 @@ struct Session
     CSeq requestGetParameter(
         std::string_view uri,
         std::string_view contentType,
-        const std::string& body,
+        std::string&& body,
         const std::optional<std::string>& token = {}) noexcept;
     CSeq requestSetParameter(
         std::string_view uri,
         std::string_view contentType,
-        const std::string& body,
+        std::string&& body,
         const std::optional<std::string>& token = {}) noexcept;
 
 protected:

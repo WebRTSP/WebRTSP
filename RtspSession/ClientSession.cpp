@@ -82,7 +82,7 @@ void ClientSession::Private::receiverPrepared()
             recordRequestCSeq,
             session,
             SdpContentType,
-            receiver->sdp());
+            std::string(receiver->sdp()));
 
         receiver->play();
         recordRequestCSeq = InvalidCSeq;

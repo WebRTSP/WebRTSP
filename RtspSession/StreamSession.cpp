@@ -99,7 +99,7 @@ void StreamSession::Private::sendIceCandidates(
                 mediaSession->uri,
                 IceCandidateContentType,
                 session,
-                iceCandidates);
+                std::move(iceCandidates));
         }
 
         mediaSession->iceCandidates.clear();

@@ -169,7 +169,7 @@ bool ClientRecordSession::onRecordResponse(
                 _p->targetUri,
                 IceCandidateContentType,
                 _p->session,
-                iceCandidates);
+                std::move(iceCandidates));
         }
 
         _p->iceCandidates.clear();
