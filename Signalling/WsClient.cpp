@@ -57,6 +57,7 @@ struct WsClient::Private
 {
     Private(
         WsClient*,
+        std::string&& trustedCAs,
         const WsClientConfig&,
         SessionFactory*,
         const Disconnected&) noexcept;
@@ -75,6 +76,7 @@ struct WsClient::Private
 
 
     WsClient *const owner;
+    const std::string trustedCAs;
     WsClientConfig config;
     SessionFactory *const sessionFactory;
     Disconnected disconnected;
@@ -87,10 +89,11 @@ struct WsClient::Private
 
 WsClient::Private::Private(
     WsClient* owner,
+    std::string&& trustedCAs,
     const WsClientConfig& config,
     SessionFactory* sessionFactory,
     const Disconnected& disconnected) noexcept :
-    owner(owner), config(config),
+    owner(owner), trustedCAs(std::move(trustedCAs)), config(config),
     sessionFactory(sessionFactory), disconnected(disconnected)
 {
 }
@@ -103,6 +106,31 @@ int WsClient::Private::wsCallback(
 {
     SessionContextData* scd = static_cast<SessionContextData*>(user);
     switch(reason) {
+        case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS: {
+            if(trustedCAs.empty())
+                break;
+
+            SSL_CTX* sslContext = static_cast<SSL_CTX*>(user);
+            if(!sslContext)
+                break;
+
+            X509_STORE* store = SSL_CTX_get_cert_store(sslContext);
+            if(!store)
+                break;
+
+            BIO* bio = BIO_new_mem_buf(trustedCAs.data(), trustedCAs.size());
+            if (!bio)
+                break;
+
+            while(X509* cert = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr)) {
+                X509_STORE_add_cert(store, cert);
+                X509_free(cert);
+            }
+
+            BIO_free(bio);
+
+            break;
+        }
         case LWS_CALLBACK_CLIENT_ESTABLISHED: {
             Log()->info("Connection to server established.");
 
@@ -440,10 +468,16 @@ void WsClient::Private::sendResponse(
 }
 
 WsClient::WsClient(
+    std::string&& trustedCAs,
     const WsClientConfig& config,
     SessionFactory* sessionFactory,
     const Disconnected& disconnected) noexcept:
-    _p(std::make_unique<Private>(this, config, sessionFactory, disconnected))
+    _p(std::make_unique<Private>(
+        this,
+        std::move(trustedCAs),
+        config,
+        sessionFactory,
+        disconnected))
 {
 }
 

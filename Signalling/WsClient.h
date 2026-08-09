@@ -19,9 +19,15 @@ public:
     typedef std::function<void (WsClient&)> Disconnected;
 
     WsClient(
+        std::string&& trustedCAs,
         const WsClientConfig&,
         SessionFactory*,
         const Disconnected&) noexcept;
+    WsClient(
+        const WsClientConfig& config,
+        SessionFactory* sessionFactory,
+        const Disconnected& disconnected) noexcept :
+        WsClient(std::string(), config, sessionFactory, disconnected) {}
     bool init(GMainLoop*) noexcept;
     ~WsClient() noexcept;
 
