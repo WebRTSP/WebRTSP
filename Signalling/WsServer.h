@@ -28,7 +28,8 @@ private:
 
 struct WsServer::SessionFactory
 {
-    virtual std::unique_ptr<rtsp::StreamSession> createSession(
+    virtual std::unique_ptr<rtsp::Session> createSession(
+        std::optional<std::string>&& authCookie,
         const rtsp::Session::SendRequest& sendRequest,
         const rtsp::Session::SendResponse& sendResponse) noexcept = 0;
 };

@@ -37,7 +37,7 @@ struct SessionData
     bool terminateSession = false;
     MessageBuffer incomingMessage;
     std::deque<MessageBuffer> sendMessages;
-    std::unique_ptr<rtsp::StreamSession> rtspSession;
+    std::unique_ptr<rtsp::Session> rtspSession;
 };
 
 // Should contain only POD types,
@@ -147,7 +147,14 @@ int WsServer::Private::wsCallback(
         case LWS_CALLBACK_PROTOCOL_INIT:
             break;
         case LWS_CALLBACK_ESTABLISHED: {
-            std::unique_ptr<rtsp::StreamSession> session = sessionFactory->createSession(
+            std::optional<std::string> authCookie;
+            char cookieBuf[256];
+            size_t cookieSize = sizeof(cookieBuf);
+            if(0 == lws_http_cookie_get(wsi, AuthCookieName, cookieBuf, &cookieSize))
+                authCookie = std::string(cookieBuf);
+
+            std::unique_ptr<rtsp::Session> session = sessionFactory->createSession(
+                std::move(authCookie),
                 [this, scd] (const rtsp::Request* request) {
                     sendRequest(scd, request);
                 },
@@ -172,14 +179,7 @@ int WsServer::Private::wsCallback(
                     .rtspSession = std::move(session)};
             scd->wsi = wsi;
 
-            std::optional<std::string> authCookie;
-            char cookieBuf[256];
-            size_t cookieSize = sizeof(cookieBuf);
-            if(0 == lws_http_cookie_get(wsi, AuthCookieName, cookieBuf, &cookieSize)) {
-                authCookie = std::string(cookieBuf, cookieSize);
-            }
-
-            if(!scd->data->rtspSession->onConnected(authCookie)) {
+            if(!scd->data->rtspSession->onConnected()) {
                 Log()->error(
                     SESSION "session requested connection close in onConnected handler",
                     scd->data->rtspSession->sessionLogId);
@@ -193,7 +193,7 @@ int WsServer::Private::wsCallback(
             break;
         case LWS_CALLBACK_RECEIVE: {
             if(scd->data->incomingMessage.onReceive(wsi, in, len)) {
-                const rtsp::StreamSession *const session = scd->data->rtspSession.get();
+                const rtsp::Session *const session = scd->data->rtspSession.get();
 
                 if(Log()->level() <= spdlog::level::trace) {
                     std::string logMessage;
@@ -222,7 +222,7 @@ int WsServer::Private::wsCallback(
             break;
         }
         case LWS_CALLBACK_SERVER_WRITEABLE: {
-            const rtsp::StreamSession *const session = scd->data->rtspSession.get();
+            const rtsp::Session *const session = scd->data->rtspSession.get();
 
             if(scd->data->terminateSession) {
                 Log()->debug(
@@ -354,7 +354,7 @@ bool WsServer::Private::onMessage(
     SessionContextData* scd,
     const MessageBuffer& message) noexcept
 {
-    rtsp::StreamSession *const session = scd->data->rtspSession.get();
+    rtsp::Session *const session = scd->data->rtspSession.get();
 
     if(rtsp::IsRequest(message.data(), message.size())) {
         std::unique_ptr<rtsp::Request> requestPtr =

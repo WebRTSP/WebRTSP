@@ -29,15 +29,11 @@ public:
         const SendResponse& sendResponse) noexcept;
     ~StreamSession();
 
-    bool onConnected(const std::optional<std::string>& authCookie = {}) noexcept;
-
     bool handleRequest(std::unique_ptr<Request>&&) noexcept override;
 
     void startRecordToClient(const std::string& uri, const MediaSessionId&) noexcept;
 
 protected:
-    const std::optional<std::string>& authCookie() const noexcept;
-
     virtual bool listEnabled(const std::string& /*uri*/) noexcept { return false; }
     virtual bool playEnabled(const std::string& /*uri*/) noexcept { return true; };
     virtual bool recordEnabled(const std::string& /*uri*/) noexcept { return false; }

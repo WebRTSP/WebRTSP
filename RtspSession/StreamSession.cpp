@@ -55,8 +55,6 @@ struct StreamSession::Private
     CreatePeer createPeer;
     CreatePeer createRecordPeer;
 
-    std::optional<std::string> authCookie;
-
     MediaSessions mediaSessions;
 
     bool recordEnabled()
@@ -277,18 +275,6 @@ StreamSession::StreamSession(
 
 StreamSession::~StreamSession()
 {
-}
-
-bool StreamSession::onConnected(const std::optional<std::string>& authCookie) noexcept
-{
-    _p->authCookie = authCookie;
-
-    return Session::onConnected();
-}
-
-const std::optional<std::string>& StreamSession::authCookie() const noexcept
-{
-    return _p->authCookie;
 }
 
 bool StreamSession::handleRequest(
