@@ -27,7 +27,7 @@ public:
         const CreatePeer& createRecordPeer,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
-    ~StreamSession();
+    ~StreamSession() override;
 
     bool handleRequest(std::unique_ptr<Request>&&) noexcept override;
 
