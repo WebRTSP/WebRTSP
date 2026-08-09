@@ -94,7 +94,6 @@ std::string ClientIpString(lws* wsi) noexcept
 struct WsServer::Private
 {
     Private(
-        WsServer*,
         const WsServerConfig&,
         SessionFactory*) noexcept;
 
@@ -107,7 +106,6 @@ struct WsServer::Private
     void sendRequest(SessionContextData*, const rtsp::Request*) noexcept;
     void sendResponse(SessionContextData*, const rtsp::Response*) noexcept;
 
-    WsServer *const owner;
     WsServerConfig config;
     SessionFactory *const sessionFactory;
 
@@ -115,10 +113,9 @@ struct WsServer::Private
 };
 
 WsServer::Private::Private(
-    WsServer* owner,
     const WsServerConfig& config,
     WsServer::SessionFactory* sessionFactory) noexcept :
-    owner(owner), config(config), sessionFactory(sessionFactory)
+    config(config), sessionFactory(sessionFactory)
 {
 }
 
@@ -498,7 +495,7 @@ void WsServer::Private::sendResponse(
 WsServer::WsServer(
     const WsServerConfig& config,
     SessionFactory* sessionFactory) noexcept :
-    _p(std::make_unique<Private>(this, config, sessionFactory))
+    _p(std::make_unique<Private>(config, sessionFactory))
 {
 }
 
