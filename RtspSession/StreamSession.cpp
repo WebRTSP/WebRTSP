@@ -277,13 +277,20 @@ StreamSession::~StreamSession()
 {
 }
 
+bool StreamSession::authorize(const std::unique_ptr<Request>& requestPtr) noexcept
+{
+    return requestPtr->method != Method::RECORD;
+}
+
 bool StreamSession::handleRequest(std::unique_ptr<Request>&& requestPtr) noexcept
 {
-    if(requestPtr->method != Method::RECORD && !authorize(requestPtr)) {
-        log()->error("{} authorize failed for \"{}\"", MethodName(requestPtr->method), requestPtr->uri);
-
+    if(!authorize(requestPtr)) {
+        log()->error(
+            SESSION TAG "{} authorize failed for \"{}\"",
+            sessionLogId,
+            MethodName(requestPtr->method),
+            requestPtr->uri);
         sendUnauthorizedResponse(requestPtr->cseq);
-
         return true;
     }
 
@@ -410,11 +417,6 @@ bool StreamSession::onDescribeRequest(
     return true;
 }
 
-bool StreamSession::authorize(const std::unique_ptr<Request>& requestPtr) noexcept
-{
-    return requestPtr->method != Method::RECORD;
-}
-
 bool StreamSession::onRecordRequest(
     std::unique_ptr<Request>&& requestPtr) noexcept
 {
@@ -422,14 +424,6 @@ bool StreamSession::onRecordRequest(
 
     if(!recordEnabled(requestPtr->uri) || !_p->recordEnabled())
         return false;
-
-    if(!authorize(requestPtr)) {
-        log()->error(
-            SESSION TAG "RECORD authorize failed for \"{}\"",
-            sessionLogId,
-            requestPtr->uri);
-        return false;
-    }
 
     const std::string& sdp = request.body;
     if(sdp.empty())
