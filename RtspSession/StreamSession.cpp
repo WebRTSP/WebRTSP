@@ -277,8 +277,7 @@ StreamSession::~StreamSession()
 {
 }
 
-bool StreamSession::handleRequest(
-    std::unique_ptr<Request>&& requestPtr) noexcept
+bool StreamSession::handleRequest(std::unique_ptr<Request>&& requestPtr) noexcept
 {
     if(requestPtr->method != Method::RECORD && !authorize(requestPtr)) {
         log()->error("{} authorize failed for \"{}\"", MethodName(requestPtr->method), requestPtr->uri);
@@ -286,18 +285,6 @@ bool StreamSession::handleRequest(
         sendUnauthorizedResponse(requestPtr->cseq);
 
         return true;
-    }
-
-    if(isProxyRequest(*requestPtr)) {
-        switch(requestPtr->method) {
-        case Method::DESCRIBE:
-        case Method::SETUP:
-        case Method::PLAY:
-        case Method::TEARDOWN:
-            return handleProxyRequest(requestPtr);
-        default:
-            break;
-        }
     }
 
     return Session::handleRequest(std::move(requestPtr));

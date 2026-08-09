@@ -50,9 +50,6 @@ protected:
 
     bool onRecordResponse(const Request& request, const Response& response) noexcept override;
 
-    virtual bool isProxyRequest(const Request&) noexcept { return false; }
-    virtual bool handleProxyRequest(std::unique_ptr<Request>&) noexcept { return false; }
-
     virtual void teardownMediaSession(const MediaSessionId&) noexcept;
 
 private:
