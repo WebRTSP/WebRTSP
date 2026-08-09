@@ -15,10 +15,10 @@ struct lws_context;
 class WsServer final
 {
 public:
-    bool init(lws_context* = nullptr) noexcept;
     struct SessionFactory;
 
-    WsServer(const WsServerConfig&, GMainLoop*, SessionFactory*) noexcept;
+    WsServer(const WsServerConfig&, SessionFactory*) noexcept;
+    bool init(GMainLoop*, lws_context* = nullptr) noexcept;
     ~WsServer() noexcept;
 
 private:

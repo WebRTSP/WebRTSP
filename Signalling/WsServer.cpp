@@ -96,10 +96,9 @@ struct WsServer::Private
     Private(
         WsServer*,
         const WsServerConfig&,
-        GMainLoop*,
         SessionFactory*) noexcept;
 
-    bool init(lws_context* context) noexcept;
+    bool init(GMainLoop*, lws_context*) noexcept;
     int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
     int wsCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
     bool onMessage(SessionContextData*, const MessageBuffer&) noexcept;
@@ -110,7 +109,6 @@ struct WsServer::Private
 
     WsServer *const owner;
     WsServerConfig config;
-    GMainLoop* loop;
     SessionFactory *const sessionFactory;
 
     LwsContextPtr contextPtr;
@@ -119,9 +117,8 @@ struct WsServer::Private
 WsServer::Private::Private(
     WsServer* owner,
     const WsServerConfig& config,
-    GMainLoop* loop,
     WsServer::SessionFactory* sessionFactory) noexcept :
-    owner(owner), config(config), loop(loop), sessionFactory(sessionFactory)
+    owner(owner), config(config), sessionFactory(sessionFactory)
 {
 }
 
@@ -283,7 +280,7 @@ int WsServer::Private::wsCallback(
     return 0;
 }
 
-bool WsServer::Private::init(lws_context* context) noexcept
+bool WsServer::Private::init(GMainLoop* loop, lws_context* context) noexcept
 {
     auto HttpCallback =
         [] (lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) -> int {
@@ -500,9 +497,8 @@ void WsServer::Private::sendResponse(
 
 WsServer::WsServer(
     const WsServerConfig& config,
-    GMainLoop* loop,
     SessionFactory* sessionFactory) noexcept :
-    _p(std::make_unique<Private>(this, config, loop, sessionFactory))
+    _p(std::make_unique<Private>(this, config, sessionFactory))
 {
 }
 
@@ -510,7 +506,7 @@ WsServer::~WsServer() noexcept
 {
 }
 
-bool WsServer::init(lws_context* context /*= nullptr*/) noexcept
+bool WsServer::init(GMainLoop* loop, lws_context* context /*= nullptr*/) noexcept
 {
-    return _p->init(context);
+    return _p->init(loop, context);
 }
