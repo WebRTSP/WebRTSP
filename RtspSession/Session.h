@@ -35,9 +35,6 @@ struct Session
     rtsp::MediaSessionId nextMediaSession()
         { return std::to_string(_nextMediaSession++); }
 
-protected:
-    Session(const SendRequest&, const SendResponse&) noexcept;
-
     Request* createRequest(
         Method,
         std::string_view uri) noexcept;
@@ -126,6 +123,9 @@ protected:
         std::string_view contentType,
         const std::string& body,
         const std::optional<std::string>& token = {}) noexcept;
+
+protected:
+    Session(const SendRequest&, const SendResponse&) noexcept;
 
     virtual bool onOptionsRequest(std::unique_ptr<Request>&&) noexcept
         { return false; }
