@@ -12,7 +12,7 @@
 
 struct lws_context;
 
-class WsServer
+class WsServer final
 {
 public:
     typedef std::function<

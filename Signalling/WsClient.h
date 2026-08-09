@@ -11,7 +11,7 @@
 #include "Config.h"
 
 
-class WsClient
+class WsClient final
 {
 public:
     typedef std::function<
