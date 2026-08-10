@@ -497,7 +497,7 @@ bool ParseResponse(const char* response, size_t size, Response* out) noexcept
     if(!IsEOS(position, size))
         out->body.assign(response + position, size - position);
 
-    auto cseqIt = out->headerFields.find("cseq");
+    auto cseqIt = out->headerFields.find(ToLower(CSeqFieldName));
     if(cseqIt == out->headerFields.end() || cseqIt->second.empty())
         return false;
 
@@ -701,7 +701,7 @@ std::optional<std::pair<unsigned, std::string>> ParseIceCandidate(const std::str
 
 std::pair<Authentication, std::string> ParseAuthentication(const Request& request)
 {
-    auto it = request.headerFields.find("authorization");
+    auto it = request.headerFields.find(ToLower(AuthorizationFieldName));
     if(it == request.headerFields.end())
         return std::make_pair(Authentication::None, std::string());
 
