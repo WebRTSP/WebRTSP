@@ -241,7 +241,7 @@ void Session::sendServiceUnavailableResponse(CSeq cseq)
     sendResponse(response);
 }
 
-void Session::sendRequest(const Request& request) noexcept
+void Session::sendRequest(Request& request) noexcept
 {
     _sendRequest(&request);
 }
@@ -408,7 +408,7 @@ CSeq Session::requestSetParameter(
     return request.cseq;
 }
 
-void Session::sendResponse(const Response& response) noexcept
+void Session::sendResponse(Response& response) noexcept
 {
     _sendResponse(&response);
 }

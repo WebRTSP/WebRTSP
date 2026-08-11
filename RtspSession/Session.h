@@ -84,8 +84,8 @@ struct Session
     void sendBadGatewayResponse(CSeq, const MediaSessionId&);
     void sendServiceUnavailableResponse(CSeq);
 
-    void sendRequest(const Request&) noexcept;
-    void sendResponse(const Response&) noexcept;
+    virtual void sendRequest(Request&) noexcept;
+    virtual void sendResponse(Response&) noexcept;
 
     void disconnect() noexcept;
 
