@@ -482,7 +482,7 @@ bool StreamSession::onSetupRequest(
     const MediaSessionId& session = requestPtr->session;
 
     auto it = _p->mediaSessions.find(session);
-    if(it == _p->mediaSessions.end())
+    if(it == _p->mediaSessions.end() || it->second->uri != requestPtr->uri)
         return false;
 
     WebRTCPeer& localPeer = *it->second->localPeer;
@@ -540,7 +540,7 @@ bool StreamSession::onPlayRequest(
         return false;
 
     auto it = _p->mediaSessions.find(session);
-    if(it == _p->mediaSessions.end())
+    if(it == _p->mediaSessions.end() || it->second->uri != requestPtr->uri)
         return false;
 
     MediaSession& mediaSession = *it->second;
@@ -566,7 +566,7 @@ bool StreamSession::onTeardownRequest(
     const MediaSessionId& session = requestPtr->session;
 
     auto it = _p->mediaSessions.find(session);
-    if(it == _p->mediaSessions.end())
+    if(it == _p->mediaSessions.end() || it->second->uri != requestPtr->uri)
         return false;
 
     WebRTCPeer& localPeer = *(it->second->localPeer);
