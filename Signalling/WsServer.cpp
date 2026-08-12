@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <optional>
 
+#include <gio/gio.h>
+
 #include <CxxPtr/libwebsocketsPtr.h>
 
 #include "Helpers/MessageBuffer.h"
@@ -28,6 +30,9 @@ enum {
     RX_BUFFER_SIZE = 512,
     PING_INTERVAL = 2 * 60,
     INCOMING_MESSAGE_WAIT_INTERVAL = PING_INTERVAL + 30,
+    CONNECTIONS_UNIQUE_IP_LIMIT = 10000,
+    CONNECTIONS_LIMIT_FOR_IP = 10,
+    CONNECTIONS_LIMIT_RESET_INTERVAL = 5,
 };
 
 enum {
@@ -96,6 +101,36 @@ std::string ClientIpString(lws* wsi) noexcept
     }
 }
 
+std::pair<std::string, bool> PeerIp(lws* wsi) noexcept
+{
+    char clientIp[INET6_ADDRSTRLEN];
+    lws_get_peer_simple(wsi, clientIp, sizeof(clientIp));
+
+    g_autoptr(GInetAddress) clientIpAddr = g_inet_address_new_from_string(clientIp);
+    if(!clientIpAddr)
+        return {};
+
+    return {
+        clientIp,
+        g_inet_address_get_is_loopback(clientIpAddr) ||
+        g_inet_address_get_is_site_local(clientIpAddr)
+    };
+}
+
+std::string XRealClientIp(lws* wsi) noexcept
+{
+    char xRealIp[INET6_ADDRSTRLEN];
+    const bool xRealIpPresent = lws_hdr_copy(
+        wsi, xRealIp,
+        sizeof(xRealIp),
+        WSI_TOKEN_HTTP_X_REAL_IP) > 0;
+
+    if(!xRealIpPresent)
+        return {};
+
+    return xRealIp;
+}
+
 }
 
 
@@ -107,6 +142,11 @@ struct WsServer::Private
         WsServer::AgentsDb*) noexcept;
 
     bool init(GMainLoop*, lws_context*) noexcept;
+
+    bool isAllowed(const std::string& ip) noexcept;
+    bool isAllowedByPeerIp(lws* wsi) noexcept;
+    bool isAllowed(lws* wsi) noexcept;
+
     int httpCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
     int wsCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
     bool onMessage(SessionContextData*, const MessageBuffer&) noexcept;
@@ -120,6 +160,9 @@ struct WsServer::Private
     AgentsDb *const agentsDb;
 
     LwsContextPtr contextPtr;
+
+    std::unordered_map<std::string, unsigned char> ipHistory;
+    std::chrono::steady_clock::time_point ipHistoryTimestamp;
 };
 
 WsServer::Private::Private(
@@ -130,6 +173,65 @@ WsServer::Private::Private(
     sessionFactory(sessionFactory),
     agentsDb(agentsDb)
 {
+}
+
+bool WsServer::Private::isAllowed(const std::string& ip) noexcept
+{
+    const auto now = std::chrono::steady_clock::now();
+
+    auto it = ipHistory.end();
+    if(now - ipHistoryTimestamp > std::chrono::seconds(CONNECTIONS_LIMIT_RESET_INTERVAL)) {
+        ipHistory.clear();
+        ipHistoryTimestamp = now;
+    } else {
+        it = ipHistory.find(ip);
+    }
+
+    if(it != ipHistory.end()) {
+        if(it->second >= CONNECTIONS_LIMIT_FOR_IP) {
+            Log()->info("Too many connections from {}. Access denied", ip);
+            return false;
+        } else {
+            ++(it->second);
+            return true;
+        }
+    } else if(ipHistory.size() < CONNECTIONS_UNIQUE_IP_LIMIT) {
+        ipHistory.emplace(std::move(ip), 1);
+        return true;
+    } else {
+        Log()->info("Too many connections. Access from {} denied", ip);
+        return false;
+    }
+}
+
+bool WsServer::Private::isAllowedByPeerIp(lws* wsi) noexcept
+{
+    auto [ip, local] = PeerIp(wsi);
+    if(ip.empty()) {
+        Log()->info("Access denied from unknown IP");
+        return false;
+    }
+
+    if(local)
+        return true;
+
+    return isAllowed(ip);
+}
+
+bool WsServer::Private::isAllowed(lws* wsi) noexcept
+{
+    auto [peerIp, local] = PeerIp(wsi);
+    if(peerIp.empty()) {
+        Log()->info("Access denied from unknown IP");
+        return false;
+    }
+
+    if(local) {
+        const std::string xRealIp = XRealClientIp(wsi);
+        return isAllowed(xRealIp.empty() ? peerIp : xRealIp);
+    } else {
+        return true; // was checked in isAllowedByPeerIp
+    }
 }
 
 int WsServer::Private::httpCallback(
@@ -154,7 +256,16 @@ int WsServer::Private::wsCallback(
     switch (reason) {
         case LWS_CALLBACK_PROTOCOL_INIT:
             break;
+        case LWS_CALLBACK_FILTER_NETWORK_CONNECTION: {
+            if(!isAllowedByPeerIp(wsi))
+                return -1;
+
+            break;
+        }
         case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION: {
+            if(!isAllowed(wsi))
+                return -1;
+
             char valueBuffer[64 + 1];
             const bool hasClientId = lws_hdr_custom_copy(
                 wsi,

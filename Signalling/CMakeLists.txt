@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 
 project(Signalling)
 
+find_package(PkgConfig REQUIRED)
+pkg_search_module(LIBGIO REQUIRED gio-2.0)
+
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.cpp
     *.h
@@ -26,10 +29,12 @@ endif()
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC
+        ${LIBGIO_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}/../
 )
 
 target_link_libraries(${PROJECT_NAME}
+    ${LIBGIO_LDFLAGS}
     RtspSession
     Helpers
     CxxPtr
