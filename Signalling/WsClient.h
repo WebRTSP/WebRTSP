@@ -18,7 +18,7 @@ class WsClient final
 public:
     struct SessionFactory;
 
-    typedef std::function<void (WsClient&)> Disconnected;
+    typedef std::function<void (WsClient&, unsigned statusCode)> Disconnected;
 
     WsClient(
         std::string&& trustedCAs,

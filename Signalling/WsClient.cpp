@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <algorithm>
+#include <string_view>
 
 #include <CxxPtr/libwebsocketsPtr.h>
 
@@ -347,20 +348,30 @@ int WsClient::Private::wsCallback(
             connected = false;
 
             if(disconnected)
-                disconnected(*this->owner);
+                disconnected(*this->owner, rtsp::StatusCode::NONE);
 
             break;
-        case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-            Log()->error("Can not connect to server.");
+        case LWS_CALLBACK_CLIENT_CONNECTION_ERROR: {
+            const unsigned statusCode = lws_http_client_http_response(wsi);
+            if(statusCode > 0) {
+                Log()->error("Can not connect to server. HTTP Response: {}", statusCode);
+            } else if(in) {
+                Log()->error(
+                    "Can not connect to server. error: {}",
+                    std::string_view(static_cast<char*>(in), len));
+            } else {
+                Log()->error("Can not connect to server");
+            }
 
             sessionContextData.reset();
             connection = nullptr;
             connected = false;
 
             if(disconnected)
-                disconnected(*this->owner);
+                disconnected(*this->owner, statusCode);
 
             break;
+        }
         default:
             break;
     }
@@ -618,9 +629,9 @@ WsClient::~WsClient() noexcept
 {
 }
 
-bool WsClient::init(GMainLoop* loop, SSL_CTX* sslCtx) noexcept
+bool WsClient::init(GMainLoop* loop, SSL_CTX* sslContext) noexcept
 {
-    return _p->init(loop, sslCtx);
+    return _p->init(loop, sslContext);
 }
 
 void WsClient::connect() noexcept
