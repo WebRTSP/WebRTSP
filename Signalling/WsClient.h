@@ -6,6 +6,8 @@
 
 #include <glib.h>
 
+#include <openssl/types.h>
+
 #include "RtspSession/Session.h"
 
 #include "Config.h"
@@ -28,7 +30,7 @@ public:
         SessionFactory* sessionFactory,
         const Disconnected& disconnected) noexcept :
         WsClient(std::string(), config, sessionFactory, disconnected) {}
-    bool init(GMainLoop*) noexcept;
+    bool init(GMainLoop*, SSL_CTX* = nullptr) noexcept;
     ~WsClient() noexcept;
 
     void connect() noexcept;

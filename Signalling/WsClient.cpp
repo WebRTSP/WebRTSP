@@ -57,7 +57,8 @@ struct WsClient::Private final
         const Disconnected&) noexcept;
     ~Private() noexcept;
 
-    bool init(GMainLoop*) noexcept;
+    bool init(GMainLoop*, SSL_CTX*) noexcept;
+    void loadTrustedCAs(SSL_CTX*) noexcept;
     int wsCallback(lws*, lws_callback_reasons, void* user, void* in, size_t len) noexcept;
     bool onMessage(const MessageBuffer&) noexcept;
 
@@ -106,6 +107,27 @@ WsClient::Private::~Private() noexcept
     }
 }
 
+void WsClient::Private::loadTrustedCAs(SSL_CTX* sslContext) noexcept
+{
+    if(trustedCAs.empty())
+        return;
+
+    X509_STORE* store = SSL_CTX_get_cert_store(sslContext);
+    if(!store)
+        return;
+
+    BIO* bio = BIO_new_mem_buf(trustedCAs.data(), trustedCAs.size());
+    if (!bio)
+        return;
+
+    while(X509* cert = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr)) {
+        X509_STORE_add_cert(store, cert);
+        X509_free(cert);
+    }
+
+    BIO_free(bio);
+}
+
 int WsClient::Private::wsCallback(
     lws* wsi,
     lws_callback_reasons reason,
@@ -114,27 +136,9 @@ int WsClient::Private::wsCallback(
 {
     switch(reason) {
         case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS: {
-            if(trustedCAs.empty())
-                break;
-
             SSL_CTX* sslContext = static_cast<SSL_CTX*>(user);
-            if(!sslContext)
-                break;
-
-            X509_STORE* store = SSL_CTX_get_cert_store(sslContext);
-            if(!store)
-                break;
-
-            BIO* bio = BIO_new_mem_buf(trustedCAs.data(), trustedCAs.size());
-            if (!bio)
-                break;
-
-            while(X509* cert = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr)) {
-                X509_STORE_add_cert(store, cert);
-                X509_free(cert);
-            }
-
-            BIO_free(bio);
+            if(sslContext)
+                loadTrustedCAs(sslContext);
 
             break;
         }
@@ -364,7 +368,7 @@ int WsClient::Private::wsCallback(
     return 0;
 }
 
-bool WsClient::Private::init(GMainLoop* loop) noexcept
+bool WsClient::Private::init(GMainLoop* loop, SSL_CTX* sslContext) noexcept
 {
     auto WsCallback =
         [] (lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) -> int {
@@ -391,9 +395,10 @@ bool WsClient::Private::init(GMainLoop* loop) noexcept
     lws_context_creation_info wsInfo {
         .protocols = protocols,
         .port = CONTEXT_PORT_NO_LISTEN,
+        .provided_client_ssl_ctx = sslContext,
         .gid = gid_t(-1),
         .uid = uid_t(-1),
-        .options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT | LWS_SERVER_OPTION_GLIB,
+        .options = LWS_SERVER_OPTION_GLIB,
         .user = this,
         .foreign_loops = reinterpret_cast<void**>(&loop),
 #if LWS_LIBRARY_VERSION_NUMBER < 4000000
@@ -402,6 +407,11 @@ bool WsClient::Private::init(GMainLoop* loop) noexcept
         .retry_and_idle_policy = &retryPolicy,
 #endif
     };
+
+    if(sslContext)
+        loadTrustedCAs(sslContext);
+    else
+        wsInfo.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
 
     contextPtr.reset(lws_create_context(&wsInfo));
     lws_context* context = contextPtr.get();
@@ -608,9 +618,9 @@ WsClient::~WsClient() noexcept
 {
 }
 
-bool WsClient::init(GMainLoop* loop) noexcept
+bool WsClient::init(GMainLoop* loop, SSL_CTX* sslCtx) noexcept
 {
-    return _p->init(loop);
+    return _p->init(loop, sslCtx);
 }
 
 void WsClient::connect() noexcept
