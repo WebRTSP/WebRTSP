@@ -4,6 +4,7 @@
 namespace rtsp {
 
 enum StatusCode {
+    NONE = 0,
     OK = 200,
     BAD_REQUEST = 400,
     UNAUTHORIZED = 401,
