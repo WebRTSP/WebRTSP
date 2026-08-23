@@ -123,7 +123,7 @@ Response* Session::prepareOkResponse(
     CSeq cseq,
     Response* out)
 {
-    return prepareResponse(OK, "OK", cseq, std::string(), out);
+    return prepareResponse(OK, "OK", cseq, {}, out);
 }
 
 Response* Session::prepareOkResponse(
@@ -187,28 +187,28 @@ void Session::sendOkResponse(
 void Session::sendBadRequestResponse(CSeq cseq)
 {
     Response response;
-    prepareResponse(BAD_REQUEST, "Bad Request", cseq, std::string(), &response);
+    prepareResponse(BAD_REQUEST, "Bad Request", cseq, {}, &response);
     sendResponse(response);
 }
 
 void Session::sendUnauthorizedResponse(CSeq cseq)
 {
     Response response;
-    prepareResponse(UNAUTHORIZED, "Unauthorized", cseq, std::string(), &response);
+    prepareResponse(UNAUTHORIZED, "Unauthorized", cseq, {}, &response);
     sendResponse(response);
 }
 
 void Session::sendForbiddenResponse(CSeq cseq)
 {
     Response response;
-    prepareResponse(FORBIDDEN, "Forbidden", cseq, std::string(), &response);
+    prepareResponse(FORBIDDEN, "Forbidden", cseq, {}, &response);
     sendResponse(response);
 }
 
 void Session::sendNotFoundResponse(CSeq cseq)
 {
     Response response;
-    prepareResponse(NOT_FOUND, "Not Found", cseq, std::string(), &response);
+    prepareResponse(NOT_FOUND, "Not Found", cseq, {}, &response);
     sendResponse(response);
 }
 
@@ -222,7 +222,7 @@ void Session::sendSessionNotFoundResponse(CSeq cseq)
 void Session::sendInternalErrorResponse(CSeq cseq)
 {
     Response response;
-    prepareResponse(INTERNAL_ERROR, "Internal Server Error", cseq, std::string(), &response);
+    prepareResponse(INTERNAL_ERROR, "Internal Server Error", cseq, {}, &response);
     sendResponse(response);
 }
 
@@ -236,7 +236,7 @@ void Session::sendBadGatewayResponse(CSeq cseq)
 void Session::sendServiceUnavailableResponse(CSeq cseq)
 {
     Response response;
-    prepareResponse(SERVICE_UNAVAILABLE, "Service Unavailable", cseq, std::string(), &response);
+    prepareResponse(SERVICE_UNAVAILABLE, "Service Unavailable", cseq, {}, &response);
     sendResponse(response);
 }
 
