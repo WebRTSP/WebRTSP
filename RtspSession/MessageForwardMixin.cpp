@@ -43,9 +43,7 @@ MessageForwardMixin::~MessageForwardMixin() noexcept
             if(data.mediaSession.empty()) {
                 (*responseTarget)->session()->sendNotFoundResponse(data.cseq);
             } else {
-                (*responseTarget)->session()->sendSessionNotFoundResponse(
-                    data.cseq,
-                    data.mediaSession);
+                (*responseTarget)->session()->sendSessionNotFoundResponse(data.cseq);
             }
         }
     }
@@ -238,9 +236,7 @@ bool MessageForwardMixin::responseToOrphanedRequest(
     if(requestPtr->method == rtsp::Method::TEARDOWN) {
         session()->sendOkResponse(requestPtr->cseq);
     } else {
-        session()->sendSessionNotFoundResponse(
-            requestPtr->cseq,
-            requestPtr->session);
+        session()->sendSessionNotFoundResponse(requestPtr->cseq);
     }
 
     return true;
@@ -352,7 +348,7 @@ std::optional<bool> MessageForwardMixin::tryForwardResponse(
     if(badGateway) {
         const rtsp::CSeq cseq = responsePtr->cseq;
         responsePtr = std::make_unique<rtsp::Response>();
-        rtsp::Session::prepareBadGatewayResponse(cseq, {}, responsePtr.get());
+        rtsp::Session::prepareBadGatewayResponse(cseq, responsePtr.get());
     } else {
         responsePtr->cseq = forwardedRequest.cseq;
         responsePtr->session = targetMediaSession;

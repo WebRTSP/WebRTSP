@@ -245,7 +245,7 @@ void StreamSession::Private::eos(const MediaSessionId& session)
 
         owner->sendRequest(request);
     } else {
-        owner->sendBadGatewayResponse(describeRequestCSeq, session);
+        owner->sendBadGatewayResponse(describeRequestCSeq);
     }
 
     mediaSessions.erase(it);

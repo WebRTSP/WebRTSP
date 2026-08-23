@@ -136,10 +136,9 @@ Response* Session::prepareOkResponse(
 
 Response* Session::prepareBadGatewayResponse(
     CSeq cseq,
-    const MediaSessionId& session,
     Response* out)
 {
-    return prepareResponse(BAD_GATEWAY,"Bad Gateway", cseq, std::string(), out);
+    return prepareResponse(BAD_GATEWAY, "Bad Gateway", cseq, {}, out);
 }
 
 void Session::sendOkResponse(CSeq cseq)
@@ -213,10 +212,10 @@ void Session::sendNotFoundResponse(CSeq cseq)
     sendResponse(response);
 }
 
-void Session::sendSessionNotFoundResponse(CSeq cseq, const MediaSessionId& sessionId)
+void Session::sendSessionNotFoundResponse(CSeq cseq)
 {
     Response response;
-    prepareResponse(SESSION_NOT_FOUND, "Session Not Found", cseq, sessionId, &response);
+    prepareResponse(SESSION_NOT_FOUND, "Session Not Found", cseq, {}, &response);
     sendResponse(response);
 }
 
@@ -227,10 +226,10 @@ void Session::sendInternalErrorResponse(CSeq cseq)
     sendResponse(response);
 }
 
-void Session::sendBadGatewayResponse(CSeq cseq, const MediaSessionId& sessionId)
+void Session::sendBadGatewayResponse(CSeq cseq)
 {
     Response response;
-    prepareBadGatewayResponse(cseq, sessionId, &response);
+    prepareBadGatewayResponse(cseq, &response);
     sendResponse(response);
 }
 

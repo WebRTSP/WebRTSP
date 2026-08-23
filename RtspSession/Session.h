@@ -60,7 +60,6 @@ struct Session
         Response* out);
     static Response* prepareBadGatewayResponse(
         CSeq,
-        const MediaSessionId&,
         Response* out);
 
     void sendOkResponse(CSeq);
@@ -79,9 +78,9 @@ struct Session
     void sendUnauthorizedResponse(CSeq);
     void sendForbiddenResponse(CSeq);
     void sendNotFoundResponse(CSeq);
-    void sendSessionNotFoundResponse(CSeq, const MediaSessionId&);
+    void sendSessionNotFoundResponse(CSeq);
     void sendInternalErrorResponse(CSeq);
-    void sendBadGatewayResponse(CSeq, const MediaSessionId&);
+    void sendBadGatewayResponse(CSeq);
     void sendServiceUnavailableResponse(CSeq);
 
     virtual void sendRequest(Request&) noexcept;
