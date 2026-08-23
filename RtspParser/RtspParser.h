@@ -30,6 +30,6 @@ std::optional<std::pair<unsigned, std::string>> ParseIceCandidate(const std::str
 
 std::pair<Authentication, std::string> ParseAuthentication(const Request&);
 
-std::pair<std::string, std::string> SplitUri(const std::string& uri);
+std::pair<std::string_view, std::string_view> SplitUri(std::string_view uri);
 
 }
