@@ -37,7 +37,7 @@ protected:
     virtual bool authorize(const std::unique_ptr<Request>&) noexcept;
 
     virtual bool listEnabled(const std::string& /*uri*/) noexcept { return false; }
-    virtual bool playEnabled(const std::string& /*uri*/) noexcept { return true; };
+    virtual bool playEnabled(const std::string& uri) noexcept { return uri == rtsp::WildcardUri; };
     virtual bool recordEnabled(const std::string& /*uri*/) noexcept { return false; }
     virtual bool subscribeEnabled(const std::string& /*uri*/) noexcept { return false; };
 
