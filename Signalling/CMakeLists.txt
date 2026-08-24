@@ -5,6 +5,8 @@ project(Signalling)
 find_package(PkgConfig REQUIRED)
 pkg_search_module(LIBGIO REQUIRED gio-2.0)
 
+find_package(OpenSSL REQUIRED)
+
 file(GLOB SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *.cpp
     *.h
@@ -24,6 +26,17 @@ else()
     )
     target_link_libraries(${PROJECT_NAME}
         ${LIBWEBSOCKETS_LDFLAGS}
+    )
+endif()
+
+if(ANDROID)
+    target_link_libraries(${PROJECT_NAME}
+        PUBLIC
+            ${OPENSSL_STATIC_LIBRARIES}
+    )
+else()
+    target_link_libraries(${PROJECT_NAME}
+        ${OPENSSL_LIBRARIES}
     )
 endif()
 
