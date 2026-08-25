@@ -18,10 +18,24 @@ struct WsServerConfig
 struct WsClientConfig
 {
     std::string server;
-    unsigned short serverPort;
+    unsigned short serverPort = WEBRTSP_DEFAULT_WSS_PORT;
     bool useTls = true;
 };
 
-bool FillConfigFromUrl(const char*, WsClientConfig*);
-inline bool FillConfigFromUrl(const std::string& url, WsClientConfig* config)
-    { return FillConfigFromUrl(url.c_str(), config); }
+struct WsClientCredentials
+{
+    std::string agentId;
+    std::string accessToken;
+};
+
+bool WebRTSPUrlParse(
+    const char*,
+    WsClientConfig*,
+    WsClientCredentials* = nullptr,
+    std::string* outPath = nullptr);
+inline bool WebRTSPUrlParse(
+    const std::string& url,
+    WsClientConfig* config,
+    WsClientCredentials* outCredentials = nullptr,
+    std::string* outPath = nullptr)
+{ return WebRTSPUrlParse(url.c_str(), config, outCredentials, outPath); }

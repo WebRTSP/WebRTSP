@@ -7,24 +7,37 @@
 #include "CxxPtr/GlibPtr.h"
 
 
-bool FillConfigFromUrl(const char* url, WsClientConfig* config)
+bool WebRTSPUrlParse(
+    const char* url,
+    WsClientConfig* config,
+    WsClientCredentials* outCredentials,
+    std::string* outPath)
 {
-    assert(config);
+    assert(url && config);
 
-    gchar* scheme;
-    gchar* host;
+    if(!url)
+        return false;
+
+    g_autofree gchar* scheme = nullptr;
     gint port;
-    if(g_uri_split_network(
+    g_autofree gchar* user = nullptr;
+    g_autofree gchar* password = nullptr;
+    g_autofree gchar* host = nullptr;
+    g_autofree gchar* path = nullptr;
+    if(g_uri_split_with_user(
         url,
-        G_URI_FLAGS_NONE,
+        GUriFlags(G_URI_FLAGS_HAS_PASSWORD),
         &scheme,
+        &user,
+        &password,
+        nullptr, // auth_params
         &host,
         &port,
+        &path,
+        nullptr, // query
+        nullptr, // fragment
         nullptr))
     {
-        GCharPtr schemePtr(scheme);
-        GCharPtr hostPtr(host);
-
         if(!scheme || !host)
             return false;
 
@@ -38,13 +51,33 @@ bool FillConfigFromUrl(const char* url, WsClientConfig* config)
             return false;
         }
 
-        if(port == -1) {
+        if(port == -1)
             port = useTls ? WEBRTSP_DEFAULT_WSS_PORT : WEBRTSP_DEFAULT_WS_PORT;
-        }
 
         config->server = host;
         config->serverPort = port;
         config->useTls = useTls;
+
+        if(outCredentials) {
+            if(user) {
+                g_autofree char* agentId = g_uri_escape_string(user, nullptr, false);
+                outCredentials->agentId = agentId;
+            } else
+                outCredentials->agentId.clear();
+
+            if(password)
+                outCredentials->accessToken = password;
+            else
+                outCredentials->accessToken.clear();
+        }
+
+        if(outPath) {
+            if(path) {
+                g_autofree char* escapedPath = g_uri_escape_string(path, "/", false);
+                *outPath = escapedPath;
+            } else
+                outPath->clear();
+        }
 
         return true;
     }
