@@ -8,6 +8,7 @@ namespace rtsp {
 namespace {
 
 static const Authentication Authentications[] = {
+    Authentication::Basic,
     Authentication::Bearer,
 };
 
@@ -23,6 +24,8 @@ const char* AuthenticationName(Authentication authentication) noexcept
         return nullptr;
     case Authentication::Unknown:
         return nullptr;
+    case Authentication::Basic:
+        return "Basic";
     case Authentication::Bearer:
         return "Bearer";
     }

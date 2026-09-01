@@ -28,7 +28,13 @@ bool ParseParametersNames(
 std::set<rtsp::Method> ParseOptions(const Response&);
 std::optional<std::pair<unsigned, std::string>> ParseIceCandidate(const std::string& iceCandidate);
 
-std::pair<Authentication, std::string> ParseAuthentication(const Request&);
+struct Credentials
+{
+    std::string userName; // will be empty for Authentication::Bearer
+    std::string accessToken;
+};
+
+std::pair<Authentication, Credentials> ParseAuthentication(const Request&);
 
 std::pair<std::string_view, std::string_view> SplitUri(std::string_view uri);
 

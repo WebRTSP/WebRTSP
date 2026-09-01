@@ -8,7 +8,8 @@ enum class Authentication
 {
     None,
     Unknown,
-    Bearer
+    Basic,
+    Bearer,
 };
 
 const char* AuthenticationName(Authentication) noexcept;

@@ -699,11 +699,11 @@ std::optional<std::pair<unsigned, std::string>> ParseIceCandidate(const std::str
     return {};
 }
 
-std::pair<Authentication, std::string> ParseAuthentication(const Request& request)
+std::pair<Authentication, Credentials> ParseAuthentication(const Request& request)
 {
     auto it = request.headerFields.find(ToLower(AuthorizationFieldName));
     if(it == request.headerFields.end())
-        return std::make_pair(Authentication::None, std::string());
+        return { Authentication::None, {} };
 
     const char* buf = it->second.data();
     size_t size = it->second.size();
@@ -713,14 +713,27 @@ std::pair<Authentication, std::string> ParseAuthentication(const Request& reques
 
     Authentication authentication = ParseAuthentication(token);
     if(Authentication::Unknown == authentication)
-        return std::make_pair(Authentication::Unknown, std::string());
+        return { Authentication::Unknown, {} };
 
     SkipWSP(buf, &pos, size);
 
     if(IsEOS(pos, size))
-        return std::make_pair(authentication, std::string());
+        return { authentication, {} };
 
-    return { authentication, std::string(buf + pos, size - pos) };
+    if(Authentication::Bearer == authentication)
+        return { authentication, { {}, std::string(buf + pos, size - pos) } };
+
+    const std::string_view credentials(buf + pos, size - pos);
+
+    const std::string::size_type separatorPos = credentials.find_first_of(":");
+    const std::string_view userName = separatorPos == std::string::npos ?
+        std::string_view() :
+        credentials.substr(0, separatorPos);
+    const std::string_view authToken = separatorPos == std::string::npos ?
+        credentials :
+        credentials.substr(separatorPos + 1);
+
+    return { authentication, { std::string(userName), std::string(authToken) } };
 }
 
 std::pair<std::string_view, std::string_view> SplitUri(std::string_view uri)
