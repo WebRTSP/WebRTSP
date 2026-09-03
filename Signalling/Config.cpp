@@ -73,7 +73,10 @@ bool WebRTSPUrlParse(
 
         if(outPath) {
             if(path) {
-                g_autofree char* escapedPath = g_uri_escape_string(path, "/", false);
+                g_autofree char* escapedPath = g_uri_escape_string(
+                    path[0] == '/' ? path + 1 : path,
+                    "/",
+                    false);
                 *outPath = escapedPath;
             } else
                 outPath->clear();
