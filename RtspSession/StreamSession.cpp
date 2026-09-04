@@ -277,6 +277,11 @@ StreamSession::~StreamSession()
 {
 }
 
+unsigned StreamSession::mediaSessionCount() const noexcept
+{
+    return _p->mediaSessions.size();
+}
+
 bool StreamSession::authorize(const std::unique_ptr<Request>& requestPtr) noexcept
 {
     return requestPtr->method != Method::RECORD;

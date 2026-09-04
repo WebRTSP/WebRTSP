@@ -34,6 +34,8 @@ public:
     void startRecordToClient(const std::string& uri, const MediaSessionId&) noexcept;
 
 protected:
+    unsigned mediaSessionCount() const noexcept;
+
     virtual bool authorize(const std::unique_ptr<Request>&) noexcept;
 
     virtual bool listEnabled(const std::string& /*uri*/) noexcept { return false; }
