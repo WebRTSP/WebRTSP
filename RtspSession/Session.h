@@ -77,6 +77,7 @@ struct Session
     void sendBadRequestResponse(CSeq);
     void sendUnauthorizedResponse(CSeq);
     void sendForbiddenResponse(CSeq);
+    void sendNotEnoughBandwidth(CSeq);
     void sendNotFoundResponse(CSeq);
     void sendSessionNotFoundResponse(CSeq);
     void sendInternalErrorResponse(CSeq);

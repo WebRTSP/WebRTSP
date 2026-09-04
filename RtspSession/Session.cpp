@@ -212,6 +212,13 @@ void Session::sendNotFoundResponse(CSeq cseq)
     sendResponse(response);
 }
 
+void Session::sendNotEnoughBandwidth(CSeq cseq)
+{
+    Response response;
+    prepareResponse(NOT_ENOUGH_BANDWIDTH, "Not Enough Bandwidth", cseq, {}, &response);
+    sendResponse(response);
+}
+
 void Session::sendSessionNotFoundResponse(CSeq cseq)
 {
     Response response;
