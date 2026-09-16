@@ -12,7 +12,8 @@
 struct MHD_Response;
 
 
-namespace http {
+namespace http
+{
 
 enum class Method
 {
@@ -24,6 +25,8 @@ enum class Method
     PATCH,
 };
 
+typedef unsigned StatusCode;
+
 class MicroServer
 {
 public:
@@ -34,10 +37,10 @@ public:
     typedef std::function<void (
         const std::string& token,
         std::chrono::steady_clock::time_point expiresAt)> OnNewAuthToken;
-    typedef std::function<std::pair<unsigned, MHD_Response*> (
+    typedef std::function<std::pair<StatusCode, MHD_Response*> (
         Method method,
         const char* uri,
-        const std::string_view& body)> APIRequestHandler;
+        std::string_view body)> APIRequestHandler;
 
     MicroServer(
         const Config&,
