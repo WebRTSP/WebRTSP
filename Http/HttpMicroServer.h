@@ -80,6 +80,7 @@ public:
         const std::string& token,
         std::chrono::steady_clock::time_point expiresAt)> OnNewAuthToken;
     typedef std::function<std::pair<StatusCode, MHD_Response*> (
+        MHD_Connection* connection,
         Method method,
         const char* uri,
         std::string_view body)> APIRequestHandler;
