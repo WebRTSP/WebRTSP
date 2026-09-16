@@ -7,9 +7,9 @@
 
 #include <glib.h>
 
-#include "Config.h"
+#include <microhttpd.h>
 
-struct MHD_Response;
+#include "Config.h"
 
 
 namespace http
@@ -26,6 +26,48 @@ enum class Method
 };
 
 typedef unsigned StatusCode;
+
+inline MHD_Response*
+FixResponse(MHD_Response* response)
+{
+    return response ? response : MHD_create_response_from_buffer_static(0, nullptr);
+}
+
+inline std::pair<StatusCode, MHD_Response*>
+OK(MHD_Response* response = nullptr)
+{
+    return { MHD_HTTP_OK, FixResponse(response) };
+}
+
+inline std::pair<StatusCode, MHD_Response*>
+Created(MHD_Response* response = nullptr)
+{
+    return { MHD_HTTP_CREATED, FixResponse(response) };
+}
+
+inline std::pair<StatusCode, MHD_Response*>
+InternalError(MHD_Response* response = nullptr)
+{
+    return { MHD_HTTP_INTERNAL_SERVER_ERROR, FixResponse(response) };
+}
+
+inline std::pair<StatusCode, MHD_Response*>
+BadRequest(MHD_Response* response = nullptr)
+{
+    return { MHD_HTTP_BAD_REQUEST, FixResponse(response) };
+}
+
+inline std::pair<StatusCode, MHD_Response*>
+NotFound(MHD_Response* response = nullptr)
+{
+    return { MHD_HTTP_NOT_FOUND, FixResponse(response) };
+}
+
+inline std::pair<StatusCode, MHD_Response*>
+TooManyRequests(MHD_Response* response = nullptr)
+{
+    return { MHD_HTTP_TOO_MANY_REQUESTS, FixResponse(response) };
+}
 
 class MicroServer
 {
