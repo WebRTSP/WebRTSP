@@ -2,13 +2,14 @@
 
 #include <cstddef>
 
+#include <optional>
+
 #include "Token.h"
 
 
 namespace rtsp {
 
 enum class Method {
-    NONE,
     OPTIONS,
     LIST,
     DESCRIBE,
@@ -24,6 +25,6 @@ enum class Method {
 };
 
 const char* MethodName(Method) noexcept;
-Method ParseMethod(const Token&) noexcept;
+std::optional<Method> ParseMethod(const Token&) noexcept;
 
 }

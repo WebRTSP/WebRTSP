@@ -31,8 +31,6 @@ static const unsigned MethodsCount = sizeof(Methods) / sizeof(Methods[0]);
 const char* MethodName(Method method) noexcept
 {
     switch(method) {
-    case Method::NONE:
-        return nullptr;
     case Method::OPTIONS:
         return "OPTIONS";
     case Method::LIST:
@@ -62,10 +60,10 @@ const char* MethodName(Method method) noexcept
     return nullptr;
 }
 
-Method ParseMethod(const Token& token) noexcept
+std::optional<Method> ParseMethod(const Token& token) noexcept
 {
     if(IsEmptyToken(token))
-        return Method::NONE;
+        return {};
 
     for(const Method m: Methods) {
         const char* methodName = MethodName(m);
@@ -73,7 +71,7 @@ Method ParseMethod(const Token& token) noexcept
             return m;
     }
 
-    return Method::NONE;
+    return {};
 }
 
 }

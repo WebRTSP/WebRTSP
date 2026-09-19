@@ -658,7 +658,6 @@ bool WsServer::Private::onMessage(
         }
 
         switch(requestPtr->method) {
-            case rtsp::Method::NONE:
             case rtsp::Method::OPTIONS:
             case rtsp::Method::LIST:
             case rtsp::Method::SETUP:

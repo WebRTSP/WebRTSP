@@ -447,8 +447,6 @@ bool Session::handleResponse(std::unique_ptr<Response>&& responsePtr) noexcept
 bool Session::handleRequest(std::unique_ptr<Request>&& requestPtr) noexcept
 {
     switch(requestPtr->method) {
-    case Method::NONE:
-        break;
     case Method::OPTIONS:
         return onOptionsRequest(std::move(requestPtr));
     case Method::LIST:
@@ -479,8 +477,6 @@ bool Session::handleResponse(
     std::unique_ptr<Response>&& responsePtr) noexcept
 {
     switch(request.method) {
-    case Method::NONE:
-        break;
     case Method::OPTIONS:
         return onOptionsResponse(request, *responsePtr);
     case Method::LIST:

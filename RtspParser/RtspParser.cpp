@@ -257,8 +257,9 @@ static bool ParseMethodLine(const char* request, size_t* pos, size_t size, Reque
     if(IsEmptyToken(methodToken))
         return false;
 
-    out->method = ParseMethod(methodToken);
-    if(out->method == Method::NONE)
+    if(const std::optional<Method> method = ParseMethod(methodToken))
+        out->method = method.value();
+    else
         return false;
 
     if(!SkipWSP(request, pos, size))
@@ -541,7 +542,7 @@ bool IsRequest(const char* request, size_t size) noexcept
     if(IsEmptyToken(methodToken))
         return false;
 
-    if(ParseMethod(methodToken) == Method::NONE)
+    if(!ParseMethod(methodToken).has_value())
         return false;
 
     return true;
@@ -646,17 +647,15 @@ std::set<rtsp::Method> ParseOptions(const Response& response)
         SkipWSP(buf, &pos, size);
         const Token token = GetToken(buf, &pos, size);
 
-        Method method = ParseMethod(token);
-
-        if(Method::NONE == method)
+        if(const std::optional<Method> method = ParseMethod(token))
+            parsedOptions.insert(method.value());
+        else
             return returnOptions;
 
         SkipWSP(buf, &pos, size);
 
         if(!IsEOS(pos, size) && !Skip(buf, &pos, size, ','))
             return returnOptions;
-
-        parsedOptions.insert(method);
     }
 
     returnOptions.swap(parsedOptions);
