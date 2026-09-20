@@ -212,6 +212,13 @@ void Session::sendNotFoundResponse(CSeq cseq)
     sendResponse(response);
 }
 
+void Session::sendMethodNotAllowedResponse(CSeq cseq)
+{
+    Response response;
+    prepareResponse(METHOD_NOT_ALLOWED, "Method Not Allowed", cseq, {}, &response);
+    sendResponse(response);
+}
+
 void Session::sendNotEnoughBandwidth(CSeq cseq)
 {
     Response response;
