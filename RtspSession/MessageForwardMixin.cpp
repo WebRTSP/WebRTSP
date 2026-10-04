@@ -322,7 +322,7 @@ std::optional<bool> MessageForwardMixin::tryForwardResponse(
     }
 
     if(mediaSession.empty() && targetMediaSession.empty()) {
-        session()->log()->debug(
+        session()->log()->trace(
             "Forwarding {} response:\n"
             "[{}] -> [{}]\n"
             "Uri: \"{}\" -> \"{}\"\n"
@@ -332,7 +332,7 @@ std::optional<bool> MessageForwardMixin::tryForwardResponse(
             request.uri, forwardedRequest.uri,
             responsePtr->cseq, forwardedRequest.cseq);
     } else {
-        session()->log()->debug(
+        session()->log()->trace(
             "Forwarding {} response:\n"
             "[{}] -> [{}]\n"
             "Uri: \"{}\" -> \"{}\"\n"
@@ -390,7 +390,7 @@ bool MessageForwardMixin::sendForwardedRequest(
     assert(added);
 
     if(it->second.mediaSession.empty() && attachedRequest->session.empty()) {
-        session()->log()->debug(
+        session()->log()->trace(
             "Forwarding {} request:\n"
             "[{}] -> [{}]\n"
             "Uri: \"{}\" -> \"{}\"\n"
@@ -401,7 +401,7 @@ bool MessageForwardMixin::sendForwardedRequest(
             sourceCSeq, attachedRequest->cseq);
 
     } else {
-        session()->log()->debug(
+        session()->log()->trace(
             "Forwarding {} request:\n"
             "[{}] -> [{}]\n"
             "Uri: \"{}\" -> \"{}\"\n"
