@@ -423,10 +423,6 @@ int WsServer::Private::wsCallback(
                 if(0 == lws_http_cookie_get(wsi, AuthCookieName, cookieBuf, &cookieSize))
                     authCookie = std::string(cookieBuf, cookieSize);
 
-                Log()->info(
-                    "Client connected. {}",
-                    ClientIpString(wsi));
-
                 session = sessionFactory->createSession(
                     std::move(authCookie),
                     [this, scd] (const rtsp::Request* request) {
@@ -435,12 +431,21 @@ int WsServer::Private::wsCallback(
                     [this, scd] (const rtsp::Response* response) {
                         sendResponse(scd, response);
                     });
+
+                if(session) {
+                    Log()->info(
+                        SESSION "Client connected. {}",
+                        session->sessionLogId,
+                        ClientIpString(wsi));
+                } else {
+                    Log()->error(
+                        "Failed to create client session. {}\n"
+                        "Requesting connection close...",
+                        ClientIpString(wsi));
+                }
             } else {
-                Log()->info(
-                    "Agent connected. Client Id: {}, Agent Id: {}, {}",
-                    scd->data->clientId,
-                    scd->data->agentId,
-                    ClientIpString(wsi));
+                const std::string clientId = scd->data->clientId;
+                const std::string agentId = scd->data->agentId;
 
                 session = sessionFactory->createAgentSession(
                     std::move(scd->data->clientId),
@@ -451,12 +456,26 @@ int WsServer::Private::wsCallback(
                     [this, scd] (const rtsp::Response* response) {
                         sendResponse(scd, response);
                     });
+
+                if(session) {
+                    Log()->info(
+                        SESSION "Agent connected. Client Id: {}, Agent Id: {}, {}",
+                        session->sessionLogId,
+                        clientId,
+                        agentId,
+                        ClientIpString(wsi));
+                } else {
+                    Log()->error(
+                        "Failed to create agent session. Client Id: {}, Agent Id: {}, {}\n"
+                        "Requesting connection close...",
+                        clientId,
+                        agentId,
+                        ClientIpString(wsi));
+                }
             }
 
-            if(!session) {
-                Log()->error("Failed to create session. Requesting connection close...");
+            if(!session)
                 return -1;
-            }
 
             scd->data->rtspSession = std::move(session);
 
