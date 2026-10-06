@@ -72,24 +72,7 @@ std::string ClientIpString(lws* wsi) noexcept
     const bool xRealIpPresent =
         lws_hdr_copy(wsi, xRealIp, sizeof(xRealIp), WSI_TOKEN_HTTP_X_REAL_IP) > 0;
 
-    // does not include the space for a terminating '\0'
-    const int xForwardedForlength = lws_hdr_total_length(wsi, WSI_TOKEN_X_FORWARDED_FOR);
-    if(xForwardedForlength > 0) {
-        char xForwardedFor[xForwardedForlength + 1];
-        lws_hdr_copy(wsi, xForwardedFor, sizeof(xForwardedFor), WSI_TOKEN_X_FORWARDED_FOR);
-        if(xRealIpPresent) {
-            return fmt::format(
-                "IP: {}, X-Real-IP: {}, X-Forwarded-For: {}",
-                clientIp,
-                xRealIp,
-                &xForwardedFor[0]);
-        } else {
-            return fmt::format(
-                "IP: {}, X-Forwarded-For: {}",
-                clientIp,
-                &xForwardedFor[0]);
-        }
-    } else if(xRealIpPresent) {
+    if(xRealIpPresent) {
         return fmt::format(
             "IP: {}, X-Real-IP: {}",
             clientIp,
