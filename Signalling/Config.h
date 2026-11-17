@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+#include "../RtspParser/Credentials.h"
+
 
 enum: uint16_t {
     WEBRTSP_DEFAULT_WS_PORT = 5554,
@@ -22,20 +24,14 @@ struct WsClientConfig
     bool useTls = true;
 };
 
-struct WsClientCredentials
-{
-    std::string agentId;
-    std::string accessToken;
-};
-
 bool WebRTSPUrlParse(
     const char*,
     WsClientConfig*,
-    WsClientCredentials* = nullptr,
+    rtsp::Credentials* = nullptr,
     std::string* outPath = nullptr);
 inline bool WebRTSPUrlParse(
     const std::string& url,
     WsClientConfig* config,
-    WsClientCredentials* outCredentials = nullptr,
+    rtsp::Credentials* outCredentials = nullptr,
     std::string* outPath = nullptr)
 { return WebRTSPUrlParse(url.c_str(), config, outCredentials, outPath); }

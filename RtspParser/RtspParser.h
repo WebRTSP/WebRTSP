@@ -6,6 +6,7 @@
 #include "Request.h"
 #include "Response.h"
 #include "Authentication.h"
+#include "Credentials.h"
 
 
 namespace rtsp {
@@ -28,12 +29,7 @@ bool ParseParametersNames(
 std::set<rtsp::Method> ParseOptions(const Response&);
 std::optional<std::pair<unsigned, std::string>> ParseIceCandidate(const std::string& iceCandidate);
 
-struct Credentials
-{
-    std::string userName; // will be empty for Authentication::Bearer
-    std::string accessToken;
-};
-
+// Credentials::accessId will be empty for Authentication::Bearer
 std::pair<Authentication, Credentials> ParseAuthentication(const Request&);
 
 std::pair<std::string_view, std::string_view> SplitUri(std::string_view uri);

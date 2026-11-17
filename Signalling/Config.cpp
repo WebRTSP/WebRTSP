@@ -10,7 +10,7 @@
 bool WebRTSPUrlParse(
     const char* url,
     WsClientConfig* config,
-    WsClientCredentials* outCredentials,
+    rtsp::Credentials* outCredentials,
     std::string* outPath)
 {
     assert(url && config);
@@ -60,10 +60,10 @@ bool WebRTSPUrlParse(
 
         if(outCredentials) {
             if(user) {
-                g_autofree char* agentId = g_uri_escape_string(user, nullptr, false);
-                outCredentials->agentId = agentId;
+                g_autofree char* accessId = g_uri_escape_string(user, nullptr, false);
+                outCredentials->accessId = accessId;
             } else
-                outCredentials->agentId.clear();
+                outCredentials->accessId.clear();
 
             if(password)
                 outCredentials->accessToken = password;
