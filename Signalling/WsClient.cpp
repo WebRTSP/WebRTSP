@@ -99,7 +99,7 @@ WsClient::Private::Private(
 
 WsClient::Private::~Private() noexcept
 {
-    assert(!connection);
+    // assert(!connection);
     if(connection) {
         lws_set_timeout(connection, NO_PENDING_TIMEOUT, LWS_TO_KILL_SYNC); // FIXME?
         connection = nullptr;

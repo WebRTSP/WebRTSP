@@ -8,6 +8,7 @@ option(SIGNALLING_SUPPORT "libwebsockets based server and client implementations
 option(STREAMING_SUPPORT "Streaming implementation support" ON)
 option(QML_SUPPORT "QML support" OFF)
 option(QT_SERVER_SUPPORT "Qt QWebSocketServer based server implementation" OFF)
+option(PLAYER_SUPPORT "Ready to use simple WebRTSP Player implementation" ON)
 
 if(SIGNALLING_SUPPORT)
     set(LIBWEBSOCKETS_SUPPORT ON CACHE BOOL "libwebsockets enabled" FORCE)
@@ -135,7 +136,9 @@ endif()
 if(QT_SERVER_SUPPORT)
     add_subdirectory(Qt/Server)
 endif()
-
+if(PLAYER_SUPPORT)
+    add_subdirectory(WebRTSPPlayer)
+endif()
 if(BUILD_TESTS_APP)
     add_subdirectory(Tests)
 endif()
