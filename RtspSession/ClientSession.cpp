@@ -47,11 +47,13 @@ struct ClientSession::Private
     Private(
         ClientSession* owner,
         const std::string& uri,
+        const std::optional<rtsp::Credentials>& credentials,
         const CreatePeer& createPeer);
 
     ClientSession* owner;
 
     std::string uri;
+    const std::optional<rtsp::Credentials> credentials;
 
     std::unique_ptr<WebRTCPeer> receiver;
     MediaSessionId session;
@@ -65,8 +67,9 @@ struct ClientSession::Private
 ClientSession::Private::Private(
     ClientSession* owner,
     const std::string& uri,
+    const std::optional<rtsp::Credentials>& credentials,
     const CreatePeer& createPeer) :
-    owner(owner), uri(uri), receiver(createPeer())
+    owner(owner), uri(uri), credentials(credentials), receiver(createPeer())
 {
 }
 
@@ -115,21 +118,29 @@ void ClientSession::Private::eos()
 ClientSession::ClientSession(
     const std::string& uri,
     const WebRTCConfigPtr& webRTCConfig,
+    const std::optional<rtsp::Credentials>& credentials,
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
     Session(sendRequest, sendResponse),
     WebRTCSessionMixin(webRTCConfig),
-    _p(new Private(this, uri, createPeer))
+    _p(new Private(this, uri, credentials, createPeer))
 {
 }
 
 ClientSession::ClientSession(
     const WebRTCConfigPtr& webRTCConfig,
+    const std::optional<rtsp::Credentials>& credentials,
     const CreatePeer& createPeer,
     const SendRequest& sendRequest,
     const SendResponse& sendResponse) noexcept :
-    ClientSession(std::string(), webRTCConfig, createPeer, sendRequest, sendResponse)
+    ClientSession(
+        std::string(),
+        webRTCConfig,
+        credentials,
+        createPeer,
+        sendRequest,
+        sendResponse)
 {
 }
 
@@ -149,6 +160,19 @@ bool ClientSession::onConnected() noexcept
 
     return true;
 }
+
+void ClientSession::sendRequest(rtsp::Request& request) noexcept
+{
+    if(_p->credentials.has_value() &&
+        request.uri == _p->uri &&
+        !_p->credentials->accessToken.empty())
+    {
+        SetAuthorization(&request, _p->credentials.value());
+    }
+
+    Session::sendRequest(request);
+}
+
 
 CSeq ClientSession::requestDescribe() noexcept
 {

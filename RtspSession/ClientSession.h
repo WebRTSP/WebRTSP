@@ -2,6 +2,8 @@
 
 #include "RtStreaming/WebRTCPeer.h"
 
+#include "RtspParser/Credentials.h"
+
 #include "Session.h"
 #include "WebRTCSessionMixin.h"
 
@@ -15,11 +17,13 @@ public:
     ClientSession(
         const std::string& uri,
         const WebRTCConfigPtr&,
+        const std::optional<rtsp::Credentials>& credentials,
         const CreatePeer& createPeer,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
     ClientSession(
         const WebRTCConfigPtr&,
+        const std::optional<rtsp::Credentials>& credentials,
         const CreatePeer& createPeer,
         const SendRequest& sendRequest,
         const SendResponse& sendResponse) noexcept;
@@ -39,6 +43,8 @@ protected:
         { return FeatureState::Required; }
     virtual FeatureState subscribeSupportState(const std::string& /*uri*/) noexcept
         { return FeatureState::Disabled; }
+
+    void sendRequest(rtsp::Request&) noexcept override;
 
     CSeq requestDescribe() noexcept;
     CSeq requestSubscribe() noexcept;

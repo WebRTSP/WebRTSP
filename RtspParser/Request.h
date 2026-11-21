@@ -4,6 +4,7 @@
 #include <map>
 
 #include "Common.h"
+#include "Credentials.h"
 #include "Methods.h"
 #include "Protocols.h"
 #include "LessNoCase.h"
@@ -24,5 +25,6 @@ struct Request {
 };
 
 void SetBearerAuthorization(Request*, const std::string& token);
+void SetAuthorization(Request*, const Credentials&);
 
 }
